@@ -31,14 +31,8 @@ function TestComponent() {
   );
 }
 
-console.log("🔍 DEBUG: App component rendering");
 function App() {
   const { auth } = useContext(AuthContext);
-
-  console.log("🔍 DEBUG: App component rendering");
-  console.log("🔍 DEBUG: auth state:", auth);
-  console.log("🔍 DEBUG: auth.authenticate:", auth?.authenticate);
-  console.log("🔍 DEBUG: auth.user:", auth?.user);
 
   return (
     <ErrorBoundary>

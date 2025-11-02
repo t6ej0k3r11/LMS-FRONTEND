@@ -82,6 +82,11 @@ const createAxiosInstance = async () => {
     // Set withCredentials globally for all requests
     axiosInstance.defaults.withCredentials = true;
 
+    // Add CORS headers for development
+    axiosInstance.defaults.headers.common["Access-Control-Allow-Origin"] = "*";
+    axiosInstance.defaults.headers.common["Access-Control-Allow-Credentials"] =
+      "true";
+
     // Add request interceptor
     axiosInstance.interceptors.request.use(
       (config) => {
@@ -99,6 +104,14 @@ const createAxiosInstance = async () => {
           "Axios request interceptor - withCredentials:",
           config.withCredentials
         );
+        console.log("Axios request interceptor - Full config:", {
+          method: config.method,
+          url: config.url,
+          baseURL: config.baseURL,
+          headers: config.headers,
+          withCredentials: config.withCredentials,
+          origin: window.location.origin,
+        });
 
         if (accessToken) {
           config.headers.Authorization = `Bearer ${accessToken}`;
