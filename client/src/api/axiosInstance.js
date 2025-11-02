@@ -82,11 +82,6 @@ const createAxiosInstance = async () => {
     // Set withCredentials globally for all requests
     axiosInstance.defaults.withCredentials = true;
 
-    // Add CORS headers for development
-    axiosInstance.defaults.headers.common["Access-Control-Allow-Origin"] = "*";
-    axiosInstance.defaults.headers.common["Access-Control-Allow-Credentials"] =
-      "true";
-
     // Add request interceptor
     axiosInstance.interceptors.request.use(
       (config) => {
