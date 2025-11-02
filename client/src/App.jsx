@@ -21,7 +21,6 @@ import QuizPlayerPage from "./pages/student/quiz-player";
 import StudentQuizResults from "./components/student-view/quizzes/QuizResults";
 
 console.log("🔍 DEBUG: App component rendering");
-console.log("🔍 DEBUG: auth state:", auth);
 function App() {
   const { auth } = useContext(AuthContext);
 
