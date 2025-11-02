@@ -8,7 +8,6 @@ import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
 console.log("🔍 DEBUG: About to render App");
-console.log("🔍 DEBUG: basename:", basename);
 import { BrowserRouter } from "react-router-dom";
 import AuthProvider from "./context/auth-context/index.jsx";
 import InstructorProvider from "./context/instructor-context/index.jsx";

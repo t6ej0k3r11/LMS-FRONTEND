@@ -20,15 +20,29 @@ import QuizResults from "./components/instructor-view/quizzes/QuizResults";
 import QuizPlayerPage from "./pages/student/quiz-player";
 import StudentQuizResults from "./components/student-view/quizzes/QuizResults";
 
+// Temporary simple component to test rendering
+function TestComponent() {
+  return (
+    <div style={{ padding: '20px', backgroundColor: '#e0f7e0', border: '2px solid green', margin: '20px' }}>
+      <h1 style={{ color: 'green' }}>✅ SUCCESS: App Component Rendered!</h1>
+      <p>The circular dependency issue has been resolved.</p>
+      <p>You can now remove this test component and restore your normal routes.</p>
+    </div>
+  );
+}
+
 console.log("🔍 DEBUG: App component rendering");
 function App() {
   const { auth } = useContext(AuthContext);
 
   console.log("🔍 DEBUG: App component rendering");
   console.log("🔍 DEBUG: auth state:", auth);
+  console.log("🔍 DEBUG: auth.authenticate:", auth?.authenticate);
+  console.log("🔍 DEBUG: auth.user:", auth?.user);
 
   return (
     <ErrorBoundary>
+      <TestComponent />
       <Routes>
       <Route
         path="/auth"

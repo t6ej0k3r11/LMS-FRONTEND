@@ -20,12 +20,17 @@ class ErrorBoundary extends React.Component {
     });
 
     // In production, you might want to send this to a logging service
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    console.error('🔍 DEBUG: ErrorBoundary caught an error:', error, errorInfo);
+    console.error('🔍 DEBUG: Error message:', error.message);
+    console.error('🔍 DEBUG: Error stack:', error.stack);
   }
 
   render() {
+    console.log("🔍 DEBUG: ErrorBoundary render called");
+    console.log("🔍 DEBUG: hasError:", this.state.hasError);
     if (this.state.hasError) {
       // Fallback UI
+      console.log("🔍 DEBUG: ErrorBoundary rendering error UI");
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
           <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
@@ -73,6 +78,7 @@ class ErrorBoundary extends React.Component {
       );
     }
 
+    console.log("🔍 DEBUG: ErrorBoundary rendering children");
     return this.props.children;
   }
 }
