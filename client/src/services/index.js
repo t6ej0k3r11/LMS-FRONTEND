@@ -1,5 +1,7 @@
 import axiosInstance from "@/api/axiosInstance";
 
+console.log("🔍 DEBUG: services/index.js loaded");
+
 export async function registerService(formData) {
   const instance = await axiosInstance();
   const { data } = await instance.post("/auth/register", formData);

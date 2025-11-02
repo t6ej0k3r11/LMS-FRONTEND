@@ -4,6 +4,10 @@ import axios from "axios";
 let axiosInstance = null;
 let isInitializing = false;
 
+console.log("🔍 DEBUG: axiosInstance.js loaded");
+console.log("🔍 DEBUG: VITE_API_URL:", import.meta.env.VITE_API_URL);
+console.log("🔍 DEBUG: import.meta.env:", import.meta.env);
+
 // Function to get the server port dynamically
 const getServerPort = async () => {
   try {
@@ -38,11 +42,14 @@ const getServerPort = async () => {
 
 // Create axios instance with dynamic base URL
 const createAxiosInstance = async () => {
+  console.log("🔍 DEBUG: createAxiosInstance called");
   if (axiosInstance) {
+    console.log("🔍 DEBUG: Returning existing axiosInstance");
     return axiosInstance;
   }
 
   if (isInitializing) {
+    console.log("🔍 DEBUG: Initialization in progress, waiting...");
     // Wait for ongoing initialization
     while (isInitializing) {
       await new Promise((resolve) => setTimeout(resolve, 10));
@@ -51,6 +58,7 @@ const createAxiosInstance = async () => {
   }
 
   isInitializing = true;
+  console.log("🔍 DEBUG: Starting axios instance initialization");
 
   try {
     const envUrl = import.meta.env.VITE_API_URL;
@@ -117,7 +125,11 @@ const createAxiosInstance = async () => {
 
           try {
             // Import the refresh service dynamically to avoid circular dependency
+            console.log(
+              "🔍 DEBUG: Attempting dynamic import of refreshTokenService"
+            );
             const { refreshTokenService } = await import("@/services");
+            console.log("🔍 DEBUG: Dynamic import successful");
 
             const refreshResponse = await refreshTokenService();
 

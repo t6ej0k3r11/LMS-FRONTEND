@@ -1,8 +1,13 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { initialSignInFormData, initialSignUpFormData } from "@/config";
-import { checkAuthService, loginService, registerService } from "@/services";
 import { createContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
+
+// Dynamic import to avoid circular dependency
+const getServices = async () => {
+  const { checkAuthService, loginService, registerService } = await import("@/services");
+  return { checkAuthService, loginService, registerService };
+};
 
 export const AuthContext = createContext(null);
 
@@ -40,6 +45,7 @@ export default function AuthProvider({ children }) {
     console.log("🔍 DEBUG: Role validation passed, proceeding with registration");
     console.log("Registration data:", signUpFormData);
     try {
+      const { registerService } = await getServices();
       const response = await registerService(signUpFormData);
       console.log("Registration response:", response);
 
@@ -92,6 +98,7 @@ export default function AuthProvider({ children }) {
     setSignInFieldErrors({});
 
     try {
+      const { loginService } = await getServices();
       const data = await loginService(signInFormData);
 
       if (data.success) {
@@ -161,6 +168,7 @@ export default function AuthProvider({ children }) {
     }
 
     try {
+      const { checkAuthService } = await getServices();
       const data = await checkAuthService();
       if (data.success) {
         setAuth({
