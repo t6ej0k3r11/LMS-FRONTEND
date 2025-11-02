@@ -13,7 +13,8 @@ import { BrowserRouter } from "react-router-dom";
 import AuthProvider from "./context/auth-context/index.jsx";
 import InstructorProvider from "./context/instructor-context/index.jsx";
 import StudentProvider from "./context/student-context/index.jsx";
-const basename = import.meta.env.DEV ? "" : "/LMS";
+const basename = import.meta.env.DEV ? "" : "/";
+console.log("🔍 DEBUG: basename set to:", basename);
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter basename={basename}>
