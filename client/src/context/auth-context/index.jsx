@@ -147,7 +147,9 @@ export default function AuthProvider({ children }) {
   //check auth user
 
   async function checkAuthUser() {
+    console.log("🔍 DEBUG: checkAuthUser called");
     const accessToken = sessionStorage.getItem("accessToken");
+    console.log("🔍 DEBUG: accessToken exists:", !!accessToken);
     if (!accessToken) {
       setAuth({
         authenticate: false,
@@ -216,8 +218,10 @@ export default function AuthProvider({ children }) {
   }
 
   useEffect(() => {
+    console.log("🔍 DEBUG: AuthProvider useEffect running");
     // Initialize refresh token from sessionStorage if available
     const storedRefreshToken = sessionStorage.getItem("refreshToken");
+    console.log("🔍 DEBUG: storedRefreshToken:", storedRefreshToken);
     if (storedRefreshToken) {
       setAuth(prev => ({ ...prev, refreshToken: storedRefreshToken }));
     }
@@ -243,7 +247,11 @@ export default function AuthProvider({ children }) {
         setSignUpFieldErrors,
       }}
     >
-      {loading ? <Skeleton /> : children}
+      {(() => {
+        console.log("🔍 DEBUG: AuthProvider rendering children");
+        console.log("🔍 DEBUG: loading state:", loading);
+        return loading ? <Skeleton /> : children;
+      })()}
     </AuthContext.Provider>
   );
 }
