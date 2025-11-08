@@ -3,13 +3,25 @@ import StudentViewCommonHeader from "./header";
 
 function StudentViewCommonLayout() {
   const location = useLocation();
+  
+  console.log("🔍 DEBUG: StudentViewCommonLayout rendering for path:", location.pathname);
+  
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       {!location.pathname.includes("course-progress") ? (
         <StudentViewCommonHeader />
       ) : null}
 
-      <Outlet />
+      <main className="animate-fade-in">
+        {/* Debug info - hidden in production */}
+        {import.meta.env.DEV && (
+          <div style={{ display: 'none' }}>
+            Current path: {location.pathname}
+            Layout mounted
+          </div>
+        )}
+        <Outlet />
+      </main>
     </div>
   );
 }

@@ -8,11 +8,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DollarSign, Users, BookOpen } from "lucide-react";
+import { DollarSign, Users, BookOpen, Eye } from "lucide-react";
 
 function InstructorDashboard({ listOfCourses }) {
   function calculateTotalStudentsAndProfit() {
-    const { totalStudents, totalProfit, studentList } = listOfCourses.reduce(
+    const { totalStudents, totalProfit, studentList, totalRewatches } = listOfCourses.reduce(
       (acc, course) => {
         const studentCount = course.students.length;
         acc.totalStudents += studentCount;
@@ -23,7 +23,9 @@ function InstructorDashboard({ listOfCourses }) {
             courseTitle: course.title,
             studentName: student.studentName,
             studentEmail: student.studentEmail,
+            rewatchCount: student.rewatchCount || 0,
           });
+          acc.totalRewatches += student.rewatchCount || 0;
         });
 
         return acc;
@@ -32,6 +34,7 @@ function InstructorDashboard({ listOfCourses }) {
         totalStudents: 0,
         totalProfit: 0,
         studentList: [],
+        totalRewatches: 0,
       }
     );
 
@@ -39,6 +42,7 @@ function InstructorDashboard({ listOfCourses }) {
       totalProfit,
       totalStudents,
       studentList,
+      totalRewatches,
     };
   }
 
@@ -60,6 +64,11 @@ function InstructorDashboard({ listOfCourses }) {
       label: "Total Courses",
       value: listOfCourses.length,
     },
+    {
+      icon: Eye,
+      label: "Total Rewatches",
+      value: calculateTotalStudentsAndProfit().totalRewatches,
+    },
   ];
 
   return (
@@ -68,7 +77,7 @@ function InstructorDashboard({ listOfCourses }) {
         <h2 className="text-2xl font-bold">Dashboard</h2>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {config.map((item, index) => (
           <Card key={index}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -95,6 +104,7 @@ function InstructorDashboard({ listOfCourses }) {
                   <TableHead>Course Name</TableHead>
                   <TableHead>Student Name</TableHead>
                   <TableHead>Student Email</TableHead>
+                  <TableHead>Rewatch Count</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -106,6 +116,7 @@ function InstructorDashboard({ listOfCourses }) {
                       </TableCell>
                       <TableCell>{studentItem.studentName}</TableCell>
                       <TableCell>{studentItem.studentEmail}</TableCell>
+                      <TableCell>{studentItem.rewatchCount}</TableCell>
                     </TableRow>
                   )
                 )}

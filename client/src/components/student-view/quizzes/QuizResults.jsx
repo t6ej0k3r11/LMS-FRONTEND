@@ -40,7 +40,7 @@ function QuizResults() {
   }, [quizId, studentQuizProgress]);
 
   const handleRetakeQuiz = () => {
-    navigate(`/student/quiz-player/${quizId}`);
+    navigate(`/quiz-player/${quizId}`);
   };
 
   const handleBackToCourse = () => {

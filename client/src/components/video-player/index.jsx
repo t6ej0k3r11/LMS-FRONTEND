@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
 import { Slider } from "../ui/slider";
 import { Button } from "../ui/button";
+import PropTypes from "prop-types";
 import {
   Maximize,
   Minimize,
@@ -20,6 +21,13 @@ function VideoPlayer({
   onProgressUpdate,
   progressData,
 }) {
+  VideoPlayer.propTypes = {
+    width: PropTypes.string,
+    height: PropTypes.string,
+    url: PropTypes.string,
+    onProgressUpdate: PropTypes.func.isRequired,
+    progressData: PropTypes.object.isRequired,
+  };
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(0.5);
   const [muted, setMuted] = useState(false);
@@ -116,13 +124,16 @@ function VideoPlayer({
   }, []);
 
   useEffect(() => {
-    if (played === 1) {
+    // Debounce progress updates to avoid too many API calls
+    const timeoutId = setTimeout(() => {
       onProgressUpdate({
         ...progressData,
         progressValue: played,
       });
-    }
-  }, [played]);
+    }, 500); // Update every 500ms instead of on every progress change
+
+    return () => clearTimeout(timeoutId);
+  }, [played, onProgressUpdate, progressData]);
 
   return (
     <div

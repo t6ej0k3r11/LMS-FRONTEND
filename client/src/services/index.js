@@ -205,7 +205,12 @@ export async function getCurrentCourseProgressService(userId, courseId) {
   return data;
 }
 
-export async function markLectureAsViewedService(userId, courseId, lectureId) {
+export async function markLectureAsViewedService(
+  userId,
+  courseId,
+  lectureId,
+  isRewatch = false
+) {
   const instance = await axiosInstance();
 
   const { data } = await instance.post(
@@ -214,6 +219,7 @@ export async function markLectureAsViewedService(userId, courseId, lectureId) {
       userId,
       courseId,
       lectureId,
+      isRewatch,
     }
   );
 

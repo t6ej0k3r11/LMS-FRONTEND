@@ -89,78 +89,80 @@ function AuthPage() {
 
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-14 flex items-center border-b">
-        <Link to={"/"} className="flex items-center justify-center">
-          <GraduationCap className="h-8 w-8 mr-4" />
-          <span className="font-extrabold text-xl">LMS LEARN</span>
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <header className="px-6 lg:px-8 h-16 flex items-center bg-white shadow-sm border-b border-gray-200">
+        <Link to={"/"} className="flex items-center justify-center hover:opacity-80 transition-opacity duration-200">
+          <GraduationCap className="h-8 w-8 mr-3 text-primary" />
+          <span className="font-bold text-xl text-gray-900">LMS LEARN</span>
         </Link>
       </header>
-      <div className="flex items-center justify-center min-h-screen bg-background">
-        <Tabs
-          value={activeTab}
-          defaultValue="signin"
-          onValueChange={handleTabChange}
-          className="w-full max-w-md"
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Sign In</TabsTrigger>
-            <TabsTrigger value="signup">Sign Up</TabsTrigger>
-          </TabsList>
-          <TabsContent value="signin">
-            <Card className="p-6 space-y-4">
-              <CardHeader>
-                <CardTitle>Sign in to your account</CardTitle>
-                <CardDescription>
-                  Enter your email and password to access your account
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <CommonForm
-                  formControls={signInFormControls}
-                  buttonText={"Sign In"}
-                  formData={signInFormData}
-                  setFormData={setSignInFormData}
-                  isButtonDisabled={!checkIfSignInFormIsValid()}
-                  handleSubmit={handleSignInSubmit}
-                  fieldErrors={signInFieldErrors}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="signup">
-            <Card className="p-6 space-y-4">
-              <CardHeader>
-                <CardTitle>Create a new account</CardTitle>
-                <CardDescription>
-                  Enter your details to get started
-                </CardDescription>
-                <div className="text-sm text-gray-600 mt-2">
-                  <strong>Username Requirements:</strong>
-                  <ul className="list-disc list-inside mt-1 space-y-1">
-                    <li>3-50 characters long</li>
-                    <li>Letters, numbers, and underscores only</li>
-                    <li>No spaces or special characters</li>
-                  </ul>
-                  <p className="mt-2 text-xs">
-                    Examples: user123, my_username, JohnDoe
-                  </p>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <CommonForm
-                  formControls={signUpFormControls}
-                  buttonText={"Sign Up"}
-                  formData={signUpFormData}
-                  setFormData={setSignUpFormData}
-                  isButtonDisabled={!checkIfSignUpFormIsValid()}
-                  handleSubmit={handleSignUpSubmit}
-                  fieldErrors={signUpFieldErrors}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+      <div className="flex items-center justify-center flex-1 px-4 py-6 sm:py-8">
+        <div className="w-full max-w-sm sm:max-w-md animate-slide-up">
+          <Tabs
+            value={activeTab}
+            defaultValue="signin"
+            onValueChange={handleTabChange}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2 mb-4 sm:mb-6 bg-white shadow-sm">
+              <TabsTrigger value="signin" className="text-xs sm:text-sm font-medium">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="text-xs sm:text-sm font-medium">Sign Up</TabsTrigger>
+            </TabsList>
+            <TabsContent value="signin">
+              <Card className="shadow-lg border-0 bg-white bounce-in">
+                <CardHeader className="space-y-1">
+                  <CardTitle className="text-xl sm:text-2xl font-bold text-center text-gray-900">Welcome back</CardTitle>
+                  <CardDescription className="text-center text-gray-600 text-sm sm:text-base">
+                    Enter your credentials to access your account
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <CommonForm
+                    formControls={signInFormControls}
+                    buttonText={"Sign In"}
+                    formData={signInFormData}
+                    setFormData={setSignInFormData}
+                    isButtonDisabled={!checkIfSignInFormIsValid()}
+                    handleSubmit={handleSignInSubmit}
+                    fieldErrors={signInFieldErrors}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value="signup">
+              <Card className="shadow-lg border-0 bg-white bounce-in">
+                <CardHeader className="space-y-1">
+                  <CardTitle className="text-xl sm:text-2xl font-bold text-center text-gray-900">Create your account</CardTitle>
+                  <CardDescription className="text-center text-gray-600 text-sm sm:text-base">
+                    Join LMS LEARN and start learning today
+                  </CardDescription>
+                  <div className="bg-blue-50 p-4 rounded-lg mt-4 border border-blue-200">
+                    <strong className="text-sm font-medium text-blue-900">Username Requirements:</strong>
+                    <ul className="list-disc list-inside mt-2 space-y-1 text-sm text-blue-800">
+                      <li>3-50 characters long</li>
+                      <li>Letters, numbers, and underscores only</li>
+                      <li>No spaces or special characters</li>
+                    </ul>
+                    <p className="mt-2 text-xs text-blue-700">
+                      Examples: user123, my_username, JohnDoe
+                    </p>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <CommonForm
+                    formControls={signUpFormControls}
+                    buttonText={"Create Account"}
+                    formData={signUpFormData}
+                    setFormData={setSignUpFormData}
+                    isButtonDisabled={!checkIfSignUpFormIsValid()}
+                    handleSubmit={handleSignUpSubmit}
+                    fieldErrors={signUpFieldErrors}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );

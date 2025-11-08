@@ -21,22 +21,22 @@ import QuizPlayerPage from "./pages/student/quiz-player";
 import StudentQuizResults from "./components/student-view/quizzes/QuizResults";
 
 // Temporary simple component to test rendering
-function TestComponent() {
-  return (
-    <div style={{ padding: '20px', backgroundColor: '#e0f7e0', border: '2px solid green', margin: '20px' }}>
-      <h1 style={{ color: 'green' }}>✅ SUCCESS: App Component Rendered!</h1>
-      <p>The circular dependency issue has been resolved.</p>
-      <p>You can now remove this test component and restore your normal routes.</p>
-    </div>
-  );
-}
+// function TestComponent() {
+//   return (
+//     <div style={{ padding: '20px', backgroundColor: '#e0f7e0', border: '2px solid green', margin: '20px' }}>
+//       <h1 style={{ color: 'green' }}>✅ SUCCESS: App Component Rendered!</h1>
+//       <p>The circular dependency issue has been resolved.</p>
+//       <p>You can now remove this test component and restore your normal routes.</p>
+//     </div>
+//   );
+// }
 
 function App() {
   const { auth } = useContext(AuthContext);
 
   return (
     <ErrorBoundary>
-      <TestComponent />
+      {/* <TestComponent /> */}
       <Routes>
       <Route
         path="/auth"

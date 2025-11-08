@@ -38,6 +38,80 @@ function QuizPlayer() {
   const [validationWarnings, setValidationWarnings] = useState([]);
   const [autoSaveStatus, setAutoSaveStatus] = useState(null);
 
+  // Define all the functions before using them
+  const handleAnswerChange = (questionId, answer) => {
+    setAnswers(prev => ({
+      ...prev,
+      [questionId]: answer
+    }));
+  };
+
+  const handleNext = () => {
+    if (currentQuestionIndex < currentQuiz.questions.length - 1) {
+      setCurrentQuestionIndex(prev => prev + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+    }
+  };
+
+  const performSubmission = async () => {
+    try {
+      setSubmitting(true);
+      const response = await submitQuizAttemptService(quizId, attemptId, answers);
+      if (response?.success) {
+        setStudentQuizProgress(prev => ({
+          ...prev,
+          [quizId]: response.data
+        }));
+        // Use the correct nested route without '/student/' prefix
+        navigate(`/quiz-results/${quizId}`);
+      } else {
+        alert("Failed to submit quiz. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error submitting quiz:", error);
+      alert("An error occurred while submitting the quiz. Please try again.");
+    } finally {
+      setSubmitting(false);
+      setShowConfirmDialog(false);
+    }
+  };
+
+  const handleConfirmSubmit = () => {
+    performSubmission();
+  };
+
+  const handleTimeUp = () => {
+    setTimeUp(true);
+    // Auto-submit when time is up
+    performSubmission();
+  };
+
+  const handleSubmit = async () => {
+    if (submitting) return;
+
+    // Validate submission
+    const validation = validateQuizSubmission(answers, currentQuiz.questions);
+    setValidationErrors(validation.errors);
+    setValidationWarnings(validation.warnings);
+
+    if (!validation.isValid) {
+      return; // Don't proceed with submission if validation fails
+    }
+
+    // Show confirmation dialog if there are warnings
+    if (validation.warnings.length > 0) {
+      setShowConfirmDialog(true);
+      return;
+    }
+
+    await performSubmission();
+  };
+
   const autoSaveAnswers = useCallback(async () => {
     if (!attemptId) return;
 
@@ -106,6 +180,7 @@ function QuizPlayer() {
     }
   }, [quizId, studentCurrentCourseProgress?.progress, studentCurrentCourseProgress?.courseDetails, setCurrentQuiz, navigate]);
 
+  // Define effects after functions are defined
   useEffect(() => {
     fetchQuiz();
   }, [fetchQuiz]);
@@ -119,80 +194,6 @@ function QuizPlayer() {
       return () => clearTimeout(autoSaveTimer);
     }
   }, [answers, attemptId, autoSaveAnswers]);
-
-  const handleAnswerChange = (questionId, answer) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
-  };
-
-  const handleNext = () => {
-    if (currentQuestionIndex < currentQuiz.questions.length - 1) {
-      setCurrentQuestionIndex(prev => prev + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(prev => prev - 1);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (submitting) return;
-
-    // Validate submission
-    const validation = validateQuizSubmission(answers, currentQuiz.questions);
-    setValidationErrors(validation.errors);
-    setValidationWarnings(validation.warnings);
-
-    if (!validation.isValid) {
-      return; // Don't proceed with submission if validation fails
-    }
-
-    // Show confirmation dialog if there are warnings
-    if (validation.warnings.length > 0) {
-      setShowConfirmDialog(true);
-      return;
-    }
-
-    await performSubmission();
-  };
-
-
-  const performSubmission = async () => {
-    try {
-      setSubmitting(true);
-      const response = await submitQuizAttemptService(quizId, attemptId, answers);
-      if (response?.success) {
-        setStudentQuizProgress(prev => ({
-          ...prev,
-          [quizId]: response.data
-        }));
-        // Use the correct nested route without '/student/' prefix
-                navigate(`/quiz-results/${quizId}`);
-      } else {
-        alert("Failed to submit quiz. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error submitting quiz:", error);
-      alert("An error occurred while submitting the quiz. Please try again.");
-    } finally {
-      setSubmitting(false);
-      setShowConfirmDialog(false);
-    }
-  };
-
-  const handleConfirmSubmit = () => {
-    performSubmission();
-  };
-
-  const handleTimeUp = () => {
-    setTimeUp(true);
-    // Auto-submit when time is up
-    performSubmission();
-  };
 
   const renderQuestion = (question) => {
     if (!question) return null;

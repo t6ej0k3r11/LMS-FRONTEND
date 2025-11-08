@@ -46,24 +46,35 @@ function QuizList({ courseId }) {
   }, [courseId, fetchQuizzes]);
 
   const handleStartQuiz = (quiz) => {
+    console.log("🔍 DEBUG: handleStartQuiz called with quiz:", quiz._id);
+    
     // Validate prerequisites before allowing quiz start
     const prerequisiteCheck = checkQuizPrerequisites(quiz, studentCurrentCourseProgress, quiz.attempts || [], courseDetails);
+    console.log("🔍 DEBUG: prerequisiteCheck result:", prerequisiteCheck);
+    
     if (!prerequisiteCheck.canAccess) {
       alert(`Cannot start quiz: ${prerequisiteCheck.reason}`);
       return;
     }
 
     // Check for multiple simultaneous attempts
-    if (!canStartNewAttempt(quiz.attempts || [])) {
+    const canStart = canStartNewAttempt(quiz.attempts || []);
+    console.log("🔍 DEBUG: canStartNewAttempt result:", canStart);
+    
+    if (!canStart) {
       alert("You already have an active attempt for this quiz.");
       return;
     }
 
-    navigate(`/student/quiz-player/${quiz._id}`);
+    // Route is nested under the student layout at '/quiz-player/:quizId'
+    const targetPath = `/quiz-player/${quiz._id}`;
+    console.log("🔍 DEBUG: Navigating to:", targetPath);
+    navigate(targetPath);
   };
 
   const handleViewResults = (quizId) => {
-    navigate(`/student/quiz-results/${quizId}`);
+    // Use the correct nested route
+    navigate(`/quiz-results/${quizId}`);
   };
 
   const getStatusBadge = (quiz) => {

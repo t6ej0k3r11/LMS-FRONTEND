@@ -46,12 +46,15 @@ function StudentCoursesPage() {
   }
   useEffect(() => {
     fetchStudentBoughtCourses();
-  }, []);
+  }, [auth?.user?._id]);
 
   return (
-    <div className="p-4">
-      <h1 className="text-3xl font-bold mb-8">My Courses</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5">
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">My Courses</h1>
+        <p className="text-gray-600 text-sm sm:text-base">Continue your learning journey</p>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {studentBoughtCoursesList && studentBoughtCoursesList.length > 0 ? (
           studentBoughtCoursesList.map((course) => {
             const progress = courseProgress[course.courseId];
@@ -66,59 +69,75 @@ function StudentCoursesPage() {
             const totalLectures = progress?.courseDetails?.curriculum?.length || 0;
 
             return (
-              <Card key={course.id} className="flex flex-col">
-                <CardContent className="p-4 flex-grow">
+              <Card key={course.id} className="flex flex-col card-hover shadow-sm border-0 bg-white fade-in-up">
+                <CardContent className="p-0 flex-grow">
                   <img
                     src={course?.courseImage}
                     alt={course?.title}
-                    className="h-52 w-full object-cover rounded-md mb-4"
+                    className="h-48 w-full object-cover rounded-t-lg transition-transform duration-300 hover:scale-105"
                   />
-                  <h3 className="font-bold mb-1">{course?.title}</h3>
-                  <p className="text-sm text-gray-700 mb-2">
-                    {course?.instructorName}
-                  </p>
-                  <div className="flex items-center space-x-4 text-xs text-gray-600 mb-2">
-                    <span>Lectures: {lecturesViewed}/{totalLectures}</span>
-                    <span className="flex items-center">
-                      <BookOpen className="h-3 w-3 mr-1" />
-                      Quizzes: {progress?.quizzesProgress?.filter(q => q.completed).length || 0}/{quizzes.length}
-                    </span>
-                  </div>
-                  {finalQuizzes.length > 0 && (
-                    <div className="flex items-center space-x-2 text-xs mb-2">
-                      {completedFinalQuizzes === finalQuizzes.length ? (
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                      ) : (
-                        <AlertCircle className="h-4 w-4 text-yellow-500" />
+                  <div className="p-4 sm:p-6">
+                    <h3 className="font-bold text-lg mb-2 text-gray-900 line-clamp-2">{course?.title}</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      by {course?.instructorName}
+                    </p>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm text-gray-600">
+                        <span className="flex items-center">
+                          <Watch className="h-4 w-4 mr-2 text-blue-500" />
+                          Lectures: {lecturesViewed}/{totalLectures}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm text-gray-600">
+                        <span className="flex items-center">
+                          <BookOpen className="h-4 w-4 mr-2 text-green-500" />
+                          Quizzes: {progress?.quizzesProgress?.filter(q => q.completed).length || 0}/{quizzes.length}
+                        </span>
+                      </div>
+                      {finalQuizzes.length > 0 && (
+                        <div className="flex items-center space-x-2 text-sm">
+                          {completedFinalQuizzes === finalQuizzes.length ? (
+                            <CheckCircle className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4 text-yellow-500" />
+                          )}
+                          <span className={completedFinalQuizzes === finalQuizzes.length ? 'text-green-600 font-medium' : 'text-yellow-600'}>
+                            Final Quiz: {completedFinalQuizzes}/{finalQuizzes.length}
+                          </span>
+                        </div>
                       )}
-                      <span className={completedFinalQuizzes === finalQuizzes.length ? 'text-green-600' : 'text-yellow-600'}>
-                        Final Quiz: {completedFinalQuizzes}/{finalQuizzes.length}
-                      </span>
+                      {isCompleted && (
+                        <div className="flex items-center space-x-2 text-sm text-green-600 font-semibold bg-green-50 px-3 py-1 rounded-full">
+                          <CheckCircle className="h-4 w-4" />
+                          <span>Course Completed</span>
+                        </div>
+                      )}
                     </div>
-                  )}
-                  {isCompleted && (
-                    <div className="flex items-center space-x-2 text-xs text-green-600 font-semibold">
-                      <CheckCircle className="h-4 w-4" />
-                      <span>Course Completed</span>
-                    </div>
-                  )}
+                  </div>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="p-6 pt-0">
                   <Button
                     onClick={() =>
                       navigate(`/course-progress/${course?.courseId}`)
                     }
-                    className="flex-1"
+                    className="w-full btn-primary"
                   >
                     <Watch className="mr-2 h-4 w-4" />
-                    {isCompleted ? 'Review Course' : 'Continue Watching'}
+                    {isCompleted ? 'Review Course' : 'Continue Learning'}
                   </Button>
                 </CardFooter>
               </Card>
             );
           })
         ) : (
-          <h1 className="text-3xl font-bold">No Courses found</h1>
+          <div className="col-span-full text-center py-12">
+            <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Courses Yet</h2>
+            <p className="text-gray-600 mb-6">Start your learning journey by exploring our course catalog</p>
+            <Button onClick={() => navigate('/courses')} className="btn-primary">
+              Browse Courses
+            </Button>
+          </div>
         )}
       </div>
     </div>

@@ -14,15 +14,15 @@ function StudentViewCommonHeader() {
   }
 
   return (
-    <header className="flex items-center justify-between p-4 border-b relative">
-      <div className="flex items-center space-x-4">
-        <Link to="/home" className="flex items-center hover:text-black">
-          <GraduationCap className="h-8 w-8 mr-4 " />
-          <span className="font-extrabold md:text-xl text-[14px]">
+    <header className="flex items-center justify-between px-4 sm:px-6 py-4 bg-white shadow-sm border-b border-gray-200 relative animate-fade-in">
+      <div className="flex items-center space-x-4 sm:space-x-6">
+        <Link to="/home" className="flex items-center hover:text-primary transition-colors duration-200 nav-link">
+          <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-primary" />
+          <span className="font-bold text-lg sm:text-xl text-gray-900">
             LMS LEARN
           </span>
         </Link>
-        <div className="flex items-center space-x-1">
+        <nav className="hidden lg:flex items-center space-x-2">
           <Button
             variant="ghost"
             onClick={() => {
@@ -30,7 +30,7 @@ function StudentViewCommonHeader() {
                 ? null
                 : navigate("/courses");
             }}
-            className="text-[14px] md:text-[16px] font-medium"
+            className="text-sm font-medium hover:bg-gray-100 transition-colors duration-200"
           >
             Explore Courses
           </Button>
@@ -41,25 +41,32 @@ function StudentViewCommonHeader() {
                 ? null
                 : navigate("/student-courses");
             }}
-            className="text-[14px] md:text-[16px] font-medium"
+            className="text-sm font-medium hover:bg-gray-100 transition-colors duration-200"
           >
-            <BookOpen className="h-4 w-4 mr-1" />
-            My Quizzes
+            <BookOpen className="h-4 w-4 mr-2" />
+            My Courses
           </Button>
-        </div>
+        </nav>
       </div>
-      <div className="flex items-center space-x-4">
-        <div className="flex gap-4 items-center">
+      <div className="flex items-center space-x-2 sm:space-x-4">
+        <div className="flex gap-2 sm:gap-4 items-center">
           <div
             onClick={() => navigate("/student-courses")}
-            className="flex cursor-pointer items-center gap-3"
+            className="flex cursor-pointer items-center gap-2 sm:gap-3 hover:text-primary transition-colors duration-200 nav-link"
           >
-            <span className="font-extrabold md:text-xl text-[14px]">
+            <span className="font-semibold text-base sm:text-lg text-gray-700">
               My Courses
             </span>
-            <TvMinimalPlay className="w-8 h-8 cursor-pointer" />
+            <TvMinimalPlay className="w-5 h-5 sm:w-6 sm:h-6 cursor-pointer" />
           </div>
-          <Button onClick={handleLogout}>Sign Out</Button>
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            size="sm"
+            className="hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors duration-200"
+          >
+            Sign Out
+          </Button>
         </div>
       </div>
     </header>
