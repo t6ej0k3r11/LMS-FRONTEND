@@ -42,10 +42,12 @@ function QuestionBuilder({ questions, setQuestions }) {
         updatedQuestions[index].options = [];
         updatedQuestions[index].correctAnswerIndex = null;
         updatedQuestions[index].correctAnswer = "";
-      } else if (!updatedQuestions[index].options || updatedQuestions[index].options.length === 0) {
-        updatedQuestions[index].options = ["", "", "", ""];
-        updatedQuestions[index].correctAnswerIndex = null;
-        updatedQuestions[index].correctAnswer = "";
+      } else if (value === "multiple-choice" || value === "true-false") {
+        if (!updatedQuestions[index].options || updatedQuestions[index].options.length === 0) {
+          updatedQuestions[index].options = ["", "", "", ""];
+          updatedQuestions[index].correctAnswerIndex = null;
+          updatedQuestions[index].correctAnswer = "";
+        }
       }
     }
 

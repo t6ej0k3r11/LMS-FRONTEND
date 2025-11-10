@@ -14,11 +14,11 @@ function StudentViewCommonHeader() {
   }
 
   return (
-    <header className="flex items-center justify-between px-4 sm:px-6 py-4 bg-white shadow-sm border-b border-gray-200 relative animate-fade-in">
+    <header className="flex items-center justify-between px-4 sm:px-6 py-4 glass-effect shadow-sm border-b border-gray-200 relative animate-fade-in" role="banner">
       <div className="flex items-center space-x-4 sm:space-x-6">
-        <Link to="/home" className="flex items-center hover:text-primary transition-colors duration-200 nav-link">
-          <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-primary" />
-          <span className="font-bold text-lg sm:text-xl text-gray-900">
+        <Link to="/home" className="flex items-center hover:text-primary transition-colors duration-200 nav-link accessible-focus rounded-lg p-2 -m-2" aria-label="Go to home page">
+          <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-primary" aria-hidden="true" />
+          <span className="font-bold text-lg sm:text-xl hero-text">
             LMS LEARN
           </span>
         </Link>

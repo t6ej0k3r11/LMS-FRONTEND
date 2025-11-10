@@ -3,13 +3,6 @@ import { Fragment } from "react";
 import PropTypes from "prop-types";
 
 function RouteGuard({ authenticated, user, element }) {
-  RouteGuard.propTypes = {
-    authenticated: PropTypes.bool,
-    user: PropTypes.shape({
-      role: PropTypes.string
-    }),
-    element: PropTypes.node.isRequired
-  };
   const location = useLocation();
 
   console.log("🔍 DEBUG: RouteGuard check for:", location.pathname);
@@ -42,5 +35,13 @@ function RouteGuard({ authenticated, user, element }) {
   console.log("🔍 DEBUG: Route access granted for path:", location.pathname);
   return <Fragment>{element}</Fragment>;
 }
+
+RouteGuard.propTypes = {
+  authenticated: PropTypes.bool.isRequired,
+  user: PropTypes.shape({
+    role: PropTypes.string.isRequired
+  }),
+  element: PropTypes.node.isRequired
+};
 
 export default RouteGuard;

@@ -7,7 +7,7 @@ function StudentViewCommonLayout() {
   console.log("🔍 DEBUG: StudentViewCommonLayout rendering for path:", location.pathname);
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen gradient-bg">
       {!location.pathname.includes("course-progress") ? (
         <StudentViewCommonHeader />
       ) : null}

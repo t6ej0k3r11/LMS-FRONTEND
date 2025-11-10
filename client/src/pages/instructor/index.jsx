@@ -72,19 +72,23 @@ function InstructorDashboardpage() {
   console.log(instructorCoursesList, "instructorCoursesList");
 
   return (
-    <div className="flex h-full min-h-screen bg-gray-50">
-      <aside className="w-64 bg-white shadow-lg hidden lg:block border-r border-gray-200">
+    <div className="flex h-full min-h-screen gradient-bg">
+      <aside className="w-64 glass-effect shadow-xl hidden lg:block border-r border-white/20">
         <div className="p-4 lg:p-6">
           <div className="flex items-center mb-6 lg:mb-8">
-            <GraduationCap className="h-6 w-6 lg:h-8 lg:w-8 mr-2 lg:mr-3 text-primary" />
-            <h2 className="text-lg lg:text-xl font-bold text-gray-900">Instructor Panel</h2>
+            <GraduationCap className="h-6 w-6 lg:h-8 lg:w-8 mr-2 lg:mr-3 hero-text" />
+            <h2 className="text-lg lg:text-xl font-bold hero-text">Instructor Panel</h2>
           </div>
-          <nav className="space-y-2">
+          <nav className="space-y-3">
             {menuItems.map((menuItem) => (
               <Button
-                className="w-full justify-start transition-colors duration-200 text-sm lg:text-base"
+                className={`w-full justify-start transition-all duration-300 text-sm lg:text-base hover:scale-105 ${
+                  activeTab === menuItem.value
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                    : 'hover:bg-white/10 text-gray-700 hover:text-blue-600'
+                }`}
                 key={menuItem.value}
-                variant={activeTab === menuItem.value ? "default" : "ghost"}
+                variant="ghost"
                 size="sm"
                 onClick={
                   menuItem.value === "logout"
@@ -104,7 +108,7 @@ function InstructorDashboardpage() {
       <main className="flex-1 p-4 lg:p-8 overflow-y-auto animate-fade-in">
         <div className="max-w-7xl mx-auto">
           <div className="mb-6 lg:mb-8">
-            <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+            <h1 className="text-3xl lg:text-4xl font-bold hero-text mb-2">Dashboard</h1>
             <p className="text-gray-600 text-sm lg:text-base">Manage your courses and track student progress</p>
           </div>
           <Tabs value={activeTab} onValueChange={setActiveTab}>

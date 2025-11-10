@@ -87,9 +87,9 @@ function InstructorCourses({ listOfCourses }) {
   };
 
   return (
-    <Card>
+    <Card className="stats-card">
       <CardHeader className="flex justify-between flex-row items-center">
-        <CardTitle className="text-3xl font-extrabold">All Courses</CardTitle>
+        <CardTitle className="text-3xl font-extrabold hero-text">All Courses</CardTitle>
         <Button
           onClick={() => {
             setCurrentEditedCourseId(null);
@@ -97,7 +97,7 @@ function InstructorCourses({ listOfCourses }) {
             setCourseCurriculumFormData(courseCurriculumInitialFormData);
             navigate("/instructor/create-new-course");
           }}
-          className="p-6"
+          className="btn-primary px-6 py-3 text-lg font-medium hover:scale-105 transition-transform"
         >
           Create New Course
         </Button>
@@ -106,55 +106,69 @@ function InstructorCourses({ listOfCourses }) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>Course</TableHead>
-                <TableHead>Students</TableHead>
-                <TableHead>Revenue</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+              <TableRow className="border-gray-200">
+                <TableHead className="font-semibold text-gray-700">Course</TableHead>
+                <TableHead className="font-semibold text-gray-700">Students</TableHead>
+                <TableHead className="font-semibold text-gray-700">Revenue</TableHead>
+                <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {listOfCourses && listOfCourses.length > 0
                 ? listOfCourses.map((course) => (
-                    <TableRow key={course._id}>
-                      <TableCell className="font-medium">
+                    <TableRow key={course._id} className="hover:bg-gray-50 transition-colors">
+                      <TableCell className="font-medium text-gray-900">
                         {course?.title}
                       </TableCell>
-                      <TableCell>{course?.students?.length}</TableCell>
                       <TableCell>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                          {course?.students?.length}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-semibold text-green-600">
                         ${course?.students?.length * course?.pricing}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          onClick={() => {
-                            navigate(`/instructor/edit-course/${course?._id}`);
-                          }}
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <Edit className="h-6 w-6" />
-                        </Button>
-                        <Button
-                          onClick={() => {
-                            navigate(`/instructor/quiz-management/${course?._id}`);
-                          }}
-                          variant="ghost"
-                          size="sm"
-                        >
-                          <FileQuestion className="h-6 w-6" />
-                        </Button>
-                        <Button
-                          onClick={() => openDeleteDialog(course)}
-                          variant="ghost"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Delete className="h-6 w-6" />
-                        </Button>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            onClick={() => {
+                              navigate(`/instructor/edit-course/${course?._id}`);
+                            }}
+                            variant="ghost"
+                            size="sm"
+                            className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                          >
+                            <Edit className="h-5 w-5" />
+                          </Button>
+                          <Button
+                            onClick={() => {
+                              navigate(`/instructor/quiz-management/${course?._id}`);
+                            }}
+                            variant="ghost"
+                            size="sm"
+                            className="hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                          >
+                            <FileQuestion className="h-5 w-5" />
+                          </Button>
+                          <Button
+                            onClick={() => openDeleteDialog(course)}
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                          >
+                            <Delete className="h-5 w-5" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
-                : null}
+                : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                      No courses found. Create your first course to get started!
+                    </TableCell>
+                  </TableRow>
+                )}
             </TableBody>
           </Table>
         </div>

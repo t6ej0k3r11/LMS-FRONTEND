@@ -10,29 +10,27 @@ import { StudentContext } from "@/context/student-context";
 import { ChevronLeft, ChevronRight, Send, AlertTriangle, Save } from "lucide-react";
 import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import QuizTimer from "./QuizTimer";
 import {
+  getCurrentCourseProgressService,
   getQuizForTakingService,
   startQuizAttemptService,
   submitQuizAttemptService,
 } from "@/services";
 import {
   validateQuizSubmission,
-  checkQuizPrerequisites,
-  canStartNewAttempt
+  checkQuizPrerequisites
 } from "@/lib/quiz-utils";
 
 function QuizPlayer() {
   const { quizId } = useParams();
   const navigate = useNavigate();
-  const { currentQuiz, setCurrentQuiz, setStudentQuizProgress, studentCurrentCourseProgress } = useContext(StudentContext);
+  const { currentQuiz, setCurrentQuiz, setStudentQuizProgress, studentCurrentCourseProgress, setStudentCurrentCourseProgress } = useContext(StudentContext);
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [attemptId, setAttemptId] = useState(null);
-  const [timeUp, setTimeUp] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [validationErrors, setValidationErrors] = useState([]);
   const [validationWarnings, setValidationWarnings] = useState([]);
@@ -56,12 +54,34 @@ function QuizPlayer() {
   const fetchQuiz = useCallback(async () => {
     try {
       setLoading(true);
+      console.log("Fetching quiz with ID:", quizId);
+
+      // First, refresh the course progress data to ensure we have the latest lecture completion status
+      if (studentCurrentCourseProgress?.courseDetails?._id) {
+        console.log("Refreshing course progress data...");
+        const progressResponse = await getCurrentCourseProgressService(
+          "current", // Use "current" as the userId since the service handles auth
+          studentCurrentCourseProgress.courseDetails._id
+        );
+        if (progressResponse?.success) {
+          console.log("Updated course progress:", progressResponse.data);
+          setStudentCurrentCourseProgress({
+            courseDetails: progressResponse.data.courseDetails,
+            progress: progressResponse.data.progress,
+            quizzesProgress: progressResponse.data.quizzesProgress || [],
+          });
+        }
+      }
+
       const response = await getQuizForTakingService(quizId);
+      console.log("Quiz fetch response:", response);
       if (response?.success) {
         const quiz = response.data.quiz;
+        console.log("Quiz data:", quiz);
 
-        // Check prerequisites
+        // Check prerequisites using the utility function
         const prerequisiteCheck = checkQuizPrerequisites(quiz, studentCurrentCourseProgress?.progress || [], response.data.attempts || [], studentCurrentCourseProgress?.courseDetails);
+        console.log("Prerequisite check result:", prerequisiteCheck);
         if (!prerequisiteCheck.canAccess) {
           alert(`Cannot access quiz: ${prerequisiteCheck.reason}`);
           navigate(-1);
@@ -70,13 +90,8 @@ function QuizPlayer() {
 
         setCurrentQuiz(quiz);
 
-        // Check for existing attempts and prevent multiple simultaneous attempts
-        const existingAttempts = response.data.attempts || [];
-        if (!canStartNewAttempt(existingAttempts)) {
-          alert("You already have an active attempt for this quiz.");
-          navigate(-1);
-          return;
-        }
+        // Allow multiple attempts - students can retake quizzes anytime
+        // No longer preventing multiple simultaneous attempts
 
         // Check if quiz has questions
         if (!quiz.questions || quiz.questions.length === 0) {
@@ -86,25 +101,31 @@ function QuizPlayer() {
         }
 
         // Start attempt
+        console.log("Starting quiz attempt...");
         const attemptResponse = await startQuizAttemptService(quizId);
+        console.log("Attempt start response:", attemptResponse);
         if (attemptResponse?.success) {
           setAttemptId(attemptResponse.data.attemptId);
+          console.log("Attempt started successfully with ID:", attemptResponse.data.attemptId);
         } else {
+          console.error("Failed to start attempt:", attemptResponse);
           alert("Failed to start quiz attempt. Please try again.");
           navigate(-1);
         }
       } else {
+        console.error("Failed to load quiz:", response);
         alert("Failed to load quiz. Please try again.");
         navigate(-1);
       }
     } catch (error) {
       console.error("Error fetching quiz:", error);
+      console.error("Error details:", error.response?.data || error.message);
       alert("An error occurred while loading the quiz.");
       navigate(-1);
     } finally {
       setLoading(false);
     }
-  }, [quizId, studentCurrentCourseProgress?.progress, studentCurrentCourseProgress?.courseDetails, setCurrentQuiz, navigate]);
+  }, [quizId, studentCurrentCourseProgress?.progress, studentCurrentCourseProgress?.courseDetails, setCurrentQuiz, setStudentCurrentCourseProgress, navigate]);
 
   useEffect(() => {
     fetchQuiz();
@@ -164,19 +185,23 @@ function QuizPlayer() {
   const performSubmission = async () => {
     try {
       setSubmitting(true);
+      console.log("Submitting quiz with answers:", answers);
       const response = await submitQuizAttemptService(quizId, attemptId, answers);
+      console.log("Quiz submission response:", response);
       if (response?.success) {
         setStudentQuizProgress(prev => ({
           ...prev,
           [quizId]: response.data
         }));
         // Use the correct nested route without '/student/' prefix
-                navigate(`/quiz-results/${quizId}`);
+        navigate(`/quiz-results/${quizId}`);
       } else {
+        console.error("Quiz submission failed:", response);
         alert("Failed to submit quiz. Please try again.");
       }
     } catch (error) {
       console.error("Error submitting quiz:", error);
+      console.error("Error details:", error.response?.data || error.message);
       alert("An error occurred while submitting the quiz. Please try again.");
     } finally {
       setSubmitting(false);
@@ -188,11 +213,6 @@ function QuizPlayer() {
     performSubmission();
   };
 
-  const handleTimeUp = () => {
-    setTimeUp(true);
-    // Auto-submit when time is up
-    performSubmission();
-  };
 
   const renderQuestion = (question) => {
     if (!question) return null;
@@ -306,13 +326,7 @@ function QuizPlayer() {
               {autoSaveStatus === 'error' && 'Save failed'}
             </div>
           )}
-          {currentQuiz.timeLimit && (
-            <QuizTimer
-              timeLimit={currentQuiz.timeLimit}
-              onTimeUp={handleTimeUp}
-              isActive={!timeUp && !submitting}
-            />
-          )}
+          {/* Removed time limit - students can take quizzes at their own pace */}
         </div>
       </div>
 
@@ -356,6 +370,22 @@ function QuizPlayer() {
         <CardContent className="space-y-4">
           <div className="text-lg">{currentQuestion.question}</div>
           {renderQuestion(currentQuestion)}
+          {isLastQuestion && currentQuiz.quizType === 'final' && (
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-yellow-800 mb-2">Final Quiz Reminder</h4>
+                  <p className="text-sm text-yellow-700 leading-relaxed">
+                    Make sure to review all materials thoroughly before attempting the final assessment to ensure success.
+                  </p>
+                  <p className="text-sm text-yellow-700 mt-2 font-medium">
+                    Passing Score Required: 80%
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

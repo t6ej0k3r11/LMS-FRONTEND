@@ -130,7 +130,7 @@ function VideoPlayer({
         ...progressData,
         progressValue: played,
       });
-    }, 500); // Update every 500ms instead of on every progress change
+    }, 100); // Update every 100ms for smoother real-time progress
 
     return () => clearTimeout(timeoutId);
   }, [played, onProgressUpdate, progressData]);

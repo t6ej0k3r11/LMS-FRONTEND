@@ -15,7 +15,7 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
 import { getStudentQuizzesByCourseService } from "@/services";
-import { checkQuizPrerequisites, canStartNewAttempt, getQuizStatus } from "@/lib/quiz-utils";
+import { checkQuizPrerequisites, getQuizStatus } from "@/lib/quiz-utils";
 
 function QuizList({ courseId }) {
   QuizList.propTypes = {
@@ -46,35 +46,18 @@ function QuizList({ courseId }) {
   }, [courseId, fetchQuizzes]);
 
   const handleStartQuiz = (quiz) => {
-    console.log("🔍 DEBUG: handleStartQuiz called with quiz:", quiz._id);
-    
     // Validate prerequisites before allowing quiz start
     const prerequisiteCheck = checkQuizPrerequisites(quiz, studentCurrentCourseProgress, quiz.attempts || [], courseDetails);
-    console.log("🔍 DEBUG: prerequisiteCheck result:", prerequisiteCheck);
-    
     if (!prerequisiteCheck.canAccess) {
       alert(`Cannot start quiz: ${prerequisiteCheck.reason}`);
       return;
     }
 
-    // Check for multiple simultaneous attempts
-    const canStart = canStartNewAttempt(quiz.attempts || []);
-    console.log("🔍 DEBUG: canStartNewAttempt result:", canStart);
-    
-    if (!canStart) {
-      alert("You already have an active attempt for this quiz.");
-      return;
-    }
-
-    // Route is nested under the student layout at '/quiz-player/:quizId'
-    const targetPath = `/quiz-player/${quiz._id}`;
-    console.log("🔍 DEBUG: Navigating to:", targetPath);
-    navigate(targetPath);
+    navigate(`/student/quiz-player/${quiz._id}`);
   };
 
   const handleViewResults = (quizId) => {
-    // Use the correct nested route
-    navigate(`/quiz-results/${quizId}`);
+    navigate(`/student/quiz-results/${quizId}`);
   };
 
   const getStatusBadge = (quiz) => {
@@ -96,8 +79,7 @@ function QuizList({ courseId }) {
 
   const canStartQuiz = (quiz) => {
     const prerequisiteCheck = checkQuizPrerequisites(quiz, studentCurrentCourseProgress, quiz.attempts || [], courseDetails);
-    const canStart = canStartNewAttempt(quiz.attempts || []);
-    return prerequisiteCheck.canAccess && canStart;
+    return prerequisiteCheck.canAccess;
   };
 
   return (

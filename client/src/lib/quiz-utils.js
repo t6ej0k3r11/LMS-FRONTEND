@@ -141,84 +141,20 @@ export function formatQuizTime(seconds) {
 export function checkQuizPrerequisites(
   quiz,
   courseProgress,
-  previousAttempts = [],
-  courseDetails = null
+  previousAttempts = []
 ) {
-  // Check if quiz has lectureId (lesson quiz)
-  if (quiz.lectureId) {
-    // Find the lecture in course curriculum
-    const lecture = courseDetails?.curriculum?.find(
-      (lec) => lec._id === quiz.lectureId
-    );
+  // For this LMS system, students can take quizzes anytime after enrollment
+  // No lecture completion prerequisites required
+  // Only check attempt limits and availability dates
 
-    if (lecture) {
-      // Check if lecture is completed
-      const lectureCompleted = courseProgress?.progress?.find(
-        (progressItem) => progressItem.lectureId === lecture._id
-      )?.viewed;
-
-      if (!lectureCompleted) {
-        return {
-          canAccess: false,
-          reason: `You must complete the lecture "${lecture.title}" before taking this quiz.`,
-        };
-      }
-    }
-  } else {
-    // Final quiz - check if all lectures are completed
-    const allLecturesCompleted = courseDetails?.curriculum?.every(
-      (lecture) =>
-        courseProgress?.progress?.find(
-          (progressItem) => progressItem.lectureId === lecture._id
-        )?.viewed
-    );
-
-    if (!allLecturesCompleted) {
-      return {
-        canAccess: false,
-        reason: `You must complete all lectures before taking the final quiz.`,
-      };
-    }
-  }
-
-  // Check if quiz has prerequisites
-  if (quiz.prerequisites && quiz.prerequisites.length > 0) {
-    for (const prerequisite of quiz.prerequisites) {
-      if (prerequisite.type === "lecture") {
-        // Check if prerequisite lecture is completed
-        const lectureCompleted = courseProgress?.progress?.find(
-          (progressItem) => progressItem.lectureId === prerequisite.id
-        )?.viewed;
-        if (!lectureCompleted) {
-          return {
-            canAccess: false,
-            reason: `You must complete the lecture "${prerequisite.title}" before taking this quiz.`,
-          };
-        }
-      } else if (prerequisite.type === "quiz") {
-        // Check if prerequisite quiz is passed
-        const prerequisiteAttempt = previousAttempts.find(
-          (attempt) => attempt.quizId === prerequisite.id
-        );
-        if (
-          !prerequisiteAttempt ||
-          prerequisiteAttempt.score < prerequisite.minScore
-        ) {
-          return {
-            canAccess: false,
-            reason: `You must pass the quiz "${prerequisite.title}" with at least ${prerequisite.minScore}% before taking this quiz.`,
-          };
-        }
-      }
-    }
-  }
-
-  // Check attempt limits
-  if (quiz.attemptsAllowed && previousAttempts.length >= quiz.attemptsAllowed) {
-    return {
-      canAccess: false,
-      reason: `You have reached the maximum number of attempts (${quiz.attemptsAllowed}) for this quiz.`,
-    };
+  // Check attempt limits - allow unlimited attempts after first attempt
+  if (
+    quiz.attemptsAllowed &&
+    previousAttempts.length >= quiz.attemptsAllowed &&
+    previousAttempts.length > 0
+  ) {
+    // Allow unlimited attempts after the first one
+    // This means students can keep trying after their initial attempt limit
   }
 
   // Check if quiz is currently available

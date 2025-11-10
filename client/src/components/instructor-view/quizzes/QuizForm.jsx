@@ -130,8 +130,8 @@ function QuizForm() {
         alert(`Please enter question text for question ${i + 1}`);
         return;
       }
-      // Broad text, short answer, and essay questions don't require correctAnswer to be filled
-      if (question.type !== "broad-text" && question.type !== "short-answer" && question.type !== "essay" && !question.correctAnswer.trim()) {
+      // Only multiple-choice and true-false questions require correctAnswer
+      if ((question.type === "multiple-choice" || question.type === "true-false") && !question.correctAnswer.trim()) {
         alert(`Please provide a correct answer for question ${i + 1}`);
         return;
       }
@@ -139,21 +139,28 @@ function QuizForm() {
         alert(`Please fill all options for question ${i + 1}`);
         return;
       }
+      // Validate points
+      if (!question.points || question.points < 1) {
+        alert(`Please assign at least 1 point to question ${i + 1}`);
+        return;
+      }
     }
 
     try {
       setLoading(true);
       const quizData = {
-        ...formData,
-        courseId: courseId || null,
+        courseId: courseId,
         lectureId: formData.quizType === "lesson" ? formData.lectureId : null,
-        timeLimit: formData.timeLimit ? parseInt(formData.timeLimit) : null,
-        passingScore: parseInt(formData.passingScore),
-        attemptsAllowed: parseInt(formData.attemptsAllowed),
+        quizType: formData.quizType,
+        title: formData.title,
+        description: formData.description,
         questions: formData.questions.map(question => ({
           ...question,
-          type: question.type === "short-answer" || question.type === "essay" ? "broad-text" : question.type,
+          // Keep original types - backend handles the mapping
         })),
+        passingScore: parseInt(formData.passingScore),
+        timeLimit: formData.timeLimit ? parseInt(formData.timeLimit) : null,
+        attemptsAllowed: parseInt(formData.attemptsAllowed),
       };
 
       let response;
@@ -229,7 +236,7 @@ function QuizForm() {
                   <SelectContent>
                     {lectures.length > 0 ? (
                       lectures.map((lecture, index) => (
-                        <SelectItem key={lecture._id || index} value={lecture._id || index.toString()}>
+                        <SelectItem key={lecture._id} value={lecture._id}>
                           Lecture {index + 1}: {lecture.title}
                         </SelectItem>
                       ))

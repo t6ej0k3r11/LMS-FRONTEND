@@ -17,9 +17,10 @@ import {
   getStudentQuizzesByCourseService,
   markLectureAsViewedService,
   resetCourseProgressService,
+  updateLectureProgressService,
 } from "@/services";
 import { Check, ChevronLeft, ChevronRight, Play, BookOpen, Lock, List, Trophy, Info } from "lucide-react";
-import { useContext, useEffect, useState, useCallback, useRef } from "react";
+import { useContext, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Confetti from "react-confetti";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -40,7 +41,35 @@ function StudentViewCourseProgressPage() {
   const [courseQuizzes, setCourseQuizzes] = useState([]);
   const { id } = useParams();
 
-  const handleProgressUpdate = useCallback((progressData) => {
+  // Calculate real-time overall progress percentage and lecture count
+  const { overallProgressPercentage, completedLecturesCount } = useMemo(() => {
+    const totalLectures = studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 1;
+    const completedLectures = studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length || 0;
+
+    // Add current lecture's progress if it's not already completed
+    let currentLectureContribution = 0;
+    let isCurrentLectureCompleted = false;
+
+    if (currentLecture && !studentCurrentCourseProgress?.progress?.find(p => p.lectureId === currentLecture._id)?.viewed) {
+      const currentProgress = realTimeProgress[currentLecture._id] || 0;
+      currentLectureContribution = currentProgress / totalLectures;
+
+      // If current lecture is 90%+ complete, count it as completed
+      if (currentProgress >= 0.9) {
+        isCurrentLectureCompleted = true;
+      }
+    }
+
+    const totalProgress = (completedLectures + currentLectureContribution) / totalLectures * 100;
+    const finalCompletedCount = completedLectures + (isCurrentLectureCompleted ? 1 : 0);
+
+    return {
+      overallProgressPercentage: Math.min(Math.round(totalProgress), 100),
+      completedLecturesCount: finalCompletedCount
+    };
+  }, [studentCurrentCourseProgress, currentLecture, realTimeProgress]);
+
+  const handleProgressUpdate = useCallback(async (progressData) => {
     if (!currentLecture) return;
     // Debounce progress updates to prevent excessive state updates
     if (Math.abs((currentLecture?.progressValue || 0) - progressData.progressValue) > 0.01) {
@@ -57,8 +86,20 @@ function StudentViewCourseProgressPage() {
         ...prev,
         [currentLecture._id]: progressData.progressValue
       }));
+
+      // Save progress to database
+      try {
+        await updateLectureProgressService(
+          auth?.user?._id,
+          studentCurrentCourseProgress?.courseDetails?._id,
+          currentLecture._id,
+          progressData.progressValue
+        );
+      } catch (error) {
+        console.error("Error saving progress:", error);
+      }
     }
-  }, [currentLecture]);
+  }, [currentLecture, auth?.user?._id, studentCurrentCourseProgress?.courseDetails?._id]);
 
   const fetchCurrentCourseProgress = useCallback(async () => {
     const response = await getCurrentCourseProgressService(auth?.user?._id, id);
@@ -99,6 +140,13 @@ function StudentViewCourseProgressPage() {
           } else {
             setCurrentLecture(nextLecture);
           }
+
+          // Initialize real-time progress from database
+          const progressMap = {};
+          response?.data?.progress.forEach(p => {
+            progressMap[p.lectureId] = p.progressValue || (p.viewed ? 1 : 0);
+          });
+          setRealTimeProgress(progressMap);
         }
       }
     }
@@ -192,17 +240,17 @@ function StudentViewCourseProgressPage() {
 
   // Track real-time progress updates
   const [lastProgressUpdate, setLastProgressUpdate] = useState(null);
-  
+
   useEffect(() => {
     if (!currentLecture?.progressValue || !currentLecture?._id) return;
-    
+
     // Only update if progress has changed significantly (to avoid excessive updates)
     if (Math.abs((lastProgressUpdate?.progressValue || 0) - currentLecture.progressValue) > 0.01) {
       setLastProgressUpdate(currentLecture);
-      
+
       // Update progress in real-time when video is completed
       if (currentLecture.progressValue >= 0.9 && // Consider 90% as completed
-          !lectureProgress[currentLecture._id] && 
+          !lectureProgress[currentLecture._id] &&
           !markedAsViewedRef.current[currentLecture._id] &&
           !studentCurrentCourseProgress?.progress?.find(p => p.lectureId === currentLecture._id)?.viewed) {
         const isCompleted = studentCurrentCourseProgress?.completed;
@@ -218,6 +266,9 @@ function StudentViewCourseProgressPage() {
     lastProgressUpdate,
     setLastProgressUpdate
   ]);
+
+  // Lecture completion no longer triggers automatic quiz redirection
+  // Students can access quizzes anytime from the sidebar
 
   // Reset states when changing lectures
   useEffect(() => {
@@ -266,7 +317,7 @@ function StudentViewCourseProgressPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs text-gray-400">Lectures</span>
-                  <span className="font-semibold text-white">{studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length || 0}/{studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 0}</span>
+                  <span className="font-semibold text-white">{completedLecturesCount || 0}/{studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 0}</span>
                 </div>
               </div>
               <div className="flex items-center space-x-2">
@@ -284,7 +335,7 @@ function StudentViewCourseProgressPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs text-gray-400">Progress</span>
-                  <span className="font-semibold text-white">{Math.min(Math.round((studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length || 0) / (studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 1) * 100), 100)}%</span>
+                  <span className="font-semibold text-white">{overallProgressPercentage}%</span>
                 </div>
               </div>
               {(() => {
@@ -485,53 +536,39 @@ function StudentViewCourseProgressPage() {
                             <div className="w-3 h-3 bg-white rounded-full animate-pulse shadow-lg"></div>
                           )}
                         </div>
-                        {/* Show quizzes after each lecture */}
+                        {/* Show quizzes after each lecture - now always available */}
                         {courseQuizzes
                           .filter((quiz) => quiz.lectureId === item._id)
                           .map((quiz) => {
                             const quizProgress = studentCurrentCourseProgress?.quizzesProgress?.find(
                               (qp) => qp.quizId === quiz._id
                             );
-                            const isLectureViewed = studentCurrentCourseProgress?.progress?.find(
-                              (progressItem) => progressItem.lectureId === item._id
-                            )?.viewed;
-                            const isQuizAvailable = isLectureViewed;
                             const isQuizCompleted = quizProgress?.completed;
 
                             return (
                               <div
                                 key={quiz._id}
-                                className={`flex items-center space-x-3 text-sm ml-8 mt-3 p-2 rounded-lg border transition-all duration-200 ${
-                                  isQuizAvailable
-                                    ? 'cursor-pointer bg-gray-800/50 border-gray-600/50 hover:bg-gray-700/50 hover:border-gray-500/50'
-                                    : 'bg-gray-900/50 border-gray-700/50'
-                                }`}
-                                onClick={() => isQuizAvailable && navigate(`/quiz-player/${quiz._id}`)}
+                                className="flex items-center space-x-3 text-sm ml-8 mt-3 p-2 rounded-lg border transition-all duration-200 cursor-pointer bg-gray-800/50 border-gray-600/50 hover:bg-gray-700/50 hover:border-gray-500/50"
+                                onClick={() => navigate(`/quiz-player/${quiz._id}`)}
                               >
                                 <div className={`p-1.5 rounded-md ${
                                   isQuizCompleted
                                     ? 'bg-green-500/20'
-                                    : isQuizAvailable
-                                      ? 'bg-blue-500/20'
-                                      : 'bg-gray-500/20'
+                                    : 'bg-blue-500/20'
                                 }`}>
                                   {isQuizCompleted ? (
                                     <Check className="h-4 w-4 text-green-400" />
-                                  ) : isQuizAvailable ? (
-                                    <BookOpen className="h-4 w-4 text-blue-400" />
                                   ) : (
-                                    <Lock className="h-4 w-4 text-gray-500" />
+                                    <BookOpen className="h-4 w-4 text-blue-400" />
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <span className={`block truncate font-medium ${
-                                    isQuizAvailable ? 'text-white' : 'text-gray-500'
-                                  }`}>
+                                  <span className="block truncate font-medium text-white">
                                     Quiz: {quiz?.title}
                                   </span>
-                                  {!isQuizAvailable && (
-                                    <span className="text-xs text-gray-400">Complete lecture first</span>
-                                  )}
+                                  <span className="text-xs text-gray-400">
+                                    {isQuizCompleted ? 'Completed' : 'Available anytime'}
+                                  </span>
                                 </div>
                               </div>
                             );
@@ -546,12 +583,8 @@ function StudentViewCourseProgressPage() {
                       const quizProgress = studentCurrentCourseProgress?.quizzesProgress?.find(
                         (qp) => qp.quizId === quiz._id
                       );
-                      const allLecturesViewed = studentCurrentCourseProgress?.courseDetails?.curriculum.every(
-                        (lecture) => studentCurrentCourseProgress?.progress?.find(
-                          (progressItem) => progressItem.lectureId === lecture._id
-                        )?.viewed
-                      );
-                      const isQuizAvailable = allLecturesViewed;
+                      // Final quizzes are now always available after enrollment
+                      const isQuizAvailable = true;
                       const isQuizCompleted = quizProgress?.completed;
 
                       return (
@@ -585,9 +618,9 @@ function StudentViewCourseProgressPage() {
                             }`}>
                               Final Quiz: {quiz?.title}
                             </span>
-                            {!isQuizAvailable && (
-                              <span className="text-xs text-gray-400">Complete all lectures first</span>
-                            )}
+                            <span className="text-xs text-gray-400">
+                              {isQuizCompleted ? 'Completed' : 'Available anytime'}
+                            </span>
                           </div>
                           {isQuizCompleted && (
                             <div className="px-2 py-1 bg-green-500/20 rounded-full">
@@ -770,11 +803,7 @@ function StudentViewCourseProgressPage() {
                               <div
                                 className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
                                 style={{
-                                  width: `${Math.min(
-                                    (studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length || 0) /
-                                    (studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 1) * 100,
-                                    100
-                                  )}%`
+                                  width: `${overallProgressPercentage}%`
                                 }}
                               ></div>
                             </div>
@@ -808,7 +837,7 @@ function StudentViewCourseProgressPage() {
                               )}
                             </div>
                             <div className="flex-1">
-                              <span className="font-semibold text-white">Pass final quiz</span>
+                              <span className="font-semibold text-white">Pass final quiz with 80% minimum</span>
                               <div className="flex items-center space-x-2 mt-1">
                                 <div className="flex-1 bg-gray-700 rounded-full h-2">
                                   <div
@@ -836,8 +865,11 @@ function StudentViewCourseProgressPage() {
                       </div>
                       <div>
                         <h4 className="font-semibold text-white mb-2">Important Note</h4>
-                        <p className="text-sm text-gray-300 leading-relaxed">
-                          Course completion requires both watching all lectures and passing the final quiz with the required score. Make sure to review all materials thoroughly before attempting the final assessment.
+                        <p className="text-sm text-gray-300 leading-relaxed mb-2">
+                          Course completion requires both watching all lectures in full and passing the final quiz with a minimum score of 80%.
+                        </p>
+                        <p className="text-sm text-yellow-400 leading-relaxed">
+                          Make sure to review all materials thoroughly before attempting the final assessment to ensure success.
                         </p>
                       </div>
                     </div>

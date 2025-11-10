@@ -73,50 +73,56 @@ function InstructorDashboard({ listOfCourses }) {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Dashboard</h2>
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-3xl font-bold hero-text">Dashboard Overview</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {config.map((item, index) => (
-          <Card key={index}>
+          <Card key={index} className="stats-card hover:shadow-xl transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-gray-600">
                 {item.label}
               </CardTitle>
-              <item.icon className="h-4 w-4 text-muted-foreground" />
+              <div className="p-2 bg-gradient-to-br from-blue-100 to-purple-100 rounded-lg">
+                <item.icon className="h-5 w-5 text-blue-600" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{item.value}</div>
+              <div className="text-3xl font-bold text-gray-900">{item.value}</div>
             </CardContent>
           </Card>
         ))}
       </div>
-      <Card>
+      <Card className="stats-card">
         <CardHeader>
-          <CardTitle>Students List</CardTitle>
+          <CardTitle className="text-xl font-bold text-gray-800">Students List</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table className="w-full">
               <TableHeader>
-                <TableRow>
-                  <TableHead>Course Name</TableHead>
-                  <TableHead>Student Name</TableHead>
-                  <TableHead>Student Email</TableHead>
-                  <TableHead>Rewatch Count</TableHead>
+                <TableRow className="border-gray-200">
+                  <TableHead className="font-semibold text-gray-700">Course Name</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Student Name</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Student Email</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Rewatch Count</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {calculateTotalStudentsAndProfit().studentList.map(
                   (studentItem, index) => (
-                    <TableRow key={index}>
-                      <TableCell className="font-medium">
+                    <TableRow key={index} className="hover:bg-gray-50 transition-colors">
+                      <TableCell className="font-medium text-gray-900">
                         {studentItem.courseTitle}
                       </TableCell>
-                      <TableCell>{studentItem.studentName}</TableCell>
-                      <TableCell>{studentItem.studentEmail}</TableCell>
-                      <TableCell>{studentItem.rewatchCount}</TableCell>
+                      <TableCell className="text-gray-700">{studentItem.studentName}</TableCell>
+                      <TableCell className="text-gray-700">{studentItem.studentEmail}</TableCell>
+                      <TableCell>
+                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                          {studentItem.rewatchCount}
+                        </span>
+                      </TableCell>
                     </TableRow>
                   )
                 )}

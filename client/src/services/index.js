@@ -226,6 +226,27 @@ export async function markLectureAsViewedService(
   return data;
 }
 
+export async function updateLectureProgressService(
+  userId,
+  courseId,
+  lectureId,
+  progressValue
+) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post(
+    `/student/course-progress/update-lecture-progress`,
+    {
+      userId,
+      courseId,
+      lectureId,
+      progressValue,
+    }
+  );
+
+  return data;
+}
+
 export async function resetCourseProgressService(userId, courseId) {
   const instance = await axiosInstance();
 
