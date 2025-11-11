@@ -121,6 +121,30 @@ function StudentViewCourseProgressPage() {
           return;
         }
 
+        // Check if course should be marked as completed based on current progress
+        const allLecturesCompleted = response?.data?.progress?.every(p => p.viewed && p.progressValue >= 1);
+        const allQuizzesCompleted = response?.data?.quizzesProgress?.every(q => q.completed);
+
+        if (allLecturesCompleted && allQuizzesCompleted && !response?.data?.completed) {
+          // Trigger course completion check by marking the last lecture as viewed
+          const lastLecture = response?.data?.courseDetails?.curriculum[response?.data?.courseDetails?.curriculum.length - 1];
+          if (lastLecture) {
+            await markLectureAsViewedService(auth?.user?._id, id, lastLecture._id, false);
+            // Refresh progress to get updated completion status
+            const updatedResponse = await getCurrentCourseProgressService(auth?.user?._id, id);
+            if (updatedResponse?.success && updatedResponse?.data?.completed) {
+              setStudentCurrentCourseProgress({
+                courseDetails: updatedResponse?.data?.courseDetails,
+                progress: updatedResponse?.data?.progress,
+                quizzesProgress: updatedResponse?.data?.quizzesProgress || [],
+              });
+              setShowCourseCompleteDialog(true);
+              setShowConfetti(true);
+              return;
+            }
+          }
+        }
+
         if (response?.data?.progress?.length === 0) {
           setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
         } else {
@@ -329,6 +353,22 @@ function StudentViewCourseProgressPage() {
                   <span className="font-semibold text-white">{studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length || 0}/{courseQuizzes?.length || 0}</span>
                 </div>
               </div>
+              {(() => {
+                const allLecturesCompleted = studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length === studentCurrentCourseProgress?.courseDetails?.curriculum?.length;
+                const allQuizzesCompleted = studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length === courseQuizzes?.length;
+                const isCourseCompleted = allLecturesCompleted && allQuizzesCompleted;
+                return isCourseCompleted ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="p-1 bg-yellow-500/20 rounded-lg">
+                      <Trophy className="h-4 w-4 text-yellow-400" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-400">Status</span>
+                      <span className="font-semibold text-yellow-400">Completed</span>
+                    </div>
+                  </div>
+                ) : null;
+              })()}
               <div className="flex items-center space-x-2">
                 <div className="p-1 bg-purple-500/20 rounded-lg">
                   <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
@@ -814,6 +854,40 @@ function StudentViewCourseProgressPage() {
                         </div>
                       </div>
 
+                      <div className={`flex items-center space-x-4 p-4 rounded-xl border-2 transition-all duration-300 ${
+                        studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length === courseQuizzes?.length
+                          ? 'bg-green-500/10 border-green-500/30'
+                          : 'bg-gray-800/50 border-gray-600/30'
+                      }`}>
+                        <div className={`p-2 rounded-lg ${
+                          studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length === courseQuizzes?.length
+                            ? 'bg-green-500/20'
+                            : 'bg-purple-500/20'
+                        }`}>
+                          {studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length === courseQuizzes?.length ? (
+                            <Check className="h-6 w-6 text-green-400" />
+                          ) : (
+                            <BookOpen className="h-6 w-6 text-purple-400" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <span className="font-semibold text-white">Pass all quizzes</span>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <div className="flex-1 bg-gray-700 rounded-full h-2">
+                              <div
+                                className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
+                                style={{
+                                  width: `${courseQuizzes?.length > 0 ? (studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length / courseQuizzes.length) * 100 : 0}%`
+                                }}
+                              ></div>
+                            </div>
+                            <span className="text-sm font-medium text-gray-300">
+                              {studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length || 0}/{courseQuizzes?.length || 0}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
                       {(() => {
                         const finalQuizzes = courseQuizzes?.filter(quiz => !quiz.lectureId) || [];
                         const completedFinalQuizzes = finalQuizzes.filter(quiz =>
@@ -866,7 +940,7 @@ function StudentViewCourseProgressPage() {
                       <div>
                         <h4 className="font-semibold text-white mb-2">Important Note</h4>
                         <p className="text-sm text-gray-300 leading-relaxed mb-2">
-                          Course completion requires both watching all lectures in full and passing the final quiz with a minimum score of 80%.
+                          Course completion requires both watching all lectures in full and passing all quizzes (including lesson quizzes and final quiz).
                         </p>
                         <p className="text-sm text-yellow-400 leading-relaxed">
                           Make sure to review all materials thoroughly before attempting the final assessment to ensure success.
