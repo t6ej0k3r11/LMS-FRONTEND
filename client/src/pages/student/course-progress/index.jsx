@@ -320,14 +320,14 @@ function StudentViewCourseProgressPage() {
         <div className="flex items-center space-x-4">
           <Button
             onClick={() => navigate("/student-courses")}
-            className="text-white hover:bg-gray-700 border border-gray-600 md:flex hidden"
+            className="text-white hover:bg-gray-700 border border-gray-600 hidden md:flex"
             variant="ghost"
             size="sm"
           >
             <ChevronLeft className="h-4 w-4 mr-2" />
             Back to My Courses
           </Button>
-          <div className="flex items-center space-x-4 hidden lg:flex">
+          <div className="items-center space-x-4 hidden lg:flex">
             <div className="flex items-center space-x-2">
               <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse shadow-lg"></div>
               <h1 className="text-xl font-bold text-white bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
@@ -964,8 +964,8 @@ function StudentViewCourseProgressPage() {
           </DialogHeader>
         </DialogContent>
       </Dialog>
-      <Dialog open={showCourseCompleteDialog}>
-        <DialogContent showOverlay={false} className="sm:w-[425px]">
+      <Dialog open={showCourseCompleteDialog} modal={false}>
+        <DialogContent className="sm:w-[425px]">
           <DialogHeader>
             <DialogTitle>Congratulations!</DialogTitle>
             <DialogDescription className="flex flex-col gap-3">
