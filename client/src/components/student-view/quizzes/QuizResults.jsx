@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StudentContext } from "@/context/student-context";
 import { CheckCircle, XCircle, RotateCcw } from "lucide-react";
-import { useCallback, useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getQuizResultsService } from "@/services";
 
@@ -16,35 +16,42 @@ function QuizResults() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchResults();
-  }, [fetchResults]);
-
-  const fetchResults = useCallback(async () => {
-    try {
-      setLoading(true);
-      // First check if we have results in context
-      if (studentQuizProgress[quizId]) {
-        setResults(studentQuizProgress[quizId]);
-      } else {
-        // Otherwise fetch from server
-        const response = await getQuizResultsService(quizId);
-        if (response?.success) {
-          setResults(response.data);
+    const fetchResults = async () => {
+      try {
+        setLoading(true);
+        // First check if we have results in context
+        if (studentQuizProgress[quizId]) {
+          setResults(studentQuizProgress[quizId]);
+        } else {
+          // Otherwise fetch from server
+          const response = await getQuizResultsService(quizId);
+          if (response?.success) {
+            setResults(response.data);
+          }
         }
+      } catch (error) {
+        console.error("Error fetching quiz results:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching quiz results:", error);
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    fetchResults();
   }, [quizId, studentQuizProgress]);
+
+  // Get courseId from results or context
+  const courseId = results?.courseId || results?.quiz?.courseId;
 
   const handleRetakeQuiz = () => {
     navigate(`/student/quiz-player/${quizId}`);
   };
 
   const handleBackToCourse = () => {
-    navigate(-1);
+    if (courseId) {
+      navigate(`/course-progress/${courseId}`);
+    } else {
+      navigate(-1);
+    }
   };
 
   if (loading) {

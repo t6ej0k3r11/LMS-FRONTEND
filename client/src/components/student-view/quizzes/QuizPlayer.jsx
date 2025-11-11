@@ -185,8 +185,13 @@ function QuizPlayer() {
   const performSubmission = async () => {
     try {
       setSubmitting(true);
-      console.log("Submitting quiz with answers:", answers);
-      const response = await submitQuizAttemptService(quizId, attemptId, answers);
+      // Convert answers object to array format expected by backend
+      const answersArray = Object.entries(answers).map(([questionId, answer]) => ({
+        questionId,
+        answer
+      }));
+      console.log("Submitting quiz with answers:", answersArray);
+      const response = await submitQuizAttemptService(quizId, attemptId, answersArray);
       console.log("Quiz submission response:", response);
       if (response?.success) {
         setStudentQuizProgress(prev => ({

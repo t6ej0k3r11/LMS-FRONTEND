@@ -314,7 +314,7 @@ export async function deleteCourseService(courseId) {
 export async function getQuizResultsService(quizId) {
   const instance = await axiosInstance();
 
-  const { data } = await instance.get(`/instructor/quiz/${quizId}/results`);
+  const { data } = await instance.get(`/student/quiz/${quizId}/results`);
 
   return data;
 }
