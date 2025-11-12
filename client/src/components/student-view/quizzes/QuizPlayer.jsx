@@ -198,6 +198,27 @@ function QuizPlayer() {
           ...prev,
           [quizId]: response.data
         }));
+
+        // Refresh course progress after successful quiz submission
+        if (studentCurrentCourseProgress?.courseDetails?._id) {
+          console.log("Refreshing course progress after quiz submission...");
+          const progressResponse = await getCurrentCourseProgressService(
+            "current", // Use "current" as the userId since the service handles auth
+            studentCurrentCourseProgress.courseDetails._id
+          );
+          if (progressResponse?.success) {
+            console.log("Updated course progress after quiz:", progressResponse.data);
+            setStudentCurrentCourseProgress({
+              courseDetails: progressResponse.data.courseDetails,
+              progress: progressResponse.data.progress,
+              quizzesProgress: progressResponse.data.quizzesProgress || [],
+              completed: progressResponse.data.completed,
+              completionDate: progressResponse.data.completionDate,
+              progressPercentage: progressResponse.data.progressPercentage,
+            });
+          }
+        }
+
         // Use the correct nested route without '/student/' prefix
         navigate(`/quiz-results/${quizId}`);
       } else {
