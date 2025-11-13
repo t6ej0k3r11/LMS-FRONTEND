@@ -433,3 +433,32 @@ export async function reviewCourseService(courseId, reviewData) {
 
   return data;
 }
+
+// Admin course management services
+export async function getAllCoursesService(queryParams = {}) {
+  const instance = await axiosInstance();
+
+  const queryString = new URLSearchParams(queryParams).toString();
+  const { data } = await instance.get(`/admin/courses?${queryString}`);
+
+  return data;
+}
+
+export async function updateCourseStatusService(courseId, statusData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.put(
+    `/admin/courses/${courseId}/status`,
+    statusData
+  );
+
+  return data;
+}
+
+export async function deleteAdminCourseService(courseId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.delete(`/admin/courses/${courseId}`);
+
+  return data;
+}

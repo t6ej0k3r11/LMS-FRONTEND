@@ -12,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Users, BookOpen, Shield, Activity, LogOut, Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useToast } from "../../hooks/use-toast";
 import { getAllUsersService, deleteUserService, deactivateUserService, reactivateUserService, getAdminStatsService, getRecentActivitiesService } from "../../services";
-import CourseApproval from "./course-approval";
+import CourseManagement from "./course-management";
 
 function AdminDashboard() {
   const { auth, logout } = useContext(AuthContext);
@@ -546,7 +546,7 @@ function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="courses" className="space-y-6">
-            <CourseApproval />
+            <CourseManagement />
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">
