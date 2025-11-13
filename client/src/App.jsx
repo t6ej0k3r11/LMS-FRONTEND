@@ -19,6 +19,7 @@ import QuizForm from "./components/instructor-view/quizzes/QuizForm";
 import QuizResults from "./components/instructor-view/quizzes/QuizResults";
 import QuizPlayerPage from "./pages/student/quiz-player";
 import StudentQuizResults from "./components/student-view/quizzes/QuizResults";
+import AdminDashboard from "./pages/admin";
 
 // Temporary simple component to test rendering
 // function TestComponent() {
@@ -53,6 +54,16 @@ function App() {
         element={
           <RouteGuard
             element={<InstructorDashboardpage />}
+            authenticated={auth?.authenticate}
+            user={auth?.user}
+          />
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <RouteGuard
+            element={<AdminDashboard />}
             authenticated={auth?.authenticate}
             user={auth?.user}
           />

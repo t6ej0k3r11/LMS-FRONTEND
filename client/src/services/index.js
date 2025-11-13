@@ -353,3 +353,83 @@ export async function submitQuizAttemptService(quizId, attemptId, answers) {
 
   return data;
 }
+
+// Admin services
+export async function getAllUsersService(queryParams = {}) {
+  const instance = await axiosInstance();
+
+  const queryString = new URLSearchParams(queryParams).toString();
+  const { data } = await instance.get(`/admin/users?${queryString}`);
+
+  return data;
+}
+
+export async function updateUserService(userId, userData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.put(`/admin/users/${userId}`, userData);
+
+  return data;
+}
+
+export async function deleteUserService(userId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.delete(`/admin/users/${userId}`);
+
+  return data;
+}
+
+export async function deactivateUserService(userId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.patch(`/admin/users/${userId}/deactivate`);
+
+  return data;
+}
+
+export async function reactivateUserService(userId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.patch(`/admin/users/${userId}/reactivate`);
+
+  return data;
+}
+
+// Admin dashboard services
+export async function getAdminStatsService() {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.get(`/admin/stats`);
+
+  return data;
+}
+
+export async function getRecentActivitiesService(limit = 10) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.get(`/admin/activities?limit=${limit}`);
+
+  return data;
+}
+
+// Admin course services
+export async function getPendingCoursesService(queryParams = {}) {
+  const instance = await axiosInstance();
+
+  const queryString = new URLSearchParams(queryParams).toString();
+  const { data } = await instance.get(`/admin/courses/pending?${queryString}`);
+
+  return data;
+}
+
+export async function reviewCourseService(courseId, reviewData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post(
+    `/admin/courses/${courseId}/review`,
+    reviewData
+  );
+
+  return data;
+}

@@ -16,20 +16,33 @@ function RouteGuard({ authenticated, user, element }) {
   if (
     authenticated &&
     user?.role !== "instructor" &&
+    user?.role !== "admin" &&
     (location.pathname.includes("instructor") ||
+      location.pathname.includes("admin") ||
       location.pathname.includes("/auth"))
   ) {
-    console.log("🔍 DEBUG: Non-instructor accessing instructor route, redirecting to /home");
+    console.log("🔍 DEBUG: Non-instructor/admin accessing protected route, redirecting to /home");
     return <Navigate to="/home" />;
   }
 
   if (
     authenticated &&
     user?.role === "instructor" &&
+    !location.pathname.includes("instructor") &&
+    !location.pathname.includes("admin")
+  ) {
+    console.log("🔍 DEBUG: Instructor accessing non-instructor route, redirecting to /instructor");
+    return <Navigate to="/instructor" />;
+  }
+
+  if (
+    authenticated &&
+    user?.role === "admin" &&
+    !location.pathname.includes("admin") &&
     !location.pathname.includes("instructor")
   ) {
-    console.log("🔍 DEBUG: Instructor accessing student route, redirecting to /instructor");
-    return <Navigate to="/instructor" />;
+    console.log("🔍 DEBUG: Admin accessing non-admin route, redirecting to /admin");
+    return <Navigate to="/admin" />;
   }
 
   console.log("🔍 DEBUG: Route access granted for path:", location.pathname);

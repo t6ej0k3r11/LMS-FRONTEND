@@ -1,6 +1,7 @@
 export const roleOptions = [
   { id: "instructor", label: "Instructor" },
   { id: "student", label: "Student" },
+  { id: "admin", label: "Admin" },
 ];
 
 export const signUpFormControls = [
