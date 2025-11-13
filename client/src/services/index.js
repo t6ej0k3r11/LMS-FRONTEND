@@ -462,3 +462,31 @@ export async function deleteAdminCourseService(courseId) {
 
   return data;
 }
+
+// Service objects for easier importing
+export const authService = {
+  register: registerService,
+  login: loginService,
+  checkAuth: checkAuthService,
+  refreshToken: refreshTokenService,
+};
+
+export const courseService = {
+  enrollInCourse: createPaymentService,
+  getCourses: fetchStudentViewCourseListService,
+  getCourseDetails: fetchStudentViewCourseDetailsService,
+  checkPurchaseInfo: checkCoursePurchaseInfoService,
+  getBoughtCourses: fetchStudentBoughtCoursesService,
+  getCurrentProgress: getCurrentCourseProgressService,
+  markLectureViewed: markLectureAsViewedService,
+  updateLectureProgress: updateLectureProgressService,
+  resetProgress: resetCourseProgressService,
+};
+
+export const quizService = {
+  getQuizzesByCourse: getStudentQuizzesByCourseService,
+  getQuizForTaking: getQuizForTakingService,
+  startQuizAttempt: startQuizAttemptService,
+  submitQuizAttempt: submitQuizAttemptService,
+  getQuizResults: getQuizResultsService,
+};
