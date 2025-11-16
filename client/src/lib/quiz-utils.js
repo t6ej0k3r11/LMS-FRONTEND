@@ -147,14 +147,24 @@ export function checkQuizPrerequisites(
   // No lecture completion prerequisites required
   // Only check attempt limits and availability dates
 
-  // Check attempt limits - allow unlimited attempts after first attempt
-  if (
-    quiz.attemptsAllowed &&
-    previousAttempts.length >= quiz.attemptsAllowed &&
-    previousAttempts.length > 0
-  ) {
-    // Allow unlimited attempts after the first one
-    // This means students can keep trying after their initial attempt limit
+  // Check attempt limits
+  if (quiz.attemptsAllowed && previousAttempts.length >= quiz.attemptsAllowed) {
+    return {
+      canAccess: false,
+      reason: `Maximum attempts (${quiz.attemptsAllowed}) reached for this quiz.`,
+    };
+  }
+
+  // Check for in-progress attempts (prevent multiple simultaneous attempts)
+  const inProgressAttempt = previousAttempts.find(
+    (attempt) => attempt.status === "in_progress"
+  );
+  if (inProgressAttempt) {
+    return {
+      canAccess: false,
+      reason:
+        "You already have an attempt in progress. Please complete or cancel it first.",
+    };
   }
 
   // Check if quiz is currently available
