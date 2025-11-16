@@ -87,9 +87,14 @@ function InstructorCourses({ listOfCourses }) {
   };
 
   return (
-    <Card className="stats-card">
-      <CardHeader className="flex justify-between flex-row items-center">
-        <CardTitle className="text-3xl font-extrabold hero-text">All Courses</CardTitle>
+    <Card className="rounded-[32px] border-white/50 bg-white/90 shadow-[0_30px_70px_rgba(5,41,30,0.12)]">
+      <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle className="text-2xl font-semibold text-foreground">Instructor Courses</CardTitle>
+          <p className="text-sm text-muted-foreground">
+            Manage every cohort, enrollment count, and quiz from one curated view.
+          </p>
+        </div>
         <Button
           onClick={() => {
             setCurrentEditedCourseId(null);
@@ -97,7 +102,7 @@ function InstructorCourses({ listOfCourses }) {
             setCourseCurriculumFormData(courseCurriculumInitialFormData);
             navigate("/instructor/create-new-course");
           }}
-          className="btn-primary px-6 py-3 text-lg font-medium hover:scale-105 transition-transform"
+          className="btn-primary px-6 py-3"
         >
           Create New Course
         </Button>
@@ -106,47 +111,46 @@ function InstructorCourses({ listOfCourses }) {
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="border-gray-200">
-                <TableHead className="font-semibold text-gray-700">Course</TableHead>
-                <TableHead className="font-semibold text-gray-700">Students</TableHead>
-                <TableHead className="font-semibold text-gray-700">Revenue</TableHead>
-                <TableHead className="text-right font-semibold text-gray-700">Actions</TableHead>
+              <TableRow className="border-white/70">
+                <TableHead className="text-muted-foreground">Course</TableHead>
+                <TableHead className="text-muted-foreground">Students</TableHead>
+                <TableHead className="text-muted-foreground">Revenue</TableHead>
+                <TableHead className="text-right text-muted-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {listOfCourses && listOfCourses.length > 0
                 ? listOfCourses.map((course) => (
-                    <TableRow key={course._id} className="hover:bg-gray-50 transition-colors">
-                      <TableCell className="font-medium text-gray-900">
+                    <TableRow
+                      key={course._id}
+                      className="border-white/60 bg-white/70 transition-colors hover:bg-white"
+                    >
+                      <TableCell className="font-semibold text-foreground">
                         {course?.title}
                       </TableCell>
                       <TableCell>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                        <span className="rounded-full bg-[hsla(var(--brand-green)/0.15)] px-3 py-1 text-sm font-medium text-primary">
                           {course?.students?.length}
                         </span>
                       </TableCell>
-                      <TableCell className="font-semibold text-green-600">
+                      <TableCell className="font-semibold text-[hsl(var(--brand-green))]">
                         ${course?.students?.length * course?.pricing}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
-                            onClick={() => {
-                              navigate(`/instructor/edit-course/${course?._id}`);
-                            }}
+                            onClick={() => navigate(`/instructor/edit-course/${course?._id}`)}
                             variant="ghost"
                             size="sm"
-                            className="hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                            className="rounded-2xl bg-white/70 text-muted-foreground hover:text-primary"
                           >
                             <Edit className="h-5 w-5" />
                           </Button>
                           <Button
-                            onClick={() => {
-                              navigate(`/instructor/quiz-management/${course?._id}`);
-                            }}
+                            onClick={() => navigate(`/instructor/quiz-management/${course?._id}`)}
                             variant="ghost"
                             size="sm"
-                            className="hover:bg-purple-50 hover:text-purple-600 transition-colors"
+                            className="rounded-2xl bg-white/70 text-muted-foreground hover:text-[hsl(var(--brand-red))]"
                           >
                             <FileQuestion className="h-5 w-5" />
                           </Button>
@@ -154,7 +158,7 @@ function InstructorCourses({ listOfCourses }) {
                             onClick={() => openDeleteDialog(course)}
                             variant="ghost"
                             size="sm"
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+                            className="rounded-2xl bg-white/70 text-[hsl(var(--brand-red))] hover:text-[hsl(var(--brand-red-deep))]"
                           >
                             <Delete className="h-5 w-5" />
                           </Button>
@@ -164,7 +168,7 @@ function InstructorCourses({ listOfCourses }) {
                   ))
                 : (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={4} className="py-10 text-center text-muted-foreground">
                       No courses found. Create your first course to get started!
                     </TableCell>
                   </TableRow>
