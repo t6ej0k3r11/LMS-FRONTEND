@@ -4,49 +4,77 @@ import { AuthContext } from "@/context/auth-context";
 import { StudentContext } from "@/context/student-context";
 import { fetchStudentBoughtCoursesService, getCurrentCourseProgressService, getStudentQuizzesByCourseService } from "@/services";
 import { Watch, BookOpen, CheckCircle, AlertCircle } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 function StudentCoursesPage() {
   const { auth } = useContext(AuthContext);
   const { studentBoughtCoursesList, setStudentBoughtCoursesList } =
     useContext(StudentContext);
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [courseProgress, setCourseProgress] = useState({});
   const [courseQuizzes, setCourseQuizzes] = useState({});
 
-  async function fetchStudentBoughtCourses() {
-    const response = await fetchStudentBoughtCoursesService(auth?.user?._id);
-    if (response?.success) {
-      setStudentBoughtCoursesList(response?.data);
+  const fetchStudentBoughtCourses = useCallback(async () => {
+    if (!auth?.user?._id) return;
 
-      // Fetch progress and quizzes for each course
-      const progressPromises = response.data.map(async (course) => {
-        const progressResponse = await getCurrentCourseProgressService(auth?.user?._id, course.courseId);
-        const quizzesResponse = await getStudentQuizzesByCourseService(course.courseId);
-        return {
-          courseId: course.courseId,
-          progress: progressResponse?.success ? progressResponse.data : null,
-          quizzes: quizzesResponse?.success ? quizzesResponse.data : []
-        };
+    try {
+      const response = await fetchStudentBoughtCoursesService(auth?.user?._id);
+      if (response?.success) {
+        setStudentBoughtCoursesList(response?.data);
+
+        // Fetch progress and quizzes for each course
+        const progressPromises = response.data.map(async (course) => {
+          try {
+            const progressResponse = await getCurrentCourseProgressService(auth?.user?._id, course.courseId);
+            const quizzesResponse = await getStudentQuizzesByCourseService(course.courseId);
+            return {
+              courseId: course.courseId,
+              progress: progressResponse?.success ? progressResponse.data : null,
+              quizzes: quizzesResponse?.success ? quizzesResponse.data : []
+            };
+          } catch (error) {
+            console.error(`Error fetching progress/quizzes for course ${course.courseId}:`, error);
+            return {
+              courseId: course.courseId,
+              progress: null,
+              quizzes: []
+            };
+          }
+        });
+
+        const progressResults = await Promise.all(progressPromises);
+        const progressMap = {};
+        const quizzesMap = {};
+        progressResults.forEach(result => {
+          progressMap[result.courseId] = result.progress;
+          quizzesMap[result.courseId] = result.quizzes;
+        });
+
+        setCourseProgress(progressMap);
+        setCourseQuizzes(quizzesMap);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load your courses. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching student courses:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load your courses. Please try again.",
+        variant: "destructive",
       });
-
-      const progressResults = await Promise.all(progressPromises);
-      const progressMap = {};
-      const quizzesMap = {};
-      progressResults.forEach(result => {
-        progressMap[result.courseId] = result.progress;
-        quizzesMap[result.courseId] = result.quizzes;
-      });
-
-      setCourseProgress(progressMap);
-      setCourseQuizzes(quizzesMap);
     }
-    console.log(response);
-  }
+  }, [auth?.user?._id, setStudentBoughtCoursesList, toast]);
+
   useEffect(() => {
     fetchStudentBoughtCourses();
-  }, [auth?.user?._id]);
+  }, [fetchStudentBoughtCourses]);
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
@@ -69,7 +97,7 @@ function StudentCoursesPage() {
             const totalLectures = progress?.courseDetails?.curriculum?.length || 0;
 
             return (
-              <Card key={course.id} className="flex flex-col card-hover shadow-sm border-0 bg-white fade-in-up">
+              <Card key={course.courseId} className="flex flex-col card-hover shadow-sm border-0 bg-white fade-in-up">
                 <CardContent className="p-0 flex-grow">
                   <img
                     src={course?.courseImage}
