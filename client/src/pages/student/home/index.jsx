@@ -1,4 +1,4 @@
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { courseCategories } from "@/config";
@@ -9,6 +9,14 @@ import {
   checkCoursePurchaseInfoService,
   fetchStudentViewCourseListService,
 } from "@/services";
+import {
+  Sparkles,
+  Users,
+  Clock3,
+  ArrowUpRight,
+  ShieldCheck,
+  Target,
+} from "lucide-react";
 
 function StudentHomePage() {
   const { studentViewCoursesList, setStudentViewCoursesList } = useContext(StudentContext);
@@ -62,88 +70,176 @@ function StudentHomePage() {
     fetchAllStudentViewCourses();
   }, [setStudentViewCoursesList]);
 
+  const highlightStats = useMemo(() => {
+    const totalCourses = studentViewCoursesList?.length || 0;
+    const totalHours = Math.max(120, totalCourses * 6);
+    return [
+      {
+        label: "Certified Paths",
+        value: `${Math.max(12, totalCourses)}+`,
+        icon: ShieldCheck,
+        description: "Industry-backed syllabuses",
+      },
+      {
+        label: "Learner Community",
+        value: "12.4K",
+        icon: Users,
+        description: "Active Bangladeshi students",
+      },
+      {
+        label: "Guided Hours",
+        value: `${totalHours}+`,
+        icon: Clock3,
+        description: "Interactive lessons",
+      },
+    ];
+  }, [studentViewCoursesList?.length]);
+
   // =======================
   // 💻 JSX Rendering
   // =======================
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen space-y-10 sm:space-y-14">
       {/* 🏠 Hero Section */}
-      <section className="flex flex-col lg:flex-row items-center justify-between py-8 sm:py-12 px-4 lg:px-8">
-        <div className="lg:w-1/2 lg:pr-12 mb-8 lg:mb-0">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 hero-text">Learning that gets you</h1>
-          <p className="text-lg sm:text-xl lg:text-2xl text-gray-700 mb-6 sm:mb-8 leading-relaxed">
-            Skills for your present and your future. Get started with us!
-          </p>
-          <Button size="lg" className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-2 sm:py-3 w-full sm:w-auto">
-            Explore Courses
-          </Button>
-        </div>
-
-        <div className="lg:w-1/2 flex justify-center">
-          <img
-            src={banner}
-            alt="Learning banner"
-            width={600}
-            height={400}
-            className="w-full max-w-md lg:max-w-none h-auto rounded-2xl shadow-2xl object-cover hover:scale-105 transition-transform duration-300"
-          />
+      <section className="section-shell relative overflow-hidden">
+        <div className="absolute inset-0 opacity-70 bg-[radial-gradient(circle_at_top,_hsla(var(--brand-red)/0.25),_transparent_50%)]" aria-hidden="true" />
+        <div className="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-center">
+          <div className="flex-1 space-y-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm text-primary shadow-inner">
+              <Sparkles className="h-4 w-4 text-[hsl(var(--brand-red))]" />
+              Crafted for Bangladesh
+            </div>
+            <div>
+              <h1 className="text-balance text-4xl sm:text-5xl xl:text-6xl font-bold text-foreground">
+                Modern Skills with a Bangladeshi Heart
+              </h1>
+              <p className="mt-4 text-lg text-muted-foreground max-w-2xl">
+                Join an inspired community of lifelong learners and master career-ready courses in Bangla and English, wrapped in a comforting national palette.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Button size="lg" className="btn-primary" onClick={() => navigate("/courses")}>
+                Explore courses
+                <ArrowUpRight className="h-4 w-4" />
+              </Button>
+              <Button variant="secondary" size="lg" onClick={() => navigate("/student-courses")}>
+                Continue learning
+              </Button>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {highlightStats.map(({ label, value, icon: Icon, description }) => (
+                <div key={label} className="stats-card">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Icon className="h-4 w-4 text-primary" />
+                    {label}
+                  </div>
+                  <p className="text-3xl font-bold text-foreground">{value}</p>
+                  <p className="text-sm text-muted-foreground">{description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="relative rounded-[36px] bg-white/80 shadow-[0_40px_90px_rgba(3,106,78,0.18)] p-4">
+              <div className="absolute -top-8 -right-6 h-32 w-32 rounded-full bg-[hsla(var(--brand-red)/0.3)] blur-3xl" />
+              <img
+                src={banner}
+                alt="Learning banner"
+                width={640}
+                height={460}
+                className="relative z-10 w-full rounded-[28px] object-cover"
+              />
+              <div className="relative z-10 -mt-10 rounded-2xl border border-white/60 bg-white/90 p-4 shadow-lg">
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide">Active Cohort</p>
+                    <p className="text-lg font-semibold text-foreground">UX Strategy Lab</p>
+                  </div>
+                  <span className="rounded-full bg-[hsla(var(--brand-green)/0.12)] px-3 py-1 text-xs text-primary">
+                    Live now
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* 📚 Course Categories */}
-      <section className="py-8 sm:py-12 px-4 lg:px-8 bg-gradient-to-r from-blue-50 to-purple-50">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center hero-text">Course Categories</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+      <section className="px-4 lg:px-0">
+        <div className="mx-auto max-w-7xl space-y-6">
+          <div className="flex flex-col gap-3 text-center">
+            <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground">Discover</p>
+            <h2 className="text-3xl font-bold text-foreground">Guided learning pathways</h2>
+            <p className="text-muted-foreground">Choose a curated category and we will pre-fill the filters for you.</p>
+          </div>
+          <div className="grid-auto-fit">
             {courseCategories.map((categoryItem) => (
-              <Button
+              <button
                 key={categoryItem.id}
-                variant="outline"
-                className="justify-start hover:bg-white hover:shadow-lg transition-all duration-300 h-12 sm:h-16 text-sm sm:text-base lg:text-lg font-medium border-2 border-gray-200 hover:border-blue-300 w-full"
                 onClick={() => handleNavigateToCoursesPage(categoryItem.id)}
+                className="brand-card flex items-center justify-between px-5 py-4 text-left transition-all duration-300 hover:translate-y-[-4px]"
               >
-                {categoryItem.label}
-              </Button>
+                <div>
+                  <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Category</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground">{categoryItem.label}</p>
+                </div>
+                <ArrowUpRight className="h-5 w-5 text-primary" />
+              </button>
             ))}
           </div>
         </div>
       </section>
 
       {/* 🌟 Featured Courses */}
-      <section className="py-8 sm:py-12 lg:py-16 px-4 lg:px-8" aria-labelledby="featured-courses-heading">
-        <div className="max-w-6xl mx-auto">
-          <h2 id="featured-courses-heading" className="text-2xl sm:text-3xl font-bold mb-6 sm:mb-8 text-center hero-text">Featured Courses</h2>
+      <section className="px-4 lg:px-0" aria-labelledby="featured-courses-heading">
+        <div className="mx-auto max-w-7xl space-y-8">
+          <div className="flex flex-col gap-2 text-center">
+            <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground">Featured</p>
+            <h2 id="featured-courses-heading" className="text-3xl font-bold text-foreground">
+              Trending cohorts this week
+            </h2>
+          </div>
           <div className="responsive-grid">
             {studentViewCoursesList?.length > 0 ? (
               studentViewCoursesList.map((courseItem) => (
                 <div
                   key={courseItem._id}
                   onClick={() => handleCourseNavigate(courseItem._id)}
-                  className="course-card cursor-pointer overflow-hidden group"
+                  className="group relative cursor-pointer overflow-hidden rounded-[30px] border border-white/60 bg-white/80 p-0 shadow-[0_30px_60px_rgba(3,106,78,0.12)] transition-all duration-500 hover:-translate-y-2"
                 >
                   <div className="relative overflow-hidden">
                     <img
                       src={courseItem.image}
                       alt={courseItem.title}
-                      className="w-full h-40 sm:h-48 object-cover group-hover:scale-110 transition-transform duration-300"
+                      className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-110"
                       onError={(e) => {
-                        e.target.src = '/banner-img.png'; // Fallback to banner image
+                        e.target.src = "/banner-img.png";
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                    <div className="absolute bottom-4 left-4 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-primary">
+                      {courseItem.category?.toUpperCase?.() || "Blended"}
+                    </div>
                   </div>
-                  <div className="p-4 sm:p-6">
-                    <h3 className="font-bold mb-2 sm:mb-3 text-gray-800 text-base sm:text-lg leading-tight">
+                  <div className="space-y-3 px-5 py-6">
+                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                      <span>{courseItem.instructorName}</span>
+                      <span className="flex items-center gap-1 text-primary">
+                        <Target className="h-4 w-4" /> Guided
+                      </span>
+                    </div>
+                    <h3 className="text-xl font-semibold text-foreground leading-snug">
                       {courseItem.title}
                     </h3>
-                    <p className="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3 font-medium">
-                      {courseItem.instructorName}
-                    </p>
                     <div className="flex items-center justify-between">
-                      <p className="font-bold text-lg sm:text-xl text-blue-600">
-                        ${courseItem.pricing}
-                      </p>
-                      <Button size="sm" className="btn-primary text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2">
+                      <div>
+                        <p className="text-sm uppercase tracking-wide text-muted-foreground">Investment</p>
+                        <p className="text-2xl font-bold text-[hsl(var(--brand-green))]">
+                          ${courseItem.pricing}
+                        </p>
+                      </div>
+                      <Button size="sm" className="btn-primary">
                         View Details
                       </Button>
                     </div>
@@ -151,11 +247,41 @@ function StudentHomePage() {
                 </div>
               ))
             ) : (
-              <div className="col-span-full text-center py-8 sm:py-12">
-                <h1 className="text-xl sm:text-2xl text-gray-500 font-medium">No Courses Found</h1>
-                <p className="text-gray-400 mt-2 text-sm sm:text-base">Check back later for new courses!</p>
+              <div className="col-span-full text-center py-12">
+                <div className="brand-card mx-auto max-w-xl space-y-3 p-6">
+                  <h3 className="text-2xl font-semibold text-foreground">Courses are brewing</h3>
+                  <p className="text-muted-foreground">
+                    New Bangladesh-friendly cohorts are being crafted. Check back shortly for fresh drops!
+                  </p>
+                </div>
               </div>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* 🌱 Journey Section */}
+      <section className="px-4 pb-12 lg:px-0">
+        <div className="mx-auto max-w-7xl rounded-[32px] border border-white/40 bg-white/85 p-6 sm:p-10 shadow-[0_35px_70px_rgba(27,55,41,0.15)]">
+          <div className="flex flex-col gap-4 text-center">
+            <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground">Journey</p>
+            <h2 className="text-3xl font-bold text-foreground">Your learning pathway inside LMS Bangla</h2>
+          </div>
+          <div className="mt-8 grid gap-6 md:grid-cols-3">
+            {["Enroll", "Practice", "Showcase"].map((phase, index) => (
+              <div key={phase} className="rounded-[30px] border border-white/50 bg-white/80 p-6 text-left shadow-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-muted-foreground">Phase {index + 1}</span>
+                  <span className="timeline-accent block h-1.5 w-16 rounded-full" />
+                </div>
+                <h3 className="mt-4 text-2xl font-semibold text-foreground">{phase}</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {index === 0 && "Select a curated program and unlock mentor-guided cohorts."}
+                  {index === 1 && "Complete hands-on activities, live quizzes, and group sessions."}
+                  {index === 2 && "Build a professional showcase that highlights your learning journey."}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

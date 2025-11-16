@@ -5,12 +5,13 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AuthContext } from "@/context/auth-context";
 import { InstructorContext } from "@/context/instructor-context";
 import { fetchInstructorCourseListService } from "@/services";
-import { BarChart, Book, LogOut, FileQuestion, GraduationCap } from "lucide-react";
+import { BarChart, Book, LogOut, FileQuestion, GraduationCap, AlignJustify, X } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function InstructorDashboardpage() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [showMobileNav, setShowMobileNav] = useState(false);
   const { resetCredentials } = useContext(AuthContext);
   const { instructorCoursesList, setInstructorCoursesList } =
     useContext(InstructorContext);
@@ -71,49 +72,84 @@ function InstructorDashboardpage() {
 
   console.log(instructorCoursesList, "instructorCoursesList");
 
+  const renderNav = (className = "") => (
+    <nav className={`space-y-2 sm:space-y-3 ${className}`}>
+      {menuItems.map((menuItem) => (
+        <Button
+          className={`w-full justify-start rounded-2xl transition-all duration-300 text-sm hover:scale-[1.01] ${
+            activeTab === menuItem.value
+              ? "bg-gradient-to-r from-[hsl(var(--brand-green))] to-[hsl(var(--brand-red))] text-white shadow-lg"
+              : "bg-white/5 text-foreground hover:bg-white/20"
+          }`}
+          key={menuItem.value}
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (menuItem.value === "logout") {
+              handleLogout();
+            } else if (menuItem.onClick) {
+              menuItem.onClick();
+            } else {
+              setActiveTab(menuItem.value);
+            }
+            setShowMobileNav(false);
+          }}
+        >
+          <menuItem.icon className="mr-3 h-4 w-4" />
+          {menuItem.label}
+        </Button>
+      ))}
+    </nav>
+  );
+
   return (
-    <div className="flex h-full min-h-screen gradient-bg">
-      <aside className="w-48 sm:w-56 lg:w-64 glass-effect shadow-xl hidden lg:block border-r border-white/20">
-        <div className="p-3 sm:p-4 lg:p-6">
-          <div className="flex items-center mb-4 sm:mb-6 lg:mb-8">
-            <GraduationCap className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 mr-2 lg:mr-3 hero-text" />
-            <h2 className="text-base sm:text-lg lg:text-xl font-bold hero-text">Instructor Panel</h2>
+    <div className="relative flex h-full min-h-screen bg-[radial-gradient(circle_at_top,_hsla(var(--brand-green)/0.18),_transparent_60%)]">
+      <aside className="hidden lg:block w-64 glass-effect border-r border-white/20 px-6 py-8">
+        <div className="space-y-6">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[hsl(var(--brand-green))] to-[hsl(var(--brand-red))] text-white flex items-center justify-center shadow-lg">
+                <GraduationCap className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">Instructor</p>
+                <h2 className="text-2xl font-bold text-foreground">Bangla Learn</h2>
+              </div>
+            </div>
           </div>
-          <nav className="space-y-2 sm:space-y-3">
-            {menuItems.map((menuItem) => (
-              <Button
-                className={`w-full justify-start transition-all duration-300 text-xs sm:text-sm lg:text-base hover:scale-105 ${
-                  activeTab === menuItem.value
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-                    : 'hover:bg-white/10 text-gray-700 hover:text-blue-600'
-                }`}
-                key={menuItem.value}
-                variant="ghost"
-                size="sm"
-                onClick={
-                  menuItem.value === "logout"
-                    ? handleLogout
-                    : menuItem.onClick
-                    ? menuItem.onClick
-                    : () => setActiveTab(menuItem.value)
-                }
-              >
-                <menuItem.icon className="mr-2 lg:mr-3 h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5" />
-                {menuItem.label}
-              </Button>
-            ))}
-          </nav>
+          {renderNav()}
         </div>
       </aside>
-      <main className="flex-1 p-3 sm:p-4 lg:p-8 overflow-y-auto animate-fade-in">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-4 sm:mb-6 lg:mb-8">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold hero-text mb-2">Dashboard</h1>
-            <p className="text-gray-600 text-xs sm:text-sm lg:text-base">Manage your courses and track student progress</p>
+
+      <main className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-10">
+          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground">Instructor HQ</p>
+              <h1 className="text-3xl font-bold text-foreground">Dashboard</h1>
+              <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
+                Manage your cohorts, review course performance, and jump into quiz management – all in a single Bangladesh-inspired workspace.
+              </p>
+            </div>
+            <div className="flex items-center gap-3 lg:hidden">
+              <Button variant="secondary" className="rounded-full" onClick={() => navigate("/instructor/create-new-course")}>
+                New Course
+              </Button>
+              <Button variant="ghost" size="icon" className="rounded-2xl border border-white/40" onClick={() => setShowMobileNav((prev) => !prev)}>
+                {showMobileNav ? <X className="h-5 w-5" /> : <AlignJustify className="h-5 w-5" />}
+              </Button>
+            </div>
           </div>
+
+          {showMobileNav && (
+            <div className="mb-6 rounded-3xl border border-white/40 glass-effect p-4 animate-slide-up lg:hidden">
+              {renderNav("space-y-3")}
+            </div>
+          )}
+
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             {menuItems.map((menuItem) => (
-              <TabsContent key={menuItem.value} value={menuItem.value} className="mt-3 sm:mt-4 lg:mt-6">
+              <TabsContent key={menuItem.value} value={menuItem.value} className="mt-4">
                 {menuItem.component !== null ? menuItem.component : null}
               </TabsContent>
             ))}

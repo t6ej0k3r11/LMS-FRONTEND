@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../components/ui/dropdown-menu";
-import { Users, BookOpen, Shield, Activity, LogOut, Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Users, BookOpen, Shield, Activity, LogOut, Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+
 import { useToast } from "../../hooks/use-toast";
 import { getAllUsersService, deleteUserService, deactivateUserService, reactivateUserService, getAdminStatsService, getRecentActivitiesService } from "../../services";
 import CourseManagement from "./course-management";
@@ -174,86 +175,93 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-6 sm:py-8">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_hsla(var(--brand-green)/0.18),_transparent_60%)]">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-10">
         {/* Header */}
-        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
-              Admin Dashboard
-            </h1>
-            <p className="text-gray-600 text-sm sm:text-base">
-              Welcome back, {auth?.user?.userName}! Manage your learning management system.
-            </p>
+        <div className="glass-effect rounded-[32px] border border-white/40 px-6 py-6 sm:px-10 sm:py-8 mb-6 sm:mb-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground">Admin Command</p>
+              <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Admin Dashboard</h1>
+              <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
+                Welcome back, {auth?.user?.userName}! Keep the LMS humming with thoughtful oversight and quick approvals.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-xs font-medium text-muted-foreground">
+                <Sparkles className="h-4 w-4 text-[hsl(var(--brand-red))]" />
+                {stats.pendingCourses} pending items need review
+              </div>
+            </div>
+            <Button variant="secondary" onClick={logout} className="rounded-full self-start">
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </Button>
           </div>
-          <Button variant="outline" onClick={logout} className="flex items-center gap-2 w-full sm:w-auto">
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalUsers}</div>
-              <p className="text-xs text-muted-foreground">
-                +12% from last month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Courses</CardTitle>
-              <BookOpen className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCourses}</div>
-              <p className="text-xs text-muted-foreground">
-                +8% from last month
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Courses</CardTitle>
-              <Shield className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{stats.pendingCourses}</div>
-              <p className="text-xs text-muted-foreground">
-                Requires approval
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Admins</CardTitle>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalAdmins}</div>
-              <p className="text-xs text-muted-foreground">
-                System administrators
-              </p>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+          {[{
+            title: "Total Users",
+            value: stats.totalUsers,
+            change: "+12%",
+            icon: Users,
+            accent: "bg-[hsla(var(--brand-green)/0.15)]"
+          }, {
+            title: "Total Courses",
+            value: stats.totalCourses,
+            change: "+8%",
+            icon: BookOpen,
+            accent: "bg-[hsla(var(--brand-red)/0.15)]"
+          }, {
+            title: "Pending Courses",
+            value: stats.pendingCourses,
+            change: "Needs review",
+            icon: Shield,
+            accent: "bg-[hsla(var(--brand-gold)/0.2)]"
+          }, {
+            title: "Active Admins",
+            value: stats.totalAdmins,
+            change: "Core team",
+            icon: Activity,
+            accent: "bg-[hsla(var(--brand-green)/0.12)]"
+          }].map((card) => (
+            <Card
+              key={card.title}
+              className="rounded-3xl border-white/60 bg-white/85 shadow-[0_25px_60px_rgba(5,41,30,0.12)] transition-transform duration-300 hover:-translate-y-1"
+            >
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div>
+                  <CardTitle className="text-sm font-semibold text-muted-foreground">{card.title}</CardTitle>
+                  <p className="text-xs text-muted-foreground">{card.change}</p>
+                </div>
+                <div className={`rounded-2xl p-3 ${card.accent}`}>
+                  <card.icon className="h-5 w-5 text-primary" />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-foreground">{card.value}</div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
-            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
-            <TabsTrigger value="users" className="text-xs sm:text-sm">User Management</TabsTrigger>
-            <TabsTrigger value="courses" className="text-xs sm:text-sm">Course Approval</TabsTrigger>
-            <TabsTrigger value="audit" className="text-xs sm:text-sm">Audit Logs</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+          <TabsList className="glass-effect border border-white/40 grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl p-1">
+            {[
+              { value: "overview", label: "Overview" },
+              { value: "users", label: "User Management" },
+              { value: "courses", label: "Course Approval" },
+              { value: "audit", label: "Audit Logs" },
+            ].map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="rounded-2xl text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-foreground"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">

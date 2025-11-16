@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StudentContext } from "@/context/student-context";
-import { ChevronLeft, ChevronRight, Send, AlertTriangle, Save, RotateCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Send, AlertTriangle, Save, RotateCw, ListChecks, TimerReset, Trophy } from "lucide-react";
+
 import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -367,179 +368,236 @@ function QuizPlayer() {
     return <div className="text-center py-8">Question not found.</div>;
   }
 
+  const metaChips = [
+    {
+      label: `${currentQuiz.questions.length} Questions`,
+      icon: ListChecks,
+    },
+    {
+      label: `${currentQuiz.passingScore || 70}% Passing`,
+      icon: Trophy,
+    },
+    {
+      label: currentQuiz.quizType === "final" ? "Final Assessment" : "Practice Mode",
+      icon: TimerReset,
+    },
+  ];
+
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
-      {attemptStatusMessage && (
-        <Alert className="border-blue-200 bg-blue-50">
-          <RotateCw className="h-4 w-4" />
-          <div>
-            <AlertTitle>{isResuming ? "Resuming attempt" : "New attempt"}</AlertTitle>
-            <AlertDescription>
-              {attemptStatusMessage}
-              {isResuming && resumeAttemptInfo && (
-                <span className="block text-xs mt-1 text-blue-700">
-                  Started on {new Date(resumeAttemptInfo.startedAt).toLocaleString()}
-                </span>
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_hsla(var(--brand-green)/0.25),_transparent_55%)] px-4 py-6 sm:px-6 lg:px-0">
+      <div className="mx-auto max-w-5xl space-y-6 lg:space-y-8">
+        <section className="glass-effect rounded-[30px] border border-white/50 p-5 sm:p-8 shadow-[0_25px_60px_rgba(12,49,36,0.18)]">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground">Quiz Session</p>
+              <h1 className="mt-2 text-3xl font-bold text-foreground">{currentQuiz.title}</h1>
+              {attemptStatusMessage && (
+                <p className="mt-3 text-sm text-muted-foreground">
+                  {attemptStatusMessage}
+                </p>
               )}
-            </AlertDescription>
-          </div>
-        </Alert>
-      )}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-xl sm:text-2xl font-bold">{currentQuiz.title}</h1>
-        <div className="flex items-center space-x-2 sm:space-x-4">
-          {autoSaveStatus && (
-            <div className="text-xs sm:text-sm text-gray-600 flex items-center">
-              <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-              {autoSaveStatus === 'saving' && 'Saving...'}
-              {autoSaveStatus === 'saved' && 'Auto-saved'}
-              {autoSaveStatus === 'error' && 'Save failed'}
             </div>
-          )}
-          {/* Removed time limit - students can take quizzes at their own pace */}
-        </div>
-      </div>
-
-      {/* Validation Errors */}
-      {validationErrors.length > 0 && (
-        <Alert className="border-red-200 bg-red-50">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <ul className="list-disc list-inside">
-              {validationErrors.map((error, index) => (
-                <li key={index}>{error}</li>
+            <div className="flex flex-wrap gap-2">
+              {metaChips.map(({ label, icon: Icon }) => (
+                <span key={label} className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/80 px-4 py-2 text-sm text-muted-foreground">
+                  <Icon className="h-4 w-4 text-primary" />
+                  {label}
+                </span>
               ))}
-            </ul>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {/* Validation Warnings */}
-      {validationWarnings.length > 0 && (
-        <Alert className="border-yellow-200 bg-yellow-50">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <ul className="list-disc list-inside">
-              {validationWarnings.map((warning, index) => (
-                <li key={index}>{warning}</li>
-              ))}
-            </ul>
-          </AlertDescription>
-        </Alert>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
-            <span className="text-base sm:text-lg">Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}</span>
-            <span className="text-xs sm:text-sm font-normal">
-              {currentQuestion.points || 1} point{currentQuestion.points !== 1 ? 's' : ''}
-            </span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="text-base sm:text-lg">{currentQuestion.question}</div>
-          {renderQuestion(currentQuestion)}
-          {isLastQuestion && currentQuiz.quizType === 'final' && (
-            <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-start space-x-2 sm:space-x-3">
-                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-yellow-800 mb-2 text-sm sm:text-base">Final Quiz Reminder</h4>
-                  <p className="text-xs sm:text-sm text-yellow-700 leading-relaxed">
-                    Make sure to review all materials thoroughly before attempting the final assessment to ensure success.
-                  </p>
-                  <p className="text-xs sm:text-sm text-yellow-700 mt-2 font-medium">
-                    Passing Score Required: 80%
-                  </p>
-                </div>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-2xl border border-white/60 bg-white/85 p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Progress</p>
+              <div className="mt-2 flex items-end justify-between">
+                <p className="text-4xl font-bold text-foreground">{currentQuestionIndex + 1}<span className="text-lg text-muted-foreground">/{currentQuiz.questions.length}</span></p>
+                {autoSaveStatus && (
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Save className="h-3.5 w-3.5" />
+                    {autoSaveStatus === 'saving' && 'Saving...'}
+                    {autoSaveStatus === 'saved' && 'Auto-saved'}
+                    {autoSaveStatus === 'error' && 'Save failed'}
+                  </div>
+                )}
+              </div>
+              <div className="mt-3 h-2 rounded-full bg-[hsla(var(--brand-green)/0.15)]">
+                <div
+                  className="h-full rounded-full bg-[hsl(var(--brand-green))] transition-all duration-500"
+                  style={{ width: `${((currentQuestionIndex + 1) / currentQuiz.questions.length) * 100}%` }}
+                />
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="rounded-2xl border border-white/60 bg-white/85 p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Attempt Info</p>
+              <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                <p>Attempt ID: <span className="font-semibold text-foreground">{attemptId?.slice(-6) || "New"}</span></p>
+                {isResuming && resumeAttemptInfo && (
+                  <p>Started: {new Date(resumeAttemptInfo.startedAt).toLocaleString()}</p>
+                )}
+                <p>Status: <span className="text-primary font-medium">{isResuming ? "Resuming" : "In progress"}</span></p>
+              </div>
+            </div>
+          </div>
+        </section>
 
-      <div className="flex flex-col sm:flex-row justify-between gap-4">
-        <Button
-          onClick={handlePrevious}
-          disabled={currentQuestionIndex === 0}
-          variant="outline"
-          className="w-full sm:w-auto"
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Previous
-        </Button>
-
-        {isLastQuestion ? (
-          <Button
-            onClick={handleSubmit}
-            disabled={submitting || validationErrors.length > 0}
-            className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
-          >
-            <Send className="h-4 w-4 mr-2" />
-            {submitting ? 'Submitting...' : 'Submit Quiz'}
-          </Button>
-        ) : (
-          <Button onClick={handleNext} className="w-full sm:w-auto">
-            Next
-            <ChevronRight className="h-4 w-4 ml-2" />
-          </Button>
+        {attemptStatusMessage && (
+          <Alert className="glass-effect border border-[hsla(var(--brand-green)/0.35)] bg-white/80">
+            <RotateCw className="h-4 w-4" />
+            <div>
+              <AlertTitle>{isResuming ? "Resuming attempt" : "New attempt"}</AlertTitle>
+              <AlertDescription>
+                {attemptStatusMessage}
+                {isResuming && resumeAttemptInfo && (
+                  <span className="block text-xs mt-1 text-muted-foreground">
+                    Started on {new Date(resumeAttemptInfo.startedAt).toLocaleString()}
+                  </span>
+                )}
+              </AlertDescription>
+            </div>
+          </Alert>
         )}
+
+        {/* Validation Errors */}
+        {validationErrors.length > 0 && (
+          <Alert className="border-[hsla(var(--brand-red)/0.3)] bg-[hsla(var(--brand-red)/0.08)]">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <ul className="list-disc list-inside">
+                {validationErrors.map((error, index) => (
+                  <li key={index}>{error}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Validation Warnings */}
+        {validationWarnings.length > 0 && (
+          <Alert className="border-[hsla(var(--brand-gold)/0.3)] bg-[hsla(var(--brand-gold)/0.12)]">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <ul className="list-disc list-inside">
+                {validationWarnings.map((warning, index) => (
+                  <li key={index}>{warning}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        <Card className="border-white/60 bg-white/85 shadow-[0_30px_70px_rgba(10,41,30,0.12)]">
+          <CardHeader>
+            <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <span className="text-base sm:text-lg font-semibold text-foreground">Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}</span>
+              <span className="rounded-full bg-[hsla(var(--brand-green)/0.12)] px-3 py-1 text-xs font-medium text-primary">
+                {currentQuestion.points || 1} point{currentQuestion.points !== 1 ? 's' : ''}
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-base sm:text-lg">{currentQuestion.question}</div>
+            {renderQuestion(currentQuestion)}
+            {isLastQuestion && currentQuiz.quizType === 'final' && (
+              <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start space-x-2 sm:space-x-3">
+                  <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-semibold text-yellow-800 mb-2 text-sm sm:text-base">Final Quiz Reminder</h4>
+                    <p className="text-xs sm:text-sm text-yellow-700 leading-relaxed">
+                      Make sure to review all materials thoroughly before attempting the final assessment to ensure success.
+                    </p>
+                    <p className="text-xs sm:text-sm text-yellow-700 mt-2 font-medium">
+                      Passing Score Required: 80%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-col sm:flex-row justify-between gap-4">
+          <Button
+            onClick={handlePrevious}
+            disabled={currentQuestionIndex === 0}
+            variant="secondary"
+            className="w-full sm:w-auto rounded-2xl"
+          >
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Previous
+          </Button>
+
+          {isLastQuestion ? (
+            <Button
+              onClick={handleSubmit}
+              disabled={submitting || validationErrors.length > 0}
+              className="btn-primary w-full sm:w-auto"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {submitting ? 'Submitting...' : 'Submit Quiz'}
+            </Button>
+          ) : (
+            <Button onClick={handleNext} className="w-full sm:w-auto rounded-2xl">
+              Next
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          )}
+        </div>
+
+        {/* Question Navigation */}
+        <Card className="border-white/50 bg-white/85">
+          <CardHeader>
+            <CardTitle className="text-base sm:text-lg">Question Navigation</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+              {currentQuiz.questions.map((_, index) => {
+                const questionId = currentQuiz.questions[index]._id;
+                const isAnswered = answers[questionId];
+                const isCurrent = index === currentQuestionIndex;
+                return (
+                  <Button
+                    key={index}
+                    variant={isCurrent ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setCurrentQuestionIndex(index)}
+                    className={`h-8 w-8 sm:h-10 sm:w-10 rounded-2xl text-xs sm:text-sm ${isAnswered ? 'bg-[hsla(var(--brand-green)/0.15)] text-primary' : ''} ${isCurrent ? 'ring-2 ring-[hsl(var(--brand-green))]' : ''}`}
+                  >
+                    {index + 1}
+                  </Button>
+                );
+              })}
+            </div>
+            <div className="mt-2 text-xs sm:text-sm text-muted-foreground">
+              <span className="inline-block w-2 h-2 sm:w-3 sm:h-3 rounded-full bg-[hsla(var(--brand-green)/0.35)] mr-2"></span>
+              Answered questions
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Confirmation Dialog */}
+        <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <DialogContent className="glass-effect border border-white/50">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-semibold text-foreground">Confirm Quiz Submission</DialogTitle>
+              <DialogDescription>
+                You have unanswered questions. Are you sure you want to submit the quiz?
+                {validationWarnings.map((warning, index) => (
+                  <div key={index} className="mt-2 text-yellow-600">• {warning}</div>
+                ))}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
+                Continue Quiz
+              </Button>
+              <Button onClick={handleConfirmSubmit} disabled={submitting} className="btn-primary">
+                {submitting ? 'Submitting...' : 'Submit Anyway'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Question Navigation */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Question Navigation</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
-            {currentQuiz.questions.map((_, index) => {
-              const questionId = currentQuiz.questions[index]._id;
-              const isAnswered = answers[questionId];
-              const isCurrent = index === currentQuestionIndex;
-              return (
-                <Button
-                  key={index}
-                  variant={isCurrent ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCurrentQuestionIndex(index)}
-                  className={`h-8 w-8 sm:h-10 sm:w-10 text-xs sm:text-sm ${isAnswered ? 'bg-blue-100 border-blue-300' : ''} ${isCurrent ? 'ring-2 ring-blue-500' : ''}`}
-                >
-                  {index + 1}
-                </Button>
-              );
-            })}
-          </div>
-          <div className="mt-2 text-xs sm:text-sm text-gray-600">
-            <span className="inline-block w-2 h-2 sm:w-3 sm:h-3 bg-blue-100 border border-blue-300 rounded mr-2"></span>
-            Answered questions
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Confirmation Dialog */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirm Quiz Submission</DialogTitle>
-            <DialogDescription>
-              You have unanswered questions. Are you sure you want to submit the quiz?
-              {validationWarnings.map((warning, index) => (
-                <div key={index} className="mt-2 text-yellow-600">• {warning}</div>
-              ))}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowConfirmDialog(false)}>
-              Continue Quiz
-            </Button>
-            <Button onClick={handleConfirmSubmit} disabled={submitting}>
-              {submitting ? 'Submitting...' : 'Submit Anyway'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

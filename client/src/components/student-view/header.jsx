@@ -1,74 +1,150 @@
-import { GraduationCap, TvMinimalPlay, BookOpen } from "lucide-react";
+import {
+  GraduationCap,
+  TvMinimalPlay,
+  BookOpen,
+  Compass,
+  BellRing,
+  Menu,
+  X,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { AuthContext } from "@/context/auth-context";
 
 function StudentViewCommonHeader() {
   const navigate = useNavigate();
   const { resetCredentials } = useContext(AuthContext);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   function handleLogout() {
     resetCredentials();
     sessionStorage.clear();
   }
 
+  const navItems = [
+    {
+      label: "Explore Courses",
+      action: () => navigate("/courses"),
+      icon: <Compass className="h-4 w-4" aria-hidden="true" />,
+    },
+    {
+      label: "My Courses",
+      action: () => navigate("/student-courses"),
+      icon: <BookOpen className="h-4 w-4" aria-hidden="true" />,
+    },
+  ];
+
   return (
-    <header className="flex items-center justify-between px-4 sm:px-6 py-4 glass-effect shadow-sm border-b border-gray-200 relative animate-fade-in" role="banner">
-      <div className="flex items-center space-x-2 sm:space-x-4 lg:space-x-6">
-        <Link to="/home" className="flex items-center hover:text-primary transition-colors duration-200 nav-link accessible-focus rounded-lg p-2 -m-2" aria-label="Go to home page">
-          <GraduationCap className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 text-primary" aria-hidden="true" />
-          <span className="font-bold text-lg sm:text-xl hero-text">
-            LMS LEARN
-          </span>
-        </Link>
-        <nav className="hidden lg:flex items-center space-x-2">
-          <Button
-            variant="ghost"
-            onClick={() => {
-              location.pathname.includes("/courses")
-                ? null
-                : navigate("/courses");
-            }}
-            className="text-sm font-medium hover:bg-gray-100 transition-colors duration-200"
-          >
-            Explore Courses
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => {
-              location.pathname.includes("/student-courses")
-                ? null
-                : navigate("/student-courses");
-            }}
-            className="text-sm font-medium hover:bg-gray-100 transition-colors duration-200"
-          >
-            <BookOpen className="h-4 w-4 mr-2" />
-            My Courses
-          </Button>
-        </nav>
-      </div>
-      <div className="flex items-center space-x-2 sm:space-x-4">
-        <div className="flex gap-2 sm:gap-4 items-center">
-          <div
-            onClick={() => navigate("/student-courses")}
-            className="flex cursor-pointer items-center gap-1 sm:gap-2 lg:gap-3 hover:text-primary transition-colors duration-200 nav-link"
-          >
-            <span className="font-semibold text-sm sm:text-base lg:text-lg text-gray-700">
-              My Courses
-            </span>
-            <TvMinimalPlay className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 cursor-pointer" />
+    <header className="relative z-20 mx-auto max-w-7xl px-4 sm:px-6 lg:px-10 pt-6" role="banner">
+      <div className="glass-effect rounded-3xl px-4 sm:px-8 py-5 sm:py-6 border border-white/50 shadow-[0_25px_65px_rgba(15,41,28,0.16)] overflow-hidden">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link
+              to="/home"
+              className="flex items-center gap-3 nav-link rounded-2xl px-2 py-1"
+              aria-label="Go to home page"
+            >
+              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-[hsl(var(--brand-green))] to-[hsl(var(--brand-green-bright))] flex items-center justify-center text-white shadow-lg">
+                <GraduationCap className="h-5 w-5" aria-hidden="true" />
+              </div>
+              <div>
+                <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">LMS</p>
+                <p className="font-bold text-xl text-foreground">Bangla Learn</p>
+              </div>
+            </Link>
+            <div className="hidden md:flex items-center gap-3">
+              <span className="chip">Nation Powered Learning</span>
+              <span className="text-sm text-muted-foreground">
+                Curated growth for students across Bangladesh
+              </span>
+            </div>
           </div>
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            size="sm"
-            className="hover:bg-red-50 hover:border-red-200 hover:text-red-600 transition-colors duration-200 text-xs sm:text-sm"
-          >
-            Sign Out
-          </Button>
+
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="rounded-2xl bg-white/70 text-muted-foreground hover:text-primary"
+              aria-label="Notifications"
+            >
+              <BellRing className="h-5 w-5" />
+            </Button>
+            <Button
+              variant="soft"
+              className="hidden sm:inline-flex text-xs sm:text-sm"
+              onClick={() => navigate("/student-courses")}
+            >
+              Continue learning
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="md:hidden rounded-2xl border border-white/60"
+              aria-label="Toggle menu"
+              onClick={() => setMenuOpen((prev) => !prev)}
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/40 pt-4">
+          <nav className="flex flex-wrap items-center gap-2">
+            {navItems.map((item) => (
+              <Button
+                key={item.label}
+                variant="secondary"
+                size="sm"
+                className="rounded-2xl bg-white/90 text-sm"
+                onClick={() => {
+                  item.action();
+                  setMenuOpen(false);
+                }}
+              >
+                {item.icon}
+                {item.label}
+              </Button>
+            ))}
+          </nav>
+
+          <div className="flex items-center gap-3 text-sm">
+            <div className="hidden sm:flex items-center gap-2 rounded-2xl bg-white/80 px-4 py-2 text-muted-foreground shadow-inner">
+              <TvMinimalPlay className="h-4 w-4 text-primary" />
+              <span>2 new lessons unlocked today</span>
+            </div>
+            <Button
+              onClick={handleLogout}
+              variant="outline"
+              size="sm"
+              className="rounded-2xl border-[hsla(var(--brand-red)/0.35)] text-[hsl(var(--brand-red))] hover:bg-[hsla(var(--brand-red)/0.08)]"
+            >
+              Sign Out
+            </Button>
+          </div>
         </div>
       </div>
+
+      {menuOpen && (
+        <div className="mt-3 rounded-2xl border border-white/40 glass-effect p-4 space-y-3 md:hidden animate-slide-up">
+          {navItems.map((item) => (
+            <button
+              key={item.label}
+              onClick={() => {
+                item.action();
+                setMenuOpen(false);
+              }}
+              className="flex w-full items-center justify-between rounded-2xl px-4 py-3 bg-white/80 text-left text-sm font-medium text-foreground shadow-sm"
+            >
+              <span className="flex items-center gap-2">
+                {item.icon}
+                {item.label}
+              </span>
+              <span className="text-muted-foreground">Go</span>
+            </button>
+          ))}
+        </div>
+      )}
     </header>
   );
 }
