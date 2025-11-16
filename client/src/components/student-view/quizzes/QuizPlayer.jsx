@@ -340,13 +340,13 @@ function QuizPlayer() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{currentQuiz.title}</h1>
-        <div className="flex items-center space-x-4">
+    <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-xl sm:text-2xl font-bold">{currentQuiz.title}</h1>
+        <div className="flex items-center space-x-2 sm:space-x-4">
           {autoSaveStatus && (
-            <div className="text-sm text-gray-600 flex items-center">
-              <Save className="h-4 w-4 mr-1" />
+            <div className="text-xs sm:text-sm text-gray-600 flex items-center">
+              <Save className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
               {autoSaveStatus === 'saving' && 'Saving...'}
               {autoSaveStatus === 'saved' && 'Auto-saved'}
               {autoSaveStatus === 'error' && 'Save failed'}
@@ -386,26 +386,26 @@ function QuizPlayer() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex justify-between items-center">
-            <span>Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}</span>
-            <span className="text-sm font-normal">
+          <CardTitle className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <span className="text-base sm:text-lg">Question {currentQuestionIndex + 1} of {currentQuiz.questions.length}</span>
+            <span className="text-xs sm:text-sm font-normal">
               {currentQuestion.points || 1} point{currentQuestion.points !== 1 ? 's' : ''}
             </span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-lg">{currentQuestion.question}</div>
+          <div className="text-base sm:text-lg">{currentQuestion.question}</div>
           {renderQuestion(currentQuestion)}
           {isLastQuestion && currentQuiz.quizType === 'final' && (
-            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <div className="flex items-start space-x-3">
-                <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+            <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start space-x-2 sm:space-x-3">
+                <AlertTriangle className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h4 className="font-semibold text-yellow-800 mb-2">Final Quiz Reminder</h4>
-                  <p className="text-sm text-yellow-700 leading-relaxed">
+                  <h4 className="font-semibold text-yellow-800 mb-2 text-sm sm:text-base">Final Quiz Reminder</h4>
+                  <p className="text-xs sm:text-sm text-yellow-700 leading-relaxed">
                     Make sure to review all materials thoroughly before attempting the final assessment to ensure success.
                   </p>
-                  <p className="text-sm text-yellow-700 mt-2 font-medium">
+                  <p className="text-xs sm:text-sm text-yellow-700 mt-2 font-medium">
                     Passing Score Required: 80%
                   </p>
                 </div>
@@ -415,11 +415,12 @@ function QuizPlayer() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-between">
+      <div className="flex flex-col sm:flex-row justify-between gap-4">
         <Button
           onClick={handlePrevious}
           disabled={currentQuestionIndex === 0}
           variant="outline"
+          className="w-full sm:w-auto"
         >
           <ChevronLeft className="h-4 w-4 mr-2" />
           Previous
@@ -429,13 +430,13 @@ function QuizPlayer() {
           <Button
             onClick={handleSubmit}
             disabled={submitting || validationErrors.length > 0}
-            className="bg-green-600 hover:bg-green-700"
+            className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
           >
             <Send className="h-4 w-4 mr-2" />
             {submitting ? 'Submitting...' : 'Submit Quiz'}
           </Button>
         ) : (
-          <Button onClick={handleNext}>
+          <Button onClick={handleNext} className="w-full sm:w-auto">
             Next
             <ChevronRight className="h-4 w-4 ml-2" />
           </Button>
@@ -445,10 +446,10 @@ function QuizPlayer() {
       {/* Question Navigation */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Question Navigation</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Question Navigation</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-10 gap-2">
+          <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
             {currentQuiz.questions.map((_, index) => {
               const questionId = currentQuiz.questions[index]._id;
               const isAnswered = answers[questionId];
@@ -459,15 +460,15 @@ function QuizPlayer() {
                   variant={isCurrent ? "default" : "outline"}
                   size="sm"
                   onClick={() => setCurrentQuestionIndex(index)}
-                  className={`h-10 w-10 ${isAnswered ? 'bg-blue-100 border-blue-300' : ''} ${isCurrent ? 'ring-2 ring-blue-500' : ''}`}
+                  className={`h-8 w-8 sm:h-10 sm:w-10 text-xs sm:text-sm ${isAnswered ? 'bg-blue-100 border-blue-300' : ''} ${isCurrent ? 'ring-2 ring-blue-500' : ''}`}
                 >
                   {index + 1}
                 </Button>
               );
             })}
           </div>
-          <div className="mt-2 text-sm text-gray-600">
-            <span className="inline-block w-3 h-3 bg-blue-100 border border-blue-300 rounded mr-2"></span>
+          <div className="mt-2 text-xs sm:text-sm text-gray-600">
+            <span className="inline-block w-2 h-2 sm:w-3 sm:h-3 bg-blue-100 border border-blue-300 rounded mr-2"></span>
             Answered questions
           </div>
         </CardContent>

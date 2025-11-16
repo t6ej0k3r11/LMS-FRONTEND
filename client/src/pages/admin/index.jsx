@@ -175,25 +175,25 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6 sm:py-8">
         {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
               Admin Dashboard
             </h1>
-            <p className="text-gray-600">
+            <p className="text-gray-600 text-sm sm:text-base">
               Welcome back, {auth?.user?.userName}! Manage your learning management system.
             </p>
           </div>
-          <Button variant="outline" onClick={logout} className="flex items-center gap-2">
+          <Button variant="outline" onClick={logout} className="flex items-center gap-2 w-full sm:w-auto">
             <LogOut className="h-4 w-4" />
             Logout
           </Button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
@@ -248,12 +248,12 @@ function AdminDashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="courses">Course Approval</TabsTrigger>
-            <TabsTrigger value="audit">Audit Logs</TabsTrigger>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 sm:space-y-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="users" className="text-xs sm:text-sm">User Management</TabsTrigger>
+            <TabsTrigger value="courses" className="text-xs sm:text-sm">Course Approval</TabsTrigger>
+            <TabsTrigger value="audit" className="text-xs sm:text-sm">Audit Logs</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -301,7 +301,7 @@ function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 {/* Search and Filters */}
-                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex flex-col gap-4 mb-4 sm:mb-6">
                   <div className="flex-1">
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -313,27 +313,29 @@ function AdminDashboard() {
                       />
                     </div>
                   </div>
-                  <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Roles</SelectItem>
-                      <SelectItem value="student">Students</SelectItem>
-                      <SelectItem value="instructor">Instructors</SelectItem>
-                      <SelectItem value="admin">Admins</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-full sm:w-40">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <Select value={roleFilter} onValueChange={setRoleFilter}>
+                      <SelectTrigger className="w-full sm:w-40">
+                        <SelectValue placeholder="Role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Roles</SelectItem>
+                        <SelectItem value="student">Students</SelectItem>
+                        <SelectItem value="instructor">Instructors</SelectItem>
+                        <SelectItem value="admin">Admins</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full sm:w-40">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="active">Active</SelectItem>
+                        <SelectItem value="inactive">Inactive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 {/* Students Table */}

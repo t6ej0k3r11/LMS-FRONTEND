@@ -100,20 +100,20 @@ function StudentViewCoursesPage() {
 
   return (
     <div className="container mx-auto p-4 lg:p-8" role="main">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2 hero-text">All Courses</h1>
-        <p className="text-gray-600 text-lg">Discover your next learning adventure</p>
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 hero-text">All Courses</h1>
+        <p className="text-gray-600 text-base sm:text-lg">Discover your next learning adventure</p>
       </div>
-      <div className="flex flex-col md:flex-row gap-8">
-        <aside className="w-full md:w-80 space-y-6">
-          <div className="glass-effect rounded-xl p-6">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Filters</h2>
+      <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
+        <aside className="w-full md:w-80 space-y-4 sm:space-y-6">
+          <div className="glass-effect rounded-xl p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-800">Filters</h2>
             {Object.keys(filterOptions).map((ketItem) => (
-              <div key={ketItem} className="mb-6 pb-4 border-b border-gray-200 last:border-b-0">
-                <h3 className="font-semibold mb-4 text-gray-700 uppercase text-sm tracking-wide">{ketItem}</h3>
-                <div className="grid gap-3">
+              <div key={ketItem} className="mb-4 sm:mb-6 pb-4 border-b border-gray-200 last:border-b-0">
+                <h3 className="font-semibold mb-3 sm:mb-4 text-gray-700 uppercase text-xs sm:text-sm tracking-wide">{ketItem}</h3>
+                <div className="grid gap-2 sm:gap-3">
                   {filterOptions[ketItem].map((option) => (
-                    <Label key={option.id} className="flex font-medium items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors">
+                    <Label key={option.id} className="flex font-medium items-center gap-2 sm:gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition-colors text-sm">
                       <Checkbox
                         checked={
                           filters &&
@@ -135,9 +135,9 @@ function StudentViewCoursesPage() {
           </div>
         </aside>
         <main className="flex-1">
-          <div className="flex justify-between items-center mb-8 gap-5">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
             <div className="flex items-center gap-4">
-              <span className="text-lg text-gray-600 font-medium">
+              <span className="text-base sm:text-lg text-gray-600 font-medium">
                 {studentViewCoursesList.length} {studentViewCoursesList.length === 1 ? 'Course' : 'Courses'} Found
               </span>
             </div>
@@ -146,10 +146,10 @@ function StudentViewCoursesPage() {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="flex items-center gap-2 px-6 py-3 glass-effect hover:shadow-md transition-all duration-300"
+                  className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 glass-effect hover:shadow-md transition-all duration-300 w-full sm:w-auto"
                 >
-                  <ArrowUpDownIcon className="h-5 w-5" />
-                  <span className="text-base font-medium">Sort By: {sortOptions.find(s => s.id === sort)?.label}</span>
+                  <ArrowUpDownIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="text-sm sm:text-base font-medium">Sort By: {sortOptions.find(s => s.id === sort)?.label}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-[200px]">
@@ -170,7 +170,7 @@ function StudentViewCoursesPage() {
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {studentViewCoursesList && studentViewCoursesList.length > 0 ? (
               studentViewCoursesList.map((courseItem) => (
                 <Card
@@ -178,8 +178,8 @@ function StudentViewCoursesPage() {
                   className="course-card cursor-pointer group"
                   key={courseItem?._id}
                 >
-                  <CardContent className="flex gap-6 p-6">
-                    <div className="w-56 h-36 flex-shrink-0 rounded-lg overflow-hidden">
+                  <CardContent className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 sm:p-6">
+                    <div className="w-full sm:w-48 lg:w-56 h-32 sm:h-36 flex-shrink-0 rounded-lg overflow-hidden">
                       <img
                         src={courseItem?.image}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -190,29 +190,29 @@ function StudentViewCoursesPage() {
                     </div>
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
-                        <CardTitle className="text-2xl mb-3 text-gray-800 group-hover:text-blue-600 transition-colors">
+                        <CardTitle className="text-lg sm:text-xl lg:text-2xl mb-2 sm:mb-3 text-gray-800 group-hover:text-blue-600 transition-colors">
                           {courseItem?.title}
                         </CardTitle>
-                        <p className="text-base text-gray-600 mb-3">
+                        <p className="text-sm sm:text-base text-gray-600 mb-2 sm:mb-3">
                           Created By{" "}
                           <span className="font-semibold text-blue-600">
                             {courseItem?.instructorName}
                           </span>
                         </p>
-                        <div className="flex items-center gap-4 mb-4">
-                          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4">
+                          <span className="px-2 sm:px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs sm:text-sm font-medium">
                             {courseItem?.level.toUpperCase()} Level
                           </span>
-                          <span className="text-gray-500">
+                          <span className="text-gray-500 text-sm">
                             {courseItem?.curriculum?.length} {courseItem?.curriculum?.length <= 1 ? "Lecture" : "Lectures"}
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between">
-                        <p className="font-bold text-2xl text-blue-600">
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                        <p className="font-bold text-xl sm:text-2xl text-blue-600">
                           ${courseItem?.pricing}
                         </p>
-                        <Button className="btn-primary px-6 py-2">
+                        <Button className="btn-primary px-4 sm:px-6 py-2 w-full sm:w-auto">
                           View Details
                         </Button>
                       </div>
@@ -223,13 +223,13 @@ function StudentViewCoursesPage() {
             ) : loadingState ? (
               <div className="space-y-4">
                 {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="h-40 w-full rounded-xl" />
+                  <Skeleton key={i} className="h-32 sm:h-40 w-full rounded-xl" />
                 ))}
               </div>
             ) : (
-              <div className="text-center py-16">
-                <h1 className="font-bold text-3xl text-gray-500 mb-2">No Courses Found</h1>
-                <p className="text-gray-400 text-lg">Try adjusting your filters or check back later!</p>
+              <div className="text-center py-12 sm:py-16">
+                <h1 className="font-bold text-2xl sm:text-3xl text-gray-500 mb-2">No Courses Found</h1>
+                <p className="text-gray-400 text-base sm:text-lg">Try adjusting your filters or check back later!</p>
               </div>
             )}
           </div>
