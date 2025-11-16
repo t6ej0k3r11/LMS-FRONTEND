@@ -5,9 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StudentContext } from "@/context/student-context";
-import { ChevronLeft, ChevronRight, Send, AlertTriangle, Save } from "lucide-react";
+import { ChevronLeft, ChevronRight, Send, AlertTriangle, Save, RotateCw } from "lucide-react";
 import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -35,6 +35,9 @@ function QuizPlayer() {
   const [validationErrors, setValidationErrors] = useState([]);
   const [validationWarnings, setValidationWarnings] = useState([]);
   const [autoSaveStatus, setAutoSaveStatus] = useState(null);
+  const [isResuming, setIsResuming] = useState(false);
+  const [resumeAttemptInfo, setResumeAttemptInfo] = useState(null);
+  const [attemptStatusMessage, setAttemptStatusMessage] = useState(null);
 
   const autoSaveAnswers = useCallback(async () => {
     if (!attemptId) return;
@@ -80,7 +83,14 @@ function QuizPlayer() {
         console.log("Quiz data:", quiz);
 
         // Check prerequisites using the utility function
-        const prerequisiteCheck = checkQuizPrerequisites(quiz, studentCurrentCourseProgress?.progress || [], response.data.attempts || [], studentCurrentCourseProgress?.courseDetails);
+        const existingAttempts = response.data.attempts || [];
+        const prerequisiteCheck = checkQuizPrerequisites(
+          quiz,
+          studentCurrentCourseProgress?.progress || [],
+          existingAttempts,
+          studentCurrentCourseProgress?.courseDetails
+        );
+
         console.log("Prerequisite check result:", prerequisiteCheck);
         if (!prerequisiteCheck.canAccess) {
           alert(`Cannot access quiz: ${prerequisiteCheck.reason}`);
@@ -100,17 +110,37 @@ function QuizPlayer() {
           return;
         }
 
-        // Start attempt
-        console.log("Starting quiz attempt...");
-        const attemptResponse = await startQuizAttemptService(quizId);
-        console.log("Attempt start response:", attemptResponse);
-        if (attemptResponse?.success) {
-          setAttemptId(attemptResponse.data.attemptId);
-          console.log("Attempt started successfully with ID:", attemptResponse.data.attemptId);
+        // Determine if we should resume an existing attempt
+        if (prerequisiteCheck.resumeAttemptId) {
+          setAttemptId(prerequisiteCheck.resumeAttemptId);
+          setIsResuming(true);
+          const resumedAttempt = existingAttempts.find(
+            (attempt) => attempt._id === prerequisiteCheck.resumeAttemptId
+          );
+          setResumeAttemptInfo(resumedAttempt || null);
+          setAttemptStatusMessage(
+            prerequisiteCheck.reason || "You have an active attempt. Resuming now."
+          );
+          console.log("Resuming existing attempt", prerequisiteCheck.resumeAttemptId);
         } else {
-          console.error("Failed to start attempt:", attemptResponse);
-          alert("Failed to start quiz attempt. Please try again.");
-          navigate(-1);
+          setIsResuming(false);
+          setResumeAttemptInfo(null);
+          setAttemptStatusMessage(null);
+          console.log("Starting quiz attempt...");
+          const attemptResponse = await startQuizAttemptService(quizId);
+          console.log("Attempt start response:", attemptResponse);
+          if (attemptResponse?.success) {
+            setAttemptId(attemptResponse.data.attemptId);
+            setAttemptStatusMessage(null);
+            console.log(
+              "Attempt started successfully with ID:",
+              attemptResponse.data.attemptId
+            );
+          } else {
+            console.error("Failed to start attempt:", attemptResponse);
+            alert("Failed to start quiz attempt. Please try again.");
+            navigate(-1);
+          }
         }
       } else {
         console.error("Failed to load quiz:", response);
@@ -181,7 +211,6 @@ function QuizPlayer() {
     await performSubmission();
   };
 
-
   const performSubmission = async () => {
     try {
       setSubmitting(true);
@@ -238,7 +267,6 @@ function QuizPlayer() {
   const handleConfirmSubmit = () => {
     performSubmission();
   };
-
 
   const renderQuestion = (question) => {
     if (!question) return null;
@@ -341,6 +369,22 @@ function QuizPlayer() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-4 sm:space-y-6">
+      {attemptStatusMessage && (
+        <Alert className="border-blue-200 bg-blue-50">
+          <RotateCw className="h-4 w-4" />
+          <div>
+            <AlertTitle>{isResuming ? "Resuming attempt" : "New attempt"}</AlertTitle>
+            <AlertDescription>
+              {attemptStatusMessage}
+              {isResuming && resumeAttemptInfo && (
+                <span className="block text-xs mt-1 text-blue-700">
+                  Started on {new Date(resumeAttemptInfo.startedAt).toLocaleString()}
+                </span>
+              )}
+            </AlertDescription>
+          </div>
+        </Alert>
+      )}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <h1 className="text-xl sm:text-2xl font-bold">{currentQuiz.title}</h1>
         <div className="flex items-center space-x-2 sm:space-x-4">

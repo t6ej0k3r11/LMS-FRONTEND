@@ -129,16 +129,6 @@ function AuthPage() {
                     handleSubmit={handleSignInSubmit}
                     fieldErrors={signInFieldErrors}
                   />
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={!checkIfSignInFormIsValid() || isLoading}
-                  >
-                    {isLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : null}
-                    Sign In
-                  </Button>
                   <div className="text-right">
                     <Button
                       variant="link"

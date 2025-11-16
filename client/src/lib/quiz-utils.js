@@ -155,15 +155,15 @@ export function checkQuizPrerequisites(
     };
   }
 
-  // Check for in-progress attempts (prevent multiple simultaneous attempts)
+  // Check for in-progress attempts (allow resume instead of blocking)
   const inProgressAttempt = previousAttempts.find(
     (attempt) => attempt.status === "in_progress"
   );
   if (inProgressAttempt) {
     return {
-      canAccess: false,
-      reason:
-        "You already have an attempt in progress. Please complete or cancel it first.",
+      canAccess: true,
+      resumeAttemptId: inProgressAttempt._id,
+      reason: "Resuming your previous attempt.",
     };
   }
 
