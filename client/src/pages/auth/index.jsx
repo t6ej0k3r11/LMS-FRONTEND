@@ -1,4 +1,5 @@
 import CommonForm from "@/components/common-form";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -9,14 +10,16 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signInFormControls, signUpFormControls } from "@/config";
 import { AuthContext } from "@/context/auth-context";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Loader2 } from "lucide-react";
 import { useContext, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 function AuthPage() {
   const [activeTab, setActiveTab] = useState("signin");
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const {
     signInFormData,
     setSignInFormData,
@@ -126,6 +129,25 @@ function AuthPage() {
                     handleSubmit={handleSignInSubmit}
                     fieldErrors={signInFieldErrors}
                   />
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={!checkIfSignInFormIsValid() || isLoading}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
+                    Sign In
+                  </Button>
+                  <div className="text-right">
+                    <Button
+                      variant="link"
+                      className="h-auto p-0 text-sm"
+                      onClick={() => navigate('/auth/forgot-password')}
+                    >
+                      Forgot Password?
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

@@ -1,5 +1,7 @@
 import { Route, Routes } from "react-router-dom";
 import AuthPage from "./pages/auth";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import RouteGuard from "./components/route-guard";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useContext } from "react";
@@ -46,6 +48,26 @@ function App() {
             element={<AuthPage />}
             authenticated={auth?.authenticate}
             user={auth?.user}
+          />
+        }
+      />
+      <Route
+        path="/auth/forgot-password"
+        element={
+          <RouteGuard
+            element={<ForgotPassword />}
+            authenticated={false}
+            user={null}
+          />
+        }
+      />
+      <Route
+        path="/auth/reset-password"
+        element={
+          <RouteGuard
+            element={<ResetPassword />}
+            authenticated={false}
+            user={null}
           />
         }
       />
