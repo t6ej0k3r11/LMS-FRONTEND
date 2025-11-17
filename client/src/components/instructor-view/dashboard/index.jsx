@@ -102,7 +102,7 @@ function InstructorDashboard({ listOfCourses }) {
             <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground">Instructor Pulse</p>
             <h2 className="mt-2 text-3xl font-bold text-foreground">Dashboard Overview</h2>
             <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
-              Track students, revenue, and rewatches across every Bangla Learn cohort.
+              Track students, revenue, and rewatches across every DeshGory cohort.
             </p>
             <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm text-muted-foreground">
               <Sparkles className="h-4 w-4 text-[hsl(var(--brand-red))]" />

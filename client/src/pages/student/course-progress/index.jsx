@@ -635,7 +635,7 @@ function StudentViewCourseProgressPage() {
                               ? 'cursor-pointer bg-gradient-to-r from-purple-600/10 to-pink-600/10 border-purple-500/30 hover:border-purple-400/50 hover:shadow-lg'
                               : 'bg-gray-900/50 border-gray-700/50'
                           }`}
-                          onClick={() => isQuizAvailable && navigate(`/student/quiz-player/${quiz._id}`)}
+                          onClick={() => isQuizAvailable && navigate(`/quiz-player/${quiz._id}`)}
                         >
                           <div className={`p-2 rounded-lg ${
                             isQuizCompleted

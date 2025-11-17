@@ -10,7 +10,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signInFormControls, signUpFormControls } from "@/config";
 import { AuthContext } from "@/context/auth-context";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import logoImage from "@/assets/logo.jpg";
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -95,8 +96,12 @@ function AuthPage() {
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <header className="px-6 lg:px-8 h-16 flex items-center bg-white shadow-sm border-b border-gray-200">
         <Link to={"/"} className="flex items-center justify-center hover:opacity-80 transition-opacity duration-200">
-          <GraduationCap className="h-8 w-8 mr-3 text-primary" />
-          <span className="font-bold text-xl text-gray-900">LMS LEARN</span>
+          <img
+            src={logoImage}
+            alt="DeshGory logo"
+            className="h-10 w-auto mr-3 rounded"
+          />
+          <span className="font-bold text-xl text-gray-900">DeshGory</span>
         </Link>
       </header>
       <div className="flex items-center justify-center flex-1 px-4 py-6 sm:py-8">
@@ -146,7 +151,7 @@ function AuthPage() {
                 <CardHeader className="space-y-1">
                   <CardTitle className="text-xl sm:text-2xl font-bold text-center text-gray-900">Create your account</CardTitle>
                   <CardDescription className="text-center text-gray-600 text-sm sm:text-base">
-                    Join LMS LEARN and start learning today
+                    Join DeshGory and start learning today
                   </CardDescription>
                   <div className="bg-blue-50 p-4 rounded-lg mt-4 border border-blue-200">
                     <strong className="text-sm font-medium text-blue-900">Username Requirements:</strong>

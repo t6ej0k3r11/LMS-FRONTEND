@@ -1,5 +1,4 @@
 import {
-  GraduationCap,
   TvMinimalPlay,
   BookOpen,
   Compass,
@@ -11,6 +10,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useContext, useState } from "react";
 import { AuthContext } from "@/context/auth-context";
+import logoImage from "@/assets/logo.jpg";
 
 function StudentViewCommonHeader() {
   const navigate = useNavigate();
@@ -45,12 +45,14 @@ function StudentViewCommonHeader() {
               className="flex items-center gap-3 nav-link rounded-2xl px-2 py-1"
               aria-label="Go to home page"
             >
-              <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-[hsl(var(--brand-green))] to-[hsl(var(--brand-green-bright))] flex items-center justify-center text-white shadow-lg">
-                <GraduationCap className="h-5 w-5" aria-hidden="true" />
-              </div>
+              <img
+                src={logoImage}
+                alt="DeshGory logo"
+                className="h-10 w-10 rounded-2xl object-cover shadow-lg"
+              />
               <div>
-                <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">LMS</p>
-                <p className="font-bold text-xl text-foreground">Bangla Learn</p>
+                <p className="text-sm uppercase tracking-[0.3em] text-muted-foreground">DeshGory</p>
+                <p className="font-bold text-xl text-foreground">DeshGory</p>
               </div>
             </Link>
             <div className="hidden md:flex items-center gap-3">
