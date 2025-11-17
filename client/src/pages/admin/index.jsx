@@ -184,7 +184,7 @@ function AdminDashboard() {
               <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground">Admin Command</p>
               <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Admin Dashboard</h1>
               <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
-                Welcome back, {auth?.user?.userName}! Keep the LMS humming with thoughtful oversight and quick approvals.
+                Welcome back, {auth?.user?.userName}! Keep DeshGory humming with thoughtful oversight and quick approvals.
               </p>
               <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-xs font-medium text-muted-foreground">
                 <Sparkles className="h-4 w-4 text-[hsl(var(--brand-red))]" />

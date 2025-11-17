@@ -5,7 +5,8 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AuthContext } from "@/context/auth-context";
 import { InstructorContext } from "@/context/instructor-context";
 import { fetchInstructorCourseListService } from "@/services";
-import { BarChart, Book, LogOut, FileQuestion, GraduationCap, AlignJustify, X } from "lucide-react";
+import { BarChart, Book, LogOut, FileQuestion, AlignJustify, X } from "lucide-react";
+import logoImage from "@/assets/logo.jpg";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -108,12 +109,14 @@ function InstructorDashboardpage() {
         <div className="space-y-6">
           <div>
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-[hsl(var(--brand-green))] to-[hsl(var(--brand-red))] text-white flex items-center justify-center shadow-lg">
-                <GraduationCap className="h-6 w-6" />
-              </div>
+              <img
+                src={logoImage}
+                alt="DeshGory logo"
+                className="h-12 w-12 rounded-2xl shadow-lg object-cover"
+              />
               <div>
                 <p className="text-xs uppercase tracking-[0.4em] text-muted-foreground">Instructor</p>
-                <h2 className="text-2xl font-bold text-foreground">Bangla Learn</h2>
+                <h2 className="text-2xl font-bold text-foreground">DeshGory</h2>
               </div>
             </div>
           </div>
