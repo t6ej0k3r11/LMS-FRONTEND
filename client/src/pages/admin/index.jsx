@@ -560,21 +560,41 @@ function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">
-            <Card>
+            <Card className="rounded-[30px] border-white/60 bg-white/90 shadow-[0_30px_70px_rgba(9,42,31,0.14)]">
               <CardHeader>
-                <CardTitle>Audit Logs</CardTitle>
+                <CardTitle className="text-xl font-semibold text-foreground">Audit Logs</CardTitle>
+                <p className="text-sm text-muted-foreground">Trace every administrative action performed inside the platform.</p>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8">
-                  <Activity className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    System Audit Logs
-                  </h3>
-                  <p className="text-gray-500 mb-4">
-                    View all administrative actions and system changes.
-                  </p>
-                  <Button>View Audit Logs</Button>
-                </div>
+                {recentActivities.length === 0 ? (
+                  <div className="py-10 text-center text-muted-foreground">
+                    No audit entries recorded yet.
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentActivities.map((activity) => (
+                      <div
+                        key={activity._id}
+                        className="rounded-2xl border border-white/60 bg-white/80 p-4 shadow-sm"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                            <Badge variant="outline" className="uppercase tracking-wide">
+                              {activity.action?.replace?.("_", " ") || "ACTION"}
+                            </Badge>
+                            <span className="text-muted-foreground">{activity.targetName}</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(activity.timestamp).toLocaleString()}
+                          </span>
+                        </div>
+                        <p className="mt-2 text-sm text-muted-foreground">
+                          Executed by <span className="font-semibold text-foreground">{activity.adminName}</span>
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

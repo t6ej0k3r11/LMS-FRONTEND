@@ -9,6 +9,7 @@ import { useContext, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import QuestionBuilder from "./QuestionBuilder";
 import { createQuizService, updateQuizService, getQuizByIdService, fetchInstructorCourseListService } from "@/services";
+import QuestionBankModal from "@/components/instructor-view/quizzes/QuestionBankModal";
 
 function QuizForm() {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ function QuizForm() {
   const [loading, setLoading] = useState(false);
   const [lectures, setLectures] = useState([]);
   const [courseId, setCourseId] = useState(paramCourseId);
+  const [showQuestionBank, setShowQuestionBank] = useState(false);
+
   console.log("QuizForm: lectures state =", lectures);
   console.log("QuizForm: component mounted with courseId =", courseId);
   console.log("QuizForm: component mounted with quizId =", quizId);
@@ -103,6 +106,34 @@ function QuizForm() {
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleAddQuestionFromBank = (question) => {
+    setFormData(prev => {
+      const isEssayType = ["broad-text", "short-answer", "essay"].includes(question.type);
+      const newQuestion = {
+        type: question.type,
+        question: question.question,
+        options:
+          question.type === "multiple-choice"
+            ? (question.options && question.options.length > 0
+                ? question.options
+                : ["", "", "", ""])
+            : question.options || [],
+        correctAnswer: question.correctAnswer || "",
+        correctAnswerIndex:
+          question.type === "multiple-choice" && question.options?.length
+            ? question.options.findIndex((opt) => opt === question.correctAnswer)
+            : null,
+        points: question.points || 1,
+        requiresReview: isEssayType,
+      };
+      return {
+        ...prev,
+        questions: [...prev.questions, newQuestion],
+      };
+    });
+    setShowQuestionBank(false);
   };
 
   const handleSubmit = async (e) => {
@@ -299,6 +330,13 @@ function QuizForm() {
               </div>
             </div>
 
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <h3 className="text-lg font-semibold text-foreground">Questions</h3>
+              <Button type="button" variant="secondary" className="rounded-full" onClick={() => setShowQuestionBank(true)}>
+                Browse Question Bank
+              </Button>
+            </div>
+
             <QuestionBuilder
               questions={formData.questions}
               setQuestions={(questions) => handleInputChange("questions", questions)}
@@ -319,9 +357,13 @@ function QuizForm() {
           </form>
         </CardContent>
       </Card>
+      <QuestionBankModal
+        open={showQuestionBank}
+        onOpenChange={setShowQuestionBank}
+        onSelectQuestion={handleAddQuestionFromBank}
+      />
     </div>
   );
 }
-
 
 export default QuizForm;
