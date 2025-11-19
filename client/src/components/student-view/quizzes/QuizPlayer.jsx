@@ -16,6 +16,8 @@ import {
   getQuizForTakingService,
   startQuizAttemptService,
   submitQuizAttemptService,
+  submitQuestionAnswerService,
+  finalizeQuizAttemptService,
 } from "@/services";
 import {
   validateQuizSubmission,
@@ -39,6 +41,10 @@ function QuizPlayer() {
   const [isResuming, setIsResuming] = useState(false);
   const [resumeAttemptInfo, setResumeAttemptInfo] = useState(null);
   const [attemptStatusMessage, setAttemptStatusMessage] = useState(null);
+  const [instantFeedbackEnabled, setInstantFeedbackEnabled] = useState(false);
+  const [answeredQuestions, setAnsweredQuestions] = useState(new Set());
+  const [currentFeedback, setCurrentFeedback] = useState(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const autoSaveAnswers = useCallback(async () => {
     if (!attemptId) return;
@@ -100,6 +106,7 @@ function QuizPlayer() {
         }
 
         setCurrentQuiz(quiz);
+        setInstantFeedbackEnabled(quiz.instantFeedbackEnabled || false);
 
         // Allow multiple attempts - students can retake quizzes anytime
         // No longer preventing multiple simultaneous attempts
@@ -172,11 +179,36 @@ function QuizPlayer() {
     }
   }, [answers, attemptId, autoSaveAnswers]);
 
-  const handleAnswerChange = (questionId, answer) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
+  const handleAnswerChange = async (questionId, answer) => {
+    if (instantFeedbackEnabled) {
+      // For instant feedback, submit immediately
+      try {
+        const response = await submitQuestionAnswerService(quizId, attemptId, questionId, answer);
+        if (response?.success) {
+          setCurrentFeedback(response.data);
+          setShowFeedback(true);
+          setAnsweredQuestions(prev => new Set([...prev, questionId]));
+
+          // Auto-advance to next question after a delay
+          setTimeout(() => {
+            setShowFeedback(false);
+            setCurrentFeedback(null);
+            handleNext();
+          }, 3000); // Show feedback for 3 seconds
+        } else {
+          alert("Failed to submit answer. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error submitting answer:", error);
+        alert("An error occurred while submitting your answer.");
+      }
+    } else {
+      // Normal mode - just update local state
+      setAnswers(prev => ({
+        ...prev,
+        [questionId]: answer
+      }));
+    }
   };
 
   const handleNext = () => {
@@ -194,22 +226,32 @@ function QuizPlayer() {
   const handleSubmit = async () => {
     if (submitting) return;
 
-    // Validate submission
-    const validation = validateQuizSubmission(answers, currentQuiz.questions);
-    setValidationErrors(validation.errors);
-    setValidationWarnings(validation.warnings);
+    if (instantFeedbackEnabled) {
+      // For instant feedback, finalize the quiz
+      if (answeredQuestions.size !== currentQuiz.questions.length) {
+        alert("Please answer all questions before finalizing the quiz.");
+        return;
+      }
 
-    if (!validation.isValid) {
-      return; // Don't proceed with submission if validation fails
+      await performFinalization();
+    } else {
+      // Normal mode - validate and submit all answers
+      const validation = validateQuizSubmission(answers, currentQuiz.questions);
+      setValidationErrors(validation.errors);
+      setValidationWarnings(validation.warnings);
+
+      if (!validation.isValid) {
+        return; // Don't proceed with submission if validation fails
+      }
+
+      // Show confirmation dialog if there are warnings
+      if (validation.warnings.length > 0) {
+        setShowConfirmDialog(true);
+        return;
+      }
+
+      await performSubmission();
     }
-
-    // Show confirmation dialog if there are warnings
-    if (validation.warnings.length > 0) {
-      setShowConfirmDialog(true);
-      return;
-    }
-
-    await performSubmission();
   };
 
   const performSubmission = async () => {
@@ -265,6 +307,52 @@ function QuizPlayer() {
     }
   };
 
+  const performFinalization = async () => {
+    try {
+      setSubmitting(true);
+      const response = await finalizeQuizAttemptService(quizId, attemptId);
+      console.log("Quiz finalization response:", response);
+      if (response?.success) {
+        setStudentQuizProgress(prev => ({
+          ...prev,
+          [quizId]: response.data
+        }));
+
+        // Refresh course progress after successful quiz finalization
+        if (studentCurrentCourseProgress?.courseDetails?._id) {
+          console.log("Refreshing course progress after quiz finalization...");
+          const progressResponse = await getCurrentCourseProgressService(
+            "current", // Use "current" as the userId since the service handles auth
+            studentCurrentCourseProgress.courseDetails._id
+          );
+          if (progressResponse?.success) {
+            console.log("Updated course progress after quiz finalization:", progressResponse.data);
+            setStudentCurrentCourseProgress({
+              courseDetails: progressResponse.data.courseDetails,
+              progress: progressResponse.data.progress,
+              quizzesProgress: progressResponse.data.quizzesProgress || [],
+              completed: progressResponse.data.completed,
+              completionDate: progressResponse.data.completionDate,
+              progressPercentage: progressResponse.data.progressPercentage,
+            });
+          }
+        }
+
+        // Use the correct nested route without '/student/' prefix
+        navigate(`/quiz-results/${quizId}`);
+      } else {
+        console.error("Quiz finalization failed:", response);
+        alert("Failed to finalize quiz. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error finalizing quiz:", error);
+      console.error("Error details:", error.response?.data || error.message);
+      alert("An error occurred while finalizing the quiz. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleConfirmSubmit = () => {
     performSubmission();
   };
@@ -273,12 +361,15 @@ function QuizPlayer() {
     if (!question) return null;
 
     const currentAnswer = answers[question._id];
+    const isAnswered = answeredQuestions.has(question._id);
+    const isDisabled = instantFeedbackEnabled && isAnswered;
 
     if (question.type === 'multiple-choice') {
       return (
         <RadioGroup
           value={currentAnswer}
           onValueChange={(value) => handleAnswerChange(question._id, value)}
+          disabled={isDisabled}
         >
           {question.options.map((option, index) => (
             <div key={index} className="flex items-center space-x-2">
@@ -497,6 +588,38 @@ function QuizPlayer() {
           <CardContent className="space-y-4">
             <div className="text-base sm:text-lg">{currentQuestion.question}</div>
             {renderQuestion(currentQuestion)}
+
+            {/* Instant Feedback Display */}
+            {showFeedback && currentFeedback && (
+              <div className={`mt-4 p-4 rounded-lg border-2 ${
+                currentFeedback.isCorrect
+                  ? 'bg-green-50 border-green-200 text-green-800'
+                  : 'bg-red-50 border-red-200 text-red-800'
+              }`}>
+                <div className="flex items-center space-x-2 mb-2">
+                  {currentFeedback.isCorrect ? (
+                    <Trophy className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <AlertTriangle className="h-5 w-5 text-red-600" />
+                  )}
+                  <span className="font-semibold">
+                    {currentFeedback.isCorrect ? 'Correct!' : 'Incorrect'}
+                  </span>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <p><strong>Correct Answer:</strong> {currentFeedback.correctAnswer}</p>
+                  {currentFeedback.explanation && (
+                    <p><strong>Explanation:</strong> {currentFeedback.explanation}</p>
+                  )}
+                  <p><strong>Points Earned:</strong> {currentFeedback.pointsEarned}</p>
+                  <p><strong>Current Score:</strong> {currentFeedback.currentScore}%</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Progress: {currentFeedback.answeredQuestions} of {currentFeedback.totalQuestions} questions answered
+                  </p>
+                </div>
+              </div>
+            )}
+
             {isLastQuestion && currentQuiz.quizType === 'final' && (
               <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <div className="flex items-start space-x-2 sm:space-x-3">
@@ -530,11 +653,11 @@ function QuizPlayer() {
           {isLastQuestion ? (
             <Button
               onClick={handleSubmit}
-              disabled={submitting || validationErrors.length > 0}
+              disabled={submitting || validationErrors.length > 0 || (instantFeedbackEnabled && answeredQuestions.size !== currentQuiz.questions.length)}
               className="btn-primary w-full sm:w-auto"
             >
               <Send className="h-4 w-4 mr-2" />
-              {submitting ? 'Submitting...' : 'Submit Quiz'}
+              {submitting ? 'Finalizing...' : (instantFeedbackEnabled ? 'Finalize Quiz' : 'Submit Quiz')}
             </Button>
           ) : (
             <Button onClick={handleNext} className="w-full sm:w-auto rounded-2xl">
@@ -553,7 +676,9 @@ function QuizPlayer() {
             <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
               {currentQuiz.questions.map((_, index) => {
                 const questionId = currentQuiz.questions[index]._id;
-                const isAnswered = answers[questionId];
+                const isAnswered = instantFeedbackEnabled
+                  ? answeredQuestions.has(questionId)
+                  : answers[questionId];
                 const isCurrent = index === currentQuestionIndex;
                 return (
                   <Button
@@ -561,6 +686,7 @@ function QuizPlayer() {
                     variant={isCurrent ? "default" : "ghost"}
                     size="sm"
                     onClick={() => setCurrentQuestionIndex(index)}
+                    disabled={instantFeedbackEnabled && isAnswered && !isCurrent}
                     className={`h-8 w-8 sm:h-10 sm:w-10 rounded-2xl text-xs sm:text-sm ${isAnswered ? 'bg-[hsla(var(--brand-green)/0.15)] text-primary' : ''} ${isCurrent ? 'ring-2 ring-[hsl(var(--brand-green))]' : ''}`}
                   >
                     {index + 1}

@@ -99,6 +99,24 @@ export async function addNewCourseService(formData) {
   return data;
 }
 
+export async function createCourseDraftService(formData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post(`/instructor/course/draft`, formData);
+
+  return data;
+}
+
+export async function publishCourseService(courseId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.patch(
+    `/instructor/course/${courseId}/publish`
+  );
+
+  return data;
+}
+
 export async function fetchInstructorCourseDetailsService(id) {
   const instance = await axiosInstance();
 
@@ -200,6 +218,16 @@ export async function getCurrentCourseProgressService(userId, courseId) {
 
   const { data } = await instance.get(
     `/student/course-progress/get/${userId}/${courseId}`
+  );
+
+  return data;
+}
+
+export async function getUserCourseProgressService(courseId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.get(
+    `/student/course-progress/progress/${courseId}`
   );
 
   return data;
@@ -354,6 +382,32 @@ export async function submitQuizAttemptService(quizId, attemptId, answers) {
   return data;
 }
 
+export async function submitQuestionAnswerService(
+  quizId,
+  attemptId,
+  questionId,
+  answer
+) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post(
+    `/student/quiz/${quizId}/attempt/${attemptId}/question/${questionId}`,
+    { answer }
+  );
+
+  return data;
+}
+
+export async function finalizeQuizAttemptService(quizId, attemptId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post(
+    `/student/quiz/${quizId}/attempt/${attemptId}/finalize`
+  );
+
+  return data;
+}
+
 // Admin services
 export async function getAllUsersService(queryParams = {}) {
   const instance = await axiosInstance();
@@ -478,6 +532,7 @@ export const courseService = {
   checkPurchaseInfo: checkCoursePurchaseInfoService,
   getBoughtCourses: fetchStudentBoughtCoursesService,
   getCurrentProgress: getCurrentCourseProgressService,
+  getUserProgress: getUserCourseProgressService,
   markLectureViewed: markLectureAsViewedService,
   updateLectureProgress: updateLectureProgressService,
   resetProgress: resetCourseProgressService,
@@ -488,5 +543,88 @@ export const quizService = {
   getQuizForTaking: getQuizForTakingService,
   startQuizAttempt: startQuizAttemptService,
   submitQuizAttempt: submitQuizAttemptService,
+  submitQuestionAnswer: submitQuestionAnswerService,
+  finalizeQuizAttempt: finalizeQuizAttemptService,
   getQuizResults: getQuizResultsService,
 };
+
+// Admin instructor services
+export async function getPendingInstructorsService(queryParams = {}) {
+  const instance = await axiosInstance();
+
+  const queryString = new URLSearchParams(queryParams).toString();
+  const { data } = await instance.get(
+    `/admin/instructors/pending?${queryString}`
+  );
+
+  return data;
+}
+
+export async function approveInstructorService(instructorId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.patch(
+    `/admin/instructors/${instructorId}/approve`
+  );
+
+  return data;
+}
+
+export async function rejectInstructorService(instructorId, reason) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.patch(
+    `/admin/instructors/${instructorId}/reject`,
+    { reason }
+  );
+
+  return data;
+}
+
+// Question Bank services
+export async function createQuestionService(questionData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post(`/admin/questions`, questionData);
+
+  return data;
+}
+
+export async function getAllQuestionsService(queryParams = {}) {
+  const instance = await axiosInstance();
+
+  const queryString = new URLSearchParams(queryParams).toString();
+  const { data } = await instance.get(`/admin/questions?${queryString}`);
+
+  return data;
+}
+
+export async function updateQuestionService(questionId, questionData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.patch(
+    `/admin/questions/${questionId}`,
+    questionData
+  );
+
+  return data;
+}
+
+export async function deleteQuestionService(questionId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.delete(`/admin/questions/${questionId}`);
+
+  return data;
+}
+
+export async function getQuestionsForInstructorsService(queryParams = {}) {
+  const instance = await axiosInstance();
+
+  const queryString = new URLSearchParams(queryParams).toString();
+  const { data } = await instance.get(
+    `/instructor/quiz/questions/for-instructors?${queryString}`
+  );
+
+  return data;
+}

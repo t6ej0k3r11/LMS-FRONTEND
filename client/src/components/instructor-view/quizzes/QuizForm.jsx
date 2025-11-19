@@ -109,30 +109,10 @@ function QuizForm() {
   };
 
   const handleAddQuestionFromBank = (question) => {
-    setFormData(prev => {
-      const isEssayType = ["broad-text", "short-answer", "essay"].includes(question.type);
-      const newQuestion = {
-        type: question.type,
-        question: question.question,
-        options:
-          question.type === "multiple-choice"
-            ? (question.options && question.options.length > 0
-                ? question.options
-                : ["", "", "", ""])
-            : question.options || [],
-        correctAnswer: question.correctAnswer || "",
-        correctAnswerIndex:
-          question.type === "multiple-choice" && question.options?.length
-            ? question.options.findIndex((opt) => opt === question.correctAnswer)
-            : null,
-        points: question.points || 1,
-        requiresReview: isEssayType,
-      };
-      return {
-        ...prev,
-        questions: [...prev.questions, newQuestion],
-      };
-    });
+    setFormData(prev => ({
+      ...prev,
+      questions: [...prev.questions, question],
+    }));
     setShowQuestionBank(false);
   };
 
@@ -149,7 +129,13 @@ function QuizForm() {
       return;
     }
 
-    if (formData.quizType === "lesson" && !formData.lectureId) {
+    // Auto-select first lecture if lesson quiz and no lecture selected
+    let lectureId = formData.lectureId;
+    if (formData.quizType === "lesson" && !lectureId && lectures.length > 0) {
+      lectureId = lectures[0]._id;
+    }
+
+    if (formData.quizType === "lesson" && !lectureId) {
       alert("Please select a lecture for the lesson quiz");
       return;
     }
@@ -157,16 +143,16 @@ function QuizForm() {
     // Validate questions
     for (let i = 0; i < formData.questions.length; i++) {
       const question = formData.questions[i];
-      if (!question.question.trim()) {
+      if (!question.question?.trim() && !question.questionText?.trim()) {
         alert(`Please enter question text for question ${i + 1}`);
         return;
       }
       // Only multiple-choice and true-false questions require correctAnswer
-      if ((question.type === "multiple-choice" || question.type === "true-false") && !question.correctAnswer.trim()) {
+      if ((question.type === "multiple-choice" || question.type === "true-false") && !question.correctAnswer?.trim()) {
         alert(`Please provide a correct answer for question ${i + 1}`);
         return;
       }
-      if (question.type === "multiple-choice" && question.options.some(opt => !opt.trim())) {
+      if (question.type === "multiple-choice" && question.options?.some(opt => !opt?.trim())) {
         alert(`Please fill all options for question ${i + 1}`);
         return;
       }
@@ -181,7 +167,7 @@ function QuizForm() {
       setLoading(true);
       const quizData = {
         courseId: courseId,
-        lectureId: formData.quizType === "lesson" ? formData.lectureId : null,
+        lectureId: formData.quizType === "lesson" ? lectureId : null,
         quizType: formData.quizType,
         title: formData.title,
         description: formData.description,

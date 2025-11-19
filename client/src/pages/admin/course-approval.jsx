@@ -59,7 +59,7 @@ function CourseApproval() {
 
         toast({
           title: "Course Approved",
-          description: "The course has been successfully approved and published.",
+          description: "The course has been approved. The instructor can now publish it.",
         });
       } else {
         throw new Error(response.message || "Failed to approve course");
