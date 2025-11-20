@@ -28,7 +28,7 @@ function StudentCoursesPage() {
         // Fetch progress and quizzes for each course
         const progressPromises = response.data.map(async (course) => {
           try {
-            const progressResponse = await getCurrentCourseProgressService(auth?.user?._id, course.courseId);
+            const progressResponse = await getCurrentCourseProgressService(course.courseId);
             const quizzesResponse = await getStudentQuizzesByCourseService(course.courseId);
             return {
               courseId: course.courseId,

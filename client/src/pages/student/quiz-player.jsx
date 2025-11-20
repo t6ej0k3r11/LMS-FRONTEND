@@ -1,43 +1,57 @@
-import { useEffect, useContext } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { StudentContext } from "@/context/student-context";
-import { checkQuizPrerequisites } from "@/lib/quiz-utils";
-import { getQuizForTakingService } from "@/services";
+import { validateQuizAccessService } from "@/services";
 import QuizPlayer from "@/components/student-view/quizzes/QuizPlayer";
+import { useToast } from "@/hooks/use-toast";
 
 function QuizPlayerPage() {
   const { quizId } = useParams();
   const navigate = useNavigate();
-  const { studentCurrentCourseProgress } = useContext(StudentContext);
+  const { toast } = useToast();
+  const [quizValidation, setQuizValidation] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const validateQuizAccess = async () => {
+    const validateQuiz = async () => {
       try {
-        const response = await getQuizForTakingService(quizId);
-        if (response?.success) {
-          const quiz = response.data.quiz;
-          const existingAttempts = response.data.attempts || [];
-
-          // Check prerequisites
-          const prerequisiteCheck = checkQuizPrerequisites(quiz, studentCurrentCourseProgress?.progress || [], existingAttempts, studentCurrentCourseProgress?.courseDetails);
-          if (!prerequisiteCheck.canAccess) {
-            alert(`Cannot access quiz: ${prerequisiteCheck.reason}`);
-            navigate(-1);
-            return;
-          }
-
-          // Allow multiple attempts - no restrictions
+        setLoading(true);
+        const response = await validateQuizAccessService(quizId);
+        setQuizValidation(response);
+        if (!response?.success || !response?.canStart) {
+          toast({
+            title: "Cannot access quiz",
+            description: response?.message || "Quiz validation failed.",
+            variant: "destructive",
+          });
+          navigate(-1);
         }
       } catch (error) {
         console.error("Error validating quiz access:", error);
+        const errorMessage = error.response?.data?.message || "Cannot load quiz.";
+        setQuizValidation({ success: false, canStart: false, message: errorMessage });
+        toast({
+          title: "Cannot load quiz",
+          description: errorMessage,
+          variant: "destructive",
+        });
         navigate(-1);
+      } finally {
+        setLoading(false);
       }
     };
 
-    validateQuizAccess();
-  }, [quizId, studentCurrentCourseProgress?.progress, studentCurrentCourseProgress?.courseDetails, navigate]);
+    validateQuiz();
+  }, [quizId, navigate, toast]);
 
-  return <QuizPlayer />;
+  if (loading) {
+    return <div className="text-center py-8">Validating quiz access...</div>;
+  }
+
+  if (!quizValidation?.canStart) {
+    return <div className="text-center py-8">Quiz access denied.</div>;
+  }
+
+  return <QuizPlayer validation={quizValidation} />;
 }
 
 export default QuizPlayerPage;

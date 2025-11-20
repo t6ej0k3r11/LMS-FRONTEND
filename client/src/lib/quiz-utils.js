@@ -131,6 +131,24 @@ export function formatQuizTime(seconds) {
 }
 
 /**
+ * Checks if quiz is available based on prerequisite lectures
+ * @param {Object} quiz - Quiz object
+ * @param {Object} courseProgress - Student's course progress
+ * @returns {boolean} - True if quiz is available
+ */
+export const isQuizAvailable = (quiz, courseProgress) => {
+  // Check required lectures completed
+  if (!quiz.prerequisiteLectureIds || quiz.prerequisiteLectureIds.length === 0)
+    return true; // No prerequisites
+
+  const allPrereqsCompleted = quiz.prerequisiteLectureIds.every(
+    (lectureId) => courseProgress.lectures[lectureId] === "completed"
+  );
+
+  return allPrereqsCompleted;
+};
+
+/**
  * Checks if student can access the quiz based on prerequisites
  * @param {Object} quiz - Quiz object
  * @param {Object} courseProgress - Student's course progress
@@ -143,9 +161,14 @@ export function checkQuizPrerequisites(
   courseProgress,
   previousAttempts = []
 ) {
-  // For this LMS system, students can take quizzes anytime after enrollment
-  // No lecture completion prerequisites required
-  // Only check attempt limits and availability dates
+  // Check lecture completion prerequisites
+  if (!isQuizAvailable(quiz, courseProgress)) {
+    return {
+      canAccess: false,
+      reason:
+        "You must complete all prerequisite lectures before attempting this quiz.",
+    };
+  }
 
   // Check attempt limits
   if (quiz.attemptsAllowed && previousAttempts.length >= quiz.attemptsAllowed) {

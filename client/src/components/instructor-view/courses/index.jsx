@@ -96,18 +96,16 @@ function InstructorCourses({ listOfCourses }) {
 
         toast({
           title: "Success",
-          description: response?.message || "Course published successfully!",
+          description: response?.message || "Course submitted for review successfully!",
         });
       } else {
         // Handle different error scenarios
-        let errorMessage = response?.message || "Failed to publish course";
+        let errorMessage = response?.message || "Failed to submit course for review";
 
-        if (errorMessage.includes("admin approval")) {
-          errorMessage = "Your course has been submitted for admin review. You will be notified once it's approved.";
-        } else if (errorMessage.includes("required fields")) {
+        if (errorMessage.includes("required fields")) {
           errorMessage = "Please ensure your course has a title, description, and at least one lesson.";
-        } else if (errorMessage.includes("already published")) {
-          errorMessage = "This course is already published.";
+        } else if (errorMessage.includes("already submitted")) {
+          errorMessage = "This course is already submitted for review.";
         }
 
         toast({
@@ -139,13 +137,19 @@ function InstructorCourses({ listOfCourses }) {
     if (status === "published") {
       return (
         <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
-          Published
+          Approved (Published)
         </span>
       );
-    } else if (approvalStatus === "pending") {
+    } else if (status === "submitted") {
       return (
         <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">
-          Pending Approval
+          Submitted (Pending Review)
+        </span>
+      );
+    } else if (approvalStatus === "rejected") {
+      return (
+        <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800">
+          Rejected
         </span>
       );
     } else if (status === "draft") {
@@ -214,7 +218,7 @@ function InstructorCourses({ listOfCourses }) {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {course?.status === "draft" && course?.approvalStatus === "approved" && (
+                          {course?.status === "draft" && (
                             <Button
                               onClick={() => handlePublishCourse(course._id)}
                               disabled={publishingCourseId === course._id}
@@ -222,7 +226,7 @@ function InstructorCourses({ listOfCourses }) {
                               size="sm"
                               className="rounded-2xl bg-white/70 text-green-600 hover:text-green-700"
                             >
-                              {publishingCourseId === course._id ? "Publishing..." : "Publish"}
+                              {publishingCourseId === course._id ? "Submitting..." : "Submit for Review"}
                             </Button>
                           )}
                           <Button

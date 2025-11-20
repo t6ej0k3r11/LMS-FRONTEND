@@ -89,7 +89,7 @@ function AddNewCoursePage() {
       ...courseLandingFormData,
       students: [],
       curriculum: courseCurriculumFormData,
-      status: action === "publish" ? "published" : "draft",
+      status: action === "publish" && currentEditedCourseId === null ? "published" : "draft",
     };
 
     let response;
@@ -174,7 +174,7 @@ function AddNewCoursePage() {
             className="text-sm tracking-wider font-bold px-6"
             onClick={() => handleCreateCourse("publish")}
           >
-            Publish Course
+            Submit for Review
           </Button>
         </div>
       </div>

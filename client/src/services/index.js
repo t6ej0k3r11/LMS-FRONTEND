@@ -86,9 +86,15 @@ export async function mediaDeleteService(id) {
 export async function fetchInstructorCourseListService() {
   const instance = await axiosInstance();
 
-  const { data } = await instance.get(`/instructor/course/get`);
-
-  return data;
+  try {
+    const { data } = await instance.get(`/instructor/course/get`);
+    return data;
+  } catch (error) {
+    if (error.response?.status === 403) {
+      return { restricted: true };
+    }
+    throw error;
+  }
 }
 
 export async function addNewCourseService(formData) {
@@ -213,11 +219,11 @@ export async function fetchStudentBoughtCoursesService(studentId) {
   return data;
 }
 
-export async function getCurrentCourseProgressService(userId, courseId) {
+export async function getCurrentCourseProgressService(courseId) {
   const instance = await axiosInstance();
 
   const { data } = await instance.get(
-    `/student/course-progress/get/${userId}/${courseId}`
+    `/student/course-progress/get/${courseId}`
   );
 
   return data;
@@ -234,7 +240,6 @@ export async function getUserCourseProgressService(courseId) {
 }
 
 export async function markLectureAsViewedService(
-  userId,
   courseId,
   lectureId,
   isRewatch = false
@@ -244,7 +249,6 @@ export async function markLectureAsViewedService(
   const { data } = await instance.post(
     `/student/course-progress/mark-lecture-viewed`,
     {
-      userId,
       courseId,
       lectureId,
       isRewatch,
@@ -255,33 +259,30 @@ export async function markLectureAsViewedService(
 }
 
 export async function updateLectureProgressService(
-  userId,
   courseId,
   lectureId,
-  progressValue
+  status = "completed"
 ) {
   const instance = await axiosInstance();
 
   const { data } = await instance.post(
     `/student/course-progress/update-lecture-progress`,
     {
-      userId,
       courseId,
       lectureId,
-      progressValue,
+      status,
     }
   );
 
   return data;
 }
 
-export async function resetCourseProgressService(userId, courseId) {
+export async function resetCourseProgressService(courseId) {
   const instance = await axiosInstance();
 
   const { data } = await instance.post(
     `/student/course-progress/reset-progress`,
     {
-      userId,
       courseId,
     }
   );
@@ -359,6 +360,14 @@ export async function getQuizForTakingService(quizId) {
   const instance = await axiosInstance();
 
   const { data } = await instance.get(`/student/quiz/${quizId}`);
+
+  return data;
+}
+
+export async function validateQuizAccessService(quizId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.get(`/student/quiz/${quizId}/validate`);
 
   return data;
 }
@@ -488,6 +497,24 @@ export async function reviewCourseService(courseId, reviewData) {
   return data;
 }
 
+export async function approveCourseService(courseId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.patch(`/admin/courses/${courseId}/approve`);
+
+  return data;
+}
+
+export async function rejectCourseService(courseId, rejectionReason) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.patch(`/admin/courses/${courseId}/reject`, {
+    rejectionReason,
+  });
+
+  return data;
+}
+
 // Admin course management services
 export async function getAllCoursesService(queryParams = {}) {
   const instance = await axiosInstance();
@@ -541,6 +568,7 @@ export const courseService = {
 export const quizService = {
   getQuizzesByCourse: getStudentQuizzesByCourseService,
   getQuizForTaking: getQuizForTakingService,
+  validateQuizAccess: validateQuizAccessService,
   startQuizAttempt: startQuizAttemptService,
   submitQuizAttempt: submitQuizAttemptService,
   submitQuestionAnswer: submitQuestionAnswerService,

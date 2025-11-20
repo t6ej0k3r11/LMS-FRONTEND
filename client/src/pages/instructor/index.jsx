@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 function InstructorDashboardpage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showMobileNav, setShowMobileNav] = useState(false);
-  const [userStatus, setUserStatus] = useState(null);
+  const [instructorStatus, setInstructorStatus] = useState(null);
   const { resetCredentials, auth } = useContext(AuthContext);
   const { instructorCoursesList, setInstructorCoursesList } =
     useContext(InstructorContext);
@@ -25,7 +25,7 @@ function InstructorDashboardpage() {
       try {
         const response = await checkAuthService();
         if (response.success) {
-          setUserStatus(response.data.user.status);
+          setInstructorStatus(response.data.user.instructorStatus);
         }
       } catch (error) {
         console.error("Failed to fetch user info:", error);
@@ -36,28 +36,30 @@ function InstructorDashboardpage() {
   }, []);
 
   useEffect(() => {
-    const fetchAllCourses = async () => {
-      console.log("InstructorDashboard: Fetching courses...");
-      const response = await fetchInstructorCourseListService();
-      console.log("InstructorDashboard: Courses response =", response);
-      console.log("InstructorDashboard: Response success =", response?.success);
-      console.log("InstructorDashboard: Response data =", response?.data);
-      if (response?.success) {
-        console.log("InstructorDashboard: Setting courses list =", response?.data);
-        console.log("InstructorDashboard: Courses count =", response?.data?.length);
-        setInstructorCoursesList(response?.data);
-      } else {
-        console.log("InstructorDashboard: Failed to fetch courses");
-        console.log("InstructorDashboard: Response message =", response?.message);
-      }
-    };
+    if (instructorStatus === "approved") {
+      const fetchAllCourses = async () => {
+        console.log("InstructorDashboard: Fetching courses...");
+        const response = await fetchInstructorCourseListService();
+        console.log("InstructorDashboard: Courses response =", response);
+        console.log("InstructorDashboard: Response success =", response?.success);
+        console.log("InstructorDashboard: Response data =", response?.data);
+        if (response?.success) {
+          console.log("InstructorDashboard: Setting courses list =", response?.data);
+          console.log("InstructorDashboard: Courses count =", response?.data?.length);
+          setInstructorCoursesList(response?.data);
+        } else {
+          console.log("InstructorDashboard: Failed to fetch courses");
+          console.log("InstructorDashboard: Response message =", response?.message);
+        }
+      };
 
-    fetchAllCourses();
-  }, [setInstructorCoursesList]);
+      fetchAllCourses();
+    }
+  }, [instructorStatus, setInstructorCoursesList]);
 
   // Check if instructor is approved
-  if (userStatus !== null && auth.user?.role === 'instructor' && userStatus !== 'approved') {
-    return <WaitingForApproval />;
+  if (instructorStatus !== null && auth.user?.role === 'instructor' && instructorStatus !== 'approved') {
+    return <WaitingForApproval status={instructorStatus} />;
   }
 
   const menuItems = [

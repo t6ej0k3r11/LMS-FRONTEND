@@ -6,7 +6,7 @@ import { Textarea } from "../../components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
 import { useToast } from "../../hooks/use-toast";
 import { CheckCircle, XCircle, Eye, BookOpen, User, Calendar } from "lucide-react";
-import { getPendingCoursesService, reviewCourseService } from "../../services";
+import { getPendingCoursesService, approveCourseService, rejectCourseService } from "../../services";
 
 function CourseApproval() {
   const { toast } = useToast();
@@ -49,7 +49,7 @@ function CourseApproval() {
   const handleApprove = async (courseId) => {
     setLoading(true);
     try {
-      const response = await reviewCourseService(courseId, { action: "approve" });
+      const response = await approveCourseService(courseId);
 
       if (response.success) {
         // Update local state
@@ -59,7 +59,7 @@ function CourseApproval() {
 
         toast({
           title: "Course Approved",
-          description: "The course has been approved. The instructor can now publish it.",
+          description: "The course has been approved and published successfully.",
         });
       } else {
         throw new Error(response.message || "Failed to approve course");
@@ -88,10 +88,7 @@ function CourseApproval() {
 
     setLoading(true);
     try {
-      const response = await reviewCourseService(courseId, {
-        action: "reject",
-        rejectionReason: rejectionReason.trim()
-      });
+      const response = await rejectCourseService(courseId, rejectionReason.trim());
 
       if (response.success) {
         // Update local state

@@ -102,7 +102,6 @@ function StudentViewCourseProgressPage() {
       // Save progress to database
       try {
         await updateLectureProgressService(
-          auth?.user?._id,
           studentCurrentCourseProgress?.courseDetails?._id,
           currentLecture._id,
           progressData.progressValue
@@ -111,10 +110,10 @@ function StudentViewCourseProgressPage() {
         console.error("Error saving progress:", error);
       }
     }
-  }, [currentLecture, auth?.user?._id, studentCurrentCourseProgress?.courseDetails?._id]);
+  }, [currentLecture, studentCurrentCourseProgress?.courseDetails?._id]);
 
   const fetchCurrentCourseProgress = useCallback(async () => {
-    const response = await getCurrentCourseProgressService(auth?.user?._id, id);
+    const response = await getCurrentCourseProgressService(id);
     if (response?.success) {
       if (!response?.data?.isPurchased) {
         setLockCourse(true);
@@ -131,30 +130,6 @@ function StudentViewCourseProgressPage() {
           setShowConfetti(true);
 
           return;
-        }
-
-        // Check if course should be marked as completed based on current progress
-        const allLecturesCompleted = response?.data?.progress?.every(p => p.viewed && p.progressValue >= 1);
-        const allQuizzesCompleted = response?.data?.quizzesProgress?.every(q => q.completed);
-
-        if (allLecturesCompleted && allQuizzesCompleted && !response?.data?.completed) {
-          // Trigger course completion check by marking the last lecture as viewed
-          const lastLecture = response?.data?.courseDetails?.curriculum[response?.data?.courseDetails?.curriculum.length - 1];
-          if (lastLecture) {
-            await markLectureAsViewedService(auth?.user?._id, id, lastLecture._id, false);
-            // Refresh progress to get updated completion status
-            const updatedResponse = await getCurrentCourseProgressService(auth?.user?._id, id);
-            if (updatedResponse?.success && updatedResponse?.data?.completed) {
-              setStudentCurrentCourseProgress({
-                courseDetails: updatedResponse?.data?.courseDetails,
-                progress: updatedResponse?.data?.progress,
-                quizzesProgress: updatedResponse?.data?.quizzesProgress || [],
-              });
-              setShowCourseCompleteDialog(true);
-              setShowConfetti(true);
-              return;
-            }
-          }
         }
 
         if (response?.data?.progress?.length === 0) {
@@ -186,7 +161,7 @@ function StudentViewCourseProgressPage() {
         }
       }
     }
-  }, [auth?.user?._id, id, setStudentCurrentCourseProgress]);
+  }, [id, setStudentCurrentCourseProgress]);
 
   const fetchUserProgress = useCallback(async () => {
     try {
@@ -236,7 +211,6 @@ function StudentViewCourseProgressPage() {
     try {
       console.log(isRewatch ? "Marking lecture as rewatch:" : "Marking lecture as viewed:", currentLecture._id);
       const response = await markLectureAsViewedService(
-        auth.user._id,
         studentCurrentCourseProgress.courseDetails._id,
         currentLecture._id,
         isRewatch
@@ -285,7 +259,6 @@ function StudentViewCourseProgressPage() {
 
   async function handleRewatchCourse() {
     const response = await resetCourseProgressService(
-      auth?.user?._id,
       studentCurrentCourseProgress?.courseDetails?._id
     );
 
@@ -643,22 +616,31 @@ function StudentViewCourseProgressPage() {
                           .filter((quiz) => quiz.lectureId === item._id)
                           .map((quiz) => {
                             const isQuizCompleted = studentCurrentCourseProgress?.userProgress?.completedQuizzes?.includes(quiz._id);
+                            const isQuizValid = quiz.isValid !== false; // Default to true if not set
 
                             return (
                               <div
                                 key={quiz._id}
-                                className="flex items-center space-x-3 text-sm ml-8 mt-3 p-2 rounded-lg border transition-all duration-200 cursor-pointer bg-gray-800/50 border-gray-600/50 hover:bg-gray-700/50 hover:border-gray-500/50"
-                                onClick={() => navigate(`/quiz-player/${quiz._id}`)}
+                                className={`flex items-center space-x-3 text-sm ml-8 mt-3 p-2 rounded-lg border transition-all duration-200 ${
+                                  isQuizValid
+                                    ? 'cursor-pointer bg-gray-800/50 border-gray-600/50 hover:bg-gray-700/50 hover:border-gray-500/50'
+                                    : 'bg-red-900/20 border-red-600/50'
+                                }`}
+                                onClick={() => isQuizValid && navigate(`/quiz-player/${quiz._id}`)}
                               >
                                 <div className={`p-1.5 rounded-md ${
-                                  isQuizCompleted
+                                  isQuizCompleted && isQuizValid
                                     ? 'bg-green-500/20'
-                                    : 'bg-blue-500/20'
+                                    : isQuizValid
+                                      ? 'bg-blue-500/20'
+                                      : 'bg-red-500/20'
                                 }`}>
-                                  {isQuizCompleted ? (
+                                  {isQuizCompleted && isQuizValid ? (
                                     <Check className="h-4 w-4 text-green-400" />
-                                  ) : (
+                                  ) : isQuizValid ? (
                                     <BookOpen className="h-4 w-4 text-blue-400" />
+                                  ) : (
+                                    <Lock className="h-4 w-4 text-red-400" />
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -666,7 +648,10 @@ function StudentViewCourseProgressPage() {
                                     Quiz: {quiz?.title}
                                   </span>
                                   <span className="text-xs text-gray-400">
-                                    {isQuizCompleted ? 'Completed' : 'Available anytime'}
+                                    {isQuizValid
+                                      ? (isQuizCompleted ? 'Completed' : 'Available anytime')
+                                      : 'Quiz has missing questions'
+                                    }
                                   </span>
                                 </div>
                               </div>
@@ -682,43 +667,47 @@ function StudentViewCourseProgressPage() {
                       // Final quizzes are now always available after enrollment
                       const isQuizAvailable = true;
                       const isQuizCompleted = studentCurrentCourseProgress?.userProgress?.completedQuizzes?.includes(quiz._id);
+                      const isQuizValid = quiz.isValid !== false; // Default to true if not set
 
                       return (
                         <div
                           key={quiz._id}
                           className={`flex items-center space-x-3 text-sm mt-6 p-3 rounded-xl border-2 transition-all duration-300 ${
-                            isQuizAvailable
+                            isQuizAvailable && isQuizValid
                               ? 'cursor-pointer bg-gradient-to-r from-purple-600/10 to-pink-600/10 border-purple-500/30 hover:border-purple-400/50 hover:shadow-lg'
-                              : 'bg-gray-900/50 border-gray-700/50'
+                              : 'bg-red-900/20 border-red-600/50'
                           }`}
-                          onClick={() => isQuizAvailable && navigate(`/quiz-player/${quiz._id}`)}
+                          onClick={() => isQuizAvailable && isQuizValid && navigate(`/quiz-player/${quiz._id}`)}
                         >
                           <div className={`p-2 rounded-lg ${
-                            isQuizCompleted
+                            isQuizCompleted && isQuizValid
                               ? 'bg-green-500/20'
-                              : isQuizAvailable
+                              : isQuizAvailable && isQuizValid
                                 ? 'bg-purple-500/20'
-                                : 'bg-gray-500/20'
+                                : 'bg-red-500/20'
                           }`}>
-                            {isQuizCompleted ? (
+                            {isQuizCompleted && isQuizValid ? (
                               <Check className="h-5 w-5 text-green-400" />
-                            ) : isQuizAvailable ? (
+                            ) : isQuizValid ? (
                               <BookOpen className="h-5 w-5 text-purple-400" />
                             ) : (
-                              <Lock className="h-5 w-5 text-gray-500" />
+                              <Lock className="h-5 w-5 text-red-400" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <span className={`block font-semibold text-base ${
-                              isQuizAvailable ? 'text-white' : 'text-gray-500'
+                              isQuizAvailable && isQuizValid ? 'text-white' : 'text-red-400'
                             }`}>
                               Final Quiz: {quiz?.title}
                             </span>
                             <span className="text-xs text-gray-400">
-                              {isQuizCompleted ? 'Completed' : 'Available anytime'}
+                              {isQuizValid
+                                ? (isQuizCompleted ? 'Completed' : 'Available anytime')
+                                : 'Quiz has missing questions'
+                              }
                             </span>
                           </div>
-                          {isQuizCompleted && (
+                          {isQuizCompleted && isQuizValid && (
                             <div className="px-2 py-1 bg-green-500/20 rounded-full">
                               <span className="text-xs font-medium text-green-400">Completed</span>
                             </div>
@@ -804,14 +793,14 @@ function StudentViewCourseProgressPage() {
                             </div>
                             <div className="ml-4">
                               <Button
-                                onClick={() => isQuizAvailable && navigate(`/quiz-player/${quiz._id}`)}
-                                disabled={!isQuizAvailable}
+                                onClick={() => isQuizAvailable && quiz.isValid && navigate(`/quiz-player/${quiz._id}`)}
+                                disabled={!isQuizAvailable || !quiz.isValid}
                                 variant={isQuizCompleted ? "secondary" : "default"}
                                 size="sm"
                                 className={`transition-all duration-200 ${
                                   isQuizCompleted
                                     ? 'bg-green-600 hover:bg-green-700 text-white border-green-500'
-                                    : isQuizAvailable
+                                    : isQuizAvailable && quiz.isValid
                                       ? 'bg-blue-600 hover:bg-blue-700 text-white'
                                       : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                                 }`}
@@ -824,6 +813,13 @@ function StudentViewCourseProgressPage() {
                             <div className="mt-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
                               <p className="text-xs text-yellow-400">
                                 {isLectureQuiz ? 'Complete the associated lecture to unlock this quiz' : 'Complete all lectures to unlock this final quiz'}
+                              </p>
+                            </div>
+                          )}
+                          {isQuizAvailable && !quiz.isValid && (
+                            <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+                              <p className="text-xs text-red-400">
+                                This quiz contains missing questions and cannot be taken. Please contact the instructor.
                               </p>
                             </div>
                           )}
@@ -1003,7 +999,7 @@ function StudentViewCourseProgressPage() {
       <Dialog open={lockCourse}>
         <DialogContent className="sm:w-[425px]">
           <DialogHeader>
-            <DialogTitle>You cant view this page</DialogTitle>
+            <DialogTitle>You cannot view this page</DialogTitle>
             <DialogDescription>
               Please purchase this course to get access
             </DialogDescription>

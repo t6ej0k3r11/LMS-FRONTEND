@@ -25,6 +25,7 @@ function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -41,6 +42,7 @@ function AdminDashboard() {
   });
   const [recentActivities, setRecentActivities] = useState([]);
   const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState("");
 
   // Instructor management state
   const [pendingInstructors, setPendingInstructors] = useState([]);
@@ -49,6 +51,20 @@ function AdminDashboard() {
   const [selectedInstructor, setSelectedInstructor] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Reset current page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [roleFilter, statusFilter]);
+
   // Fetch users function
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -56,7 +72,7 @@ function AdminDashboard() {
       const params = {
         page: currentPage,
         limit: 10,
-        search: searchTerm,
+        search: debouncedSearchTerm,
         role: roleFilter,
         status: statusFilter,
       };
@@ -73,7 +89,7 @@ function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, searchTerm, roleFilter, statusFilter, toast]);
+  }, [currentPage, debouncedSearchTerm, roleFilter, statusFilter, toast]);
 
   // Handle user actions
   const handleDeleteUser = async () => {
@@ -137,6 +153,7 @@ function AdminDashboard() {
   // Fetch dashboard data
   const fetchDashboardData = useCallback(async () => {
     try {
+      setDashboardError("");
       setDashboardLoading(true);
       const [statsResponse, activitiesResponse] = await Promise.all([
         getAdminStatsService(),
@@ -151,16 +168,16 @@ function AdminDashboard() {
         setRecentActivities(activitiesResponse.data);
       }
     } catch (error) {
-      console.error("Failed to fetch dashboard data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch dashboard data. Please try again.",
-        variant: "destructive",
-      });
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        logout();
+        setDashboardError("Session expired. Please log in again.");
+      } else {
+        setDashboardError("Failed to fetch dashboard data. Try again later.");
+      }
     } finally {
       setDashboardLoading(false);
     }
-  }, [toast]);
+  }, [logout]);
 
   // Effect to fetch users when filters change
   useEffect(() => {
@@ -343,7 +360,13 @@ function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            {dashboardLoading ? (
+            {dashboardError ? (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <p className="text-red-500">{dashboardError}</p>
+                </CardContent>
+              </Card>
+            ) : dashboardLoading ? (
               <Card>
                 <CardContent className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>

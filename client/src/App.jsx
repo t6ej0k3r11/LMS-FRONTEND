@@ -3,6 +3,7 @@ import AuthPage from "./pages/auth";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 import RouteGuard from "./components/route-guard";
+import ProtectedAdminRoute from "./components/ProtectedAdminRoute";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { useContext } from "react";
 import { AuthContext } from "./context/auth-context";
@@ -85,11 +86,9 @@ function App() {
       <Route
         path="/admin"
         element={
-          <RouteGuard
-            element={<AdminDashboard />}
-            authenticated={auth?.authenticate}
-            user={auth?.user}
-          />
+          <ProtectedAdminRoute>
+            <AdminDashboard />
+          </ProtectedAdminRoute>
         }
       />
       <Route

@@ -3,8 +3,9 @@ import { AuthContext } from "@/context/auth-context";
 import { LogOut } from "lucide-react";
 import logoImage from "@/assets/logo.jpg";
 import { useContext } from "react";
+import PropTypes from 'prop-types';
 
-function WaitingForApproval() {
+function WaitingForApproval({ status = "pending" }) {
   const { resetCredentials } = useContext(AuthContext);
 
   function handleLogout() {
@@ -63,9 +64,14 @@ function WaitingForApproval() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-foreground mb-2">Waiting for Approval</h2>
+                <h2 className="text-2xl font-bold text-foreground mb-2">
+                  {status === "rejected" ? "Application Rejected" : "Waiting for Approval"}
+                </h2>
                 <p className="text-muted-foreground">
-                  Your instructor account is under review. You will receive an email when approved.
+                  {status === "rejected"
+                    ? "Your instructor application has been rejected. Please contact support for more information."
+                    : "Your instructor account is under review. You will receive an email when approved."
+                  }
                 </p>
               </div>
               <Button onClick={handleLogout} variant="outline" className="rounded-2xl">
@@ -79,5 +85,9 @@ function WaitingForApproval() {
     </div>
   );
 }
+
+WaitingForApproval.propTypes = {
+  status: PropTypes.string,
+};
 
 export default WaitingForApproval;

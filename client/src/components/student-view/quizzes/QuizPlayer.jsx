@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { StudentContext } from "@/context/student-context";
 import { ChevronLeft, ChevronRight, Send, AlertTriangle, Save, RotateCw, ListChecks, TimerReset, Trophy } from "lucide-react";
+import PropTypes from 'prop-types';
 
 import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -20,11 +21,10 @@ import {
   finalizeQuizAttemptService,
 } from "@/services";
 import {
-  validateQuizSubmission,
-  checkQuizPrerequisites
+  validateQuizSubmission
 } from "@/lib/quiz-utils";
 
-function QuizPlayer() {
+function QuizPlayer({ validation }) {
   const { quizId } = useParams();
   const navigate = useNavigate();
   const { currentQuiz, setCurrentQuiz, setStudentQuizProgress, studentCurrentCourseProgress, setStudentCurrentCourseProgress } = useContext(StudentContext);
@@ -66,50 +66,15 @@ function QuizPlayer() {
       setLoading(true);
       console.log("Fetching quiz with ID:", quizId);
 
-      // First, refresh the course progress data to ensure we have the latest lecture completion status
-      if (studentCurrentCourseProgress?.courseDetails?._id) {
-        console.log("Refreshing course progress data...");
-        const progressResponse = await getCurrentCourseProgressService(
-          "current", // Use "current" as the userId since the service handles auth
-          studentCurrentCourseProgress.courseDetails._id
-        );
-        if (progressResponse?.success) {
-          console.log("Updated course progress:", progressResponse.data);
-          setStudentCurrentCourseProgress({
-            courseDetails: progressResponse.data.courseDetails,
-            progress: progressResponse.data.progress,
-            quizzesProgress: progressResponse.data.quizzesProgress || [],
-          });
-        }
-      }
-
+      // Validation is already done at page level, so we can proceed
       const response = await getQuizForTakingService(quizId);
       console.log("Quiz fetch response:", response);
       if (response?.success) {
         const quiz = response.data.quiz;
         console.log("Quiz data:", quiz);
 
-        // Check prerequisites using the utility function
-        const existingAttempts = response.data.attempts || [];
-        const prerequisiteCheck = checkQuizPrerequisites(
-          quiz,
-          studentCurrentCourseProgress?.progress || [],
-          existingAttempts,
-          studentCurrentCourseProgress?.courseDetails
-        );
-
-        console.log("Prerequisite check result:", prerequisiteCheck);
-        if (!prerequisiteCheck.canAccess) {
-          alert(`Cannot access quiz: ${prerequisiteCheck.reason}`);
-          navigate(-1);
-          return;
-        }
-
         setCurrentQuiz(quiz);
         setInstantFeedbackEnabled(quiz.instantFeedbackEnabled || false);
-
-        // Allow multiple attempts - students can retake quizzes anytime
-        // No longer preventing multiple simultaneous attempts
 
         // Check if quiz has questions
         if (!quiz.questions || quiz.questions.length === 0) {
@@ -118,18 +83,21 @@ function QuizPlayer() {
           return;
         }
 
+        // Use validation data to determine attempt state
+        const existingAttempts = response.data.attempts || [];
+        const resumeAttemptId = validation?.data?.resumeAttemptId;
+        const resumeReason = validation?.data?.resumeReason;
+
         // Determine if we should resume an existing attempt
-        if (prerequisiteCheck.resumeAttemptId) {
-          setAttemptId(prerequisiteCheck.resumeAttemptId);
+        if (resumeAttemptId) {
+          setAttemptId(resumeAttemptId);
           setIsResuming(true);
           const resumedAttempt = existingAttempts.find(
-            (attempt) => attempt._id === prerequisiteCheck.resumeAttemptId
+            (attempt) => attempt._id === resumeAttemptId
           );
           setResumeAttemptInfo(resumedAttempt || null);
-          setAttemptStatusMessage(
-            prerequisiteCheck.reason || "You have an active attempt. Resuming now."
-          );
-          console.log("Resuming existing attempt", prerequisiteCheck.resumeAttemptId);
+          setAttemptStatusMessage(resumeReason || "You have an active attempt. Resuming now.");
+          console.log("Resuming existing attempt", resumeAttemptId);
         } else {
           setIsResuming(false);
           setResumeAttemptInfo(null);
@@ -163,11 +131,23 @@ function QuizPlayer() {
     } finally {
       setLoading(false);
     }
-  }, [quizId, studentCurrentCourseProgress?.progress, studentCurrentCourseProgress?.courseDetails, setCurrentQuiz, setStudentCurrentCourseProgress, navigate]);
+  }, [quizId, validation, setCurrentQuiz, navigate]);
 
   useEffect(() => {
     fetchQuiz();
   }, [fetchQuiz]);
+
+  useEffect(() => {
+    if (isResuming && resumeAttemptInfo && resumeAttemptInfo.answers) {
+      const answered = new Set(resumeAttemptInfo.answers.map(a => a.questionId));
+      setAnsweredQuestions(answered);
+      const ans = resumeAttemptInfo.answers.reduce((acc, a) => {
+        acc[a.questionId] = a.answer;
+        return acc;
+      }, {});
+      setAnswers(ans);
+    }
+  }, [isResuming, resumeAttemptInfo]);
 
   useEffect(() => {
     if (attemptId && Object.keys(answers).length > 0) {
@@ -188,6 +168,10 @@ function QuizPlayer() {
           setCurrentFeedback(response.data);
           setShowFeedback(true);
           setAnsweredQuestions(prev => new Set([...prev, questionId]));
+          setAnswers(prev => ({
+            ...prev,
+            [questionId]: answer
+          }));
 
           // Auto-advance to next question after a delay
           setTimeout(() => {
@@ -236,16 +220,16 @@ function QuizPlayer() {
       await performFinalization();
     } else {
       // Normal mode - validate and submit all answers
-      const validation = validateQuizSubmission(answers, currentQuiz.questions);
-      setValidationErrors(validation.errors);
-      setValidationWarnings(validation.warnings);
+      const submissionValidation = validateQuizSubmission(answers, currentQuiz.questions);
+      setValidationErrors(submissionValidation.errors);
+      setValidationWarnings(submissionValidation.warnings);
 
-      if (!validation.isValid) {
+      if (!submissionValidation.isValid) {
         return; // Don't proceed with submission if validation fails
       }
 
       // Show confirmation dialog if there are warnings
-      if (validation.warnings.length > 0) {
+      if (submissionValidation.warnings.length > 0) {
         setShowConfirmDialog(true);
         return;
       }
@@ -275,7 +259,6 @@ function QuizPlayer() {
         if (studentCurrentCourseProgress?.courseDetails?._id) {
           console.log("Refreshing course progress after quiz submission...");
           const progressResponse = await getCurrentCourseProgressService(
-            "current", // Use "current" as the userId since the service handles auth
             studentCurrentCourseProgress.courseDetails._id
           );
           if (progressResponse?.success) {
@@ -322,7 +305,6 @@ function QuizPlayer() {
         if (studentCurrentCourseProgress?.courseDetails?._id) {
           console.log("Refreshing course progress after quiz finalization...");
           const progressResponse = await getCurrentCourseProgressService(
-            "current", // Use "current" as the userId since the service handles auth
             studentCurrentCourseProgress.courseDetails._id
           );
           if (progressResponse?.success) {
@@ -727,5 +709,17 @@ function QuizPlayer() {
     </div>
   );
 }
+
+QuizPlayer.propTypes = {
+  validation: PropTypes.shape({
+    data: PropTypes.shape({
+      resumeAttemptId: PropTypes.string,
+      resumeReason: PropTypes.string,
+    }),
+    success: PropTypes.bool,
+    canStart: PropTypes.bool,
+    message: PropTypes.string,
+  }),
+};
 
 export default QuizPlayer;
