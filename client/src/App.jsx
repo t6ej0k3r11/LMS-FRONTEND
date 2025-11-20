@@ -22,6 +22,7 @@ import QuizResults from "./components/instructor-view/quizzes/QuizResults";
 import QuizPlayerPage from "./pages/student/quiz-player";
 import StudentQuizResults from "./components/student-view/quizzes/QuizResults";
 import AdminDashboard from "./pages/admin";
+import Footer from "./components/Footer";
 
 // Temporary simple component to test rendering
 // function TestComponent() {
@@ -189,6 +190,7 @@ function App() {
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
+    <Footer />
     </ErrorBoundary>
   );
 }
