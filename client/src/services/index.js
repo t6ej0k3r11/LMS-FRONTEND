@@ -188,7 +188,7 @@ export async function checkCoursePurchaseInfoService(courseId, studentId) {
 export async function createPaymentService(formData) {
   const instance = await axiosInstance();
 
-  const { data } = await instance.post(`/student/order/create`, formData);
+  const { data } = await instance.post(`/api/orders/create`, formData);
 
   return data;
 }

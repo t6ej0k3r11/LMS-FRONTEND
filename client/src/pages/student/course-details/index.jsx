@@ -22,6 +22,7 @@ import { sanitizeUserInput } from "@/lib/sanitizer";
 import { CheckCircle, Globe, Lock, PlayCircle, BookOpen } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 function StudentViewCourseDetailsPage() {
   const {
@@ -55,69 +56,39 @@ function StudentViewCourseDetailsPage() {
 
     setIsEnrolling(true);
     try {
-      const paymentPayload = {
-        userId: auth?.user?._id,
-        userName: auth?.user?.userName,
-        userEmail: auth?.user?.userEmail,
-        orderStatus: "pending",
-        paymentMethod: "free",
-        paymentStatus: "pending",
-        orderDate: new Date(),
-        paymentId: "",
-        payerId: "",
-        instructorId: studentViewCourseDetails?.instructorId,
-        instructorName: studentViewCourseDetails?.instructorName,
-        courseImage: studentViewCourseDetails?.image,
-        courseTitle: studentViewCourseDetails?.title,
-        courseId: studentViewCourseDetails?._id,
-        coursePricing: 0,
-      };
-
-      const response = await createPaymentService(paymentPayload);
+      const response = await createPaymentService({ courseId: studentViewCourseDetails?._id });
       if (response?.success) {
         setEnrollmentSuccess(true);
         setEnrollmentStatus({ enrolled: true, completed: false });
-        console.log("Free enrollment successful");
+        toast.success("Enrollment successful!");
       } else {
-        console.log("Free enrollment failed");
+        toast.error(response?.message || "Enrollment failed.");
       }
     } catch (error) {
       console.error("Enrollment error:", error);
+      toast.error(error.response?.data?.message || "Enrollment failed.");
     } finally {
       setIsEnrolling(false);
     }
   };
 
   const handleCreatePayment = async () => {
-    const paymentPayload = {
-      userId: auth?.user?._id,
-      userName: auth?.user?.userName,
-      userEmail: auth?.user?.userEmail,
-      orderStatus: "pending",
-      paymentMethod: "paypal",
-      paymentStatus: "initiated",
-      orderDate: new Date(),
-      paymentId: "",
-      payerId: "",
-      instructorId: studentViewCourseDetails?.instructorId,
-      instructorName: studentViewCourseDetails?.instructorName,
-      courseImage: studentViewCourseDetails?.image,
-      courseTitle: studentViewCourseDetails?.title,
-      courseId: studentViewCourseDetails?._id,
-      coursePricing: studentViewCourseDetails?.pricing,
-    };
-
-    const response = await createPaymentService(paymentPayload);
-    if (response?.success) {
-      if (response?.data?.approveUrl) {
-        window.location.href = response.data.approveUrl;
+    try {
+      const response = await createPaymentService({ courseId: studentViewCourseDetails?._id, paymentConfirmed: true });
+      if (response?.success) {
+        if (response?.data?.approveUrl) {
+          window.location.href = response.data.approveUrl;
+        } else {
+          // Simulated payment, enrollment successful
+          toast.success("Enrollment successful!");
+          // Perhaps refresh or navigate to course
+        }
       } else {
-        // Simulated payment, enrollment successful
-        console.log("Enrollment successful:", response.message);
-        // Perhaps refresh or navigate to course
+        toast.error(response?.message || "Payment creation failed");
       }
-    } else {
-      console.log("Payment creation failed");
+    } catch (error) {
+      console.error("Payment error:", error);
+      toast.error(error.response?.data?.message || "Payment failed.");
     }
   };
 

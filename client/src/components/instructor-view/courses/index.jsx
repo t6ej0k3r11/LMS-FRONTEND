@@ -134,22 +134,23 @@ function InstructorCourses({ listOfCourses }) {
   const getStatusBadge = (course) => {
     const { status, approvalStatus } = course;
 
-    if (status === "published") {
+    // Check approvalStatus first as it's the source of truth for admin decisions
+    if (approvalStatus === "approved") {
       return (
         <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
           Approved (Published)
-        </span>
-      );
-    } else if (status === "submitted") {
-      return (
-        <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">
-          Submitted (Pending Review)
         </span>
       );
     } else if (approvalStatus === "rejected") {
       return (
         <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-800">
           Rejected
+        </span>
+      );
+    } else if (approvalStatus === "pending") {
+      return (
+        <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">
+          Submitted (Pending Review)
         </span>
       );
     } else if (status === "draft") {
