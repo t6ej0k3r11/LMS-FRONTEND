@@ -112,7 +112,7 @@ const Footer = () => {
       <div className="border-t border-gray-300 dark:border-gray-700 py-4">
         <div className="container mx-auto max-w-7xl px-4 md:px-8 text-center">
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            © {currentYear} DeshGory. All rights reserved. Made with ❤️ in Bangladesh.
+            © {currentYear} DeshGory. All rights reserved. Sister Concern of iTechss.
           </p>
         </div>
       </div>
