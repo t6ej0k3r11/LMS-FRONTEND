@@ -25,7 +25,7 @@ import { InstructorContext } from "@/context/instructor-context";
 import { Delete, Edit, FileQuestion } from "lucide-react";
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { deleteCourseService, fetchInstructorCourseListService } from "@/services";
+import { deleteCourseService, fetchInstructorCourseListService, publishCourseService } from "@/services";
 import { toast } from "@/hooks/use-toast";
 
 function InstructorCourses({ listOfCourses }) {
@@ -40,6 +40,7 @@ function InstructorCourses({ listOfCourses }) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [courseToDelete, setCourseToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [publishingCourseId, setPublishingCourseId] = useState(null);
 
   const handleDeleteCourse = async () => {
     if (!courseToDelete) return;
@@ -81,9 +82,80 @@ function InstructorCourses({ listOfCourses }) {
     }
   };
 
+  const handlePublishCourse = async (courseId) => {
+    try {
+      setPublishingCourseId(courseId);
+      const response = await publishCourseService(courseId);
+
+      if (response?.success) {
+        // Refresh the courses list
+        const updatedResponse = await fetchInstructorCourseListService();
+        if (updatedResponse?.success) {
+          setInstructorCoursesList(updatedResponse.data);
+        }
+
+        toast({
+          title: "Success",
+          description: response?.message || "Course published successfully!",
+        });
+      } else {
+        // Handle different error scenarios
+        let errorMessage = response?.message || "Failed to publish course";
+
+        if (errorMessage.includes("admin approval")) {
+          errorMessage = "Your course has been submitted for admin review. You will be notified once it's approved.";
+        } else if (errorMessage.includes("required fields")) {
+          errorMessage = "Please ensure your course has a title, description, and at least one lesson.";
+        } else if (errorMessage.includes("already published")) {
+          errorMessage = "This course is already published.";
+        }
+
+        toast({
+          title: "Cannot Publish Course",
+          description: errorMessage,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error publishing course:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while publishing the course",
+        variant: "destructive",
+      });
+    } finally {
+      setPublishingCourseId(null);
+    }
+  };
+
   const openDeleteDialog = (course) => {
     setCourseToDelete(course);
     setShowDeleteDialog(true);
+  };
+
+  const getStatusBadge = (course) => {
+    const { status, approvalStatus } = course;
+
+    if (status === "published") {
+      return (
+        <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-800">
+          Published
+        </span>
+      );
+    } else if (approvalStatus === "pending") {
+      return (
+        <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-800">
+          Pending Approval
+        </span>
+      );
+    } else if (status === "draft") {
+      return (
+        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-800">
+          Draft
+        </span>
+      );
+    }
+    return null;
   };
 
   return (
@@ -113,6 +185,7 @@ function InstructorCourses({ listOfCourses }) {
             <TableHeader>
               <TableRow className="border-white/70">
                 <TableHead className="text-muted-foreground">Course</TableHead>
+                <TableHead className="text-muted-foreground">Status</TableHead>
                 <TableHead className="text-muted-foreground">Students</TableHead>
                 <TableHead className="text-muted-foreground">Revenue</TableHead>
                 <TableHead className="text-right text-muted-foreground">Actions</TableHead>
@@ -129,6 +202,9 @@ function InstructorCourses({ listOfCourses }) {
                         {course?.title}
                       </TableCell>
                       <TableCell>
+                        {getStatusBadge(course)}
+                      </TableCell>
+                      <TableCell>
                         <span className="rounded-full bg-[hsla(var(--brand-green)/0.15)] px-3 py-1 text-sm font-medium text-primary">
                           {course?.students?.length}
                         </span>
@@ -138,6 +214,17 @@ function InstructorCourses({ listOfCourses }) {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          {course?.status === "draft" && course?.approvalStatus === "approved" && (
+                            <Button
+                              onClick={() => handlePublishCourse(course._id)}
+                              disabled={publishingCourseId === course._id}
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-2xl bg-white/70 text-green-600 hover:text-green-700"
+                            >
+                              {publishingCourseId === course._id ? "Publishing..." : "Publish"}
+                            </Button>
+                          )}
                           <Button
                             onClick={() => navigate(`/instructor/edit-course/${course?._id}`)}
                             variant="ghost"
@@ -223,6 +310,8 @@ InstructorCourses.propTypes = {
       title: PropTypes.string.isRequired,
       students: PropTypes.array,
       pricing: PropTypes.number,
+      status: PropTypes.string,
+      approvalStatus: PropTypes.string,
     })
   ).isRequired,
 };

@@ -14,6 +14,7 @@ import { AuthContext } from "@/context/auth-context";
 import { StudentContext } from "@/context/student-context";
 import {
   getCurrentCourseProgressService,
+  getUserCourseProgressService,
   getStudentQuizzesByCourseService,
   markLectureAsViewedService,
   resetCourseProgressService,
@@ -41,8 +42,18 @@ function StudentViewCourseProgressPage() {
   const [courseQuizzes, setCourseQuizzes] = useState([]);
   const { id } = useParams();
 
-  // Calculate real-time overall progress percentage and lecture count
-  const { overallProgressPercentage, completedLecturesCount } = useMemo(() => {
+  // Use backend progress data instead of calculating locally
+  const { overallProgressPercentage, videoProgressPercentage, completedLecturesCount } = useMemo(() => {
+    // Use the simplified progress from backend if available
+    if (studentCurrentCourseProgress?.userProgress) {
+      return {
+        overallProgressPercentage: studentCurrentCourseProgress.userProgress.overallProgressPercentage || 0,
+        videoProgressPercentage: studentCurrentCourseProgress.userProgress.videoProgressPercentage || 0,
+        completedLecturesCount: studentCurrentCourseProgress.userProgress.completedLessons.length
+      };
+    }
+
+    // Fallback to legacy calculation
     const totalLectures = studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 1;
     const completedLectures = studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length || 0;
 
@@ -65,6 +76,7 @@ function StudentViewCourseProgressPage() {
 
     return {
       overallProgressPercentage: Math.min(Math.round(totalProgress), 100),
+      videoProgressPercentage: Math.min(Math.round(totalProgress), 100), // Fallback same as overall
       completedLecturesCount: finalCompletedCount
     };
   }, [studentCurrentCourseProgress, currentLecture, realTimeProgress]);
@@ -176,6 +188,29 @@ function StudentViewCourseProgressPage() {
     }
   }, [auth?.user?._id, id, setStudentCurrentCourseProgress]);
 
+  const fetchUserProgress = useCallback(async () => {
+    try {
+      const response = await getUserCourseProgressService(id);
+      if (response?.success) {
+        // Update progress in context with the simplified data
+        setStudentCurrentCourseProgress(prev => ({
+          ...prev,
+          userProgress: {
+            completedLessons: response?.data?.completedLessons || [],
+            completedQuizzes: response?.data?.completedQuizzes || [],
+            videoProgressPercentage: response?.data?.videoProgressPercentage || 0,
+            overallProgressPercentage: response?.data?.overallProgressPercentage || 0,
+            isCompleted: response?.data?.isCompleted || false,
+            completionDate: response?.data?.completionDate,
+            lastUpdated: response?.data?.lastUpdated,
+          }
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching user progress:", error);
+    }
+  }, [id, setStudentCurrentCourseProgress]);
+
   const fetchCourseQuizzes = useCallback(async () => {
     const response = await getStudentQuizzesByCourseService(id);
     if (response?.success) {
@@ -208,29 +243,34 @@ function StudentViewCourseProgressPage() {
       );
 
       if (response?.success) {
-        // Update context without fetching the entire progress
+        // Update context with the simplified progress data
         setStudentCurrentCourseProgress(prev => {
-          if (!prev?.progress) return prev;
-          
-          const progressExists = prev.progress.some(p => p.lectureId === currentLecture._id);
-          
-          if (progressExists) {
-            return {
-              ...prev,
-              progress: prev.progress.map(p => 
-                p.lectureId === currentLecture._id 
-                  ? { ...p, viewed: true }
-                  : p
-              )
-            };
-          } else {
-            return {
-              ...prev,
-              progress: [...prev.progress, { lectureId: currentLecture._id, viewed: true }]
-            };
+          const updatedCompletedLessons = prev?.userProgress?.completedLessons || [];
+          if (!updatedCompletedLessons.includes(currentLecture._id)) {
+            updatedCompletedLessons.push(currentLecture._id);
           }
+
+          // Recalculate video progress percentage
+          const totalLectures = prev?.courseDetails?.curriculum?.length || 1;
+          const newVideoProgressPercentage = Math.round((updatedCompletedLessons.length / totalLectures) * 100);
+
+          // Calculate overall progress (videos 50% + quizzes 50%)
+          // We don't have courseQuizzes in context here, so we'll use a simple calculation
+          // This will be updated when fetchUserProgress is called
+          const newOverallProgressPercentage = Math.round(newVideoProgressPercentage * 0.5 + 50); // Assume 50% for quizzes initially
+
+          return {
+            ...prev,
+            userProgress: {
+              ...prev.userProgress,
+              completedLessons: updatedCompletedLessons,
+              videoProgressPercentage: newVideoProgressPercentage,
+              overallProgressPercentage: newOverallProgressPercentage,
+              lastUpdated: new Date().toISOString(),
+            }
+          };
         });
-        
+
         setLectureProgress(prev => ({
           ...prev,
           [currentLecture._id]: 1
@@ -253,14 +293,31 @@ function StudentViewCourseProgressPage() {
       setCurrentLecture(null);
       setShowConfetti(false);
       setShowCourseCompleteDialog(false);
+
+      // Reset userProgress in context
+      setStudentCurrentCourseProgress(prev => ({
+        ...prev,
+        userProgress: {
+          completedLessons: [],
+          completedQuizzes: [],
+          videoProgressPercentage: 0,
+          overallProgressPercentage: 0,
+          isCompleted: false,
+          completionDate: null,
+          lastUpdated: new Date().toISOString(),
+        }
+      }));
+
       fetchCurrentCourseProgress();
+      fetchUserProgress();
     }
   }
 
   useEffect(() => {
     fetchCurrentCourseProgress();
+    fetchUserProgress();
     fetchCourseQuizzes();
-  }, [id, fetchCurrentCourseProgress, fetchCourseQuizzes]);
+  }, [id, fetchCurrentCourseProgress, fetchUserProgress, fetchCourseQuizzes]);
 
   // Track real-time progress updates
   const [lastProgressUpdate, setLastProgressUpdate] = useState(null);
@@ -350,12 +407,12 @@ function StudentViewCourseProgressPage() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-xs text-gray-400">Quizzes</span>
-                  <span className="font-semibold text-white">{studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length || 0}/{courseQuizzes?.length || 0}</span>
+                  <span className="font-semibold text-white">{studentCurrentCourseProgress?.userProgress?.completedQuizzes?.length || 0}/{courseQuizzes?.length || 0}</span>
                 </div>
               </div>
               {(() => {
-                const allLecturesCompleted = studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length === studentCurrentCourseProgress?.courseDetails?.curriculum?.length;
-                const allQuizzesCompleted = studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length === courseQuizzes?.length;
+                const allLecturesCompleted = studentCurrentCourseProgress?.userProgress?.completedLessons?.length === studentCurrentCourseProgress?.courseDetails?.curriculum?.length;
+                const allQuizzesCompleted = (studentCurrentCourseProgress?.userProgress?.completedQuizzes?.length || 0) === courseQuizzes?.length;
                 const isCourseCompleted = allLecturesCompleted && allQuizzesCompleted;
                 return isCourseCompleted ? (
                   <div className="flex items-center space-x-2">
@@ -374,14 +431,23 @@ function StudentViewCourseProgressPage() {
                   <div className="w-2 h-2 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full"></div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-xs text-gray-400">Progress</span>
+                  <span className="text-xs text-gray-400">Overall Progress</span>
                   <span className="font-semibold text-white">{overallProgressPercentage}%</span>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="p-1 bg-blue-500/20 rounded-lg">
+                  <Play className="h-3 w-3 text-blue-400" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs text-gray-400">Video Progress</span>
+                  <span className="font-semibold text-white">{videoProgressPercentage}%</span>
                 </div>
               </div>
               {(() => {
                 const finalQuizzes = courseQuizzes?.filter(quiz => !quiz.lectureId) || [];
                 const completedFinalQuizzes = finalQuizzes.filter(quiz =>
-                  studentCurrentCourseProgress?.quizzesProgress?.find(qp => qp.quizId === quiz._id && qp.completed)
+                  studentCurrentCourseProgress?.userProgress?.completedQuizzes?.includes(quiz._id)
                 ).length;
                 return finalQuizzes.length > 0 ? (
                   <div className={`flex items-center space-x-2 ${completedFinalQuizzes === finalQuizzes.length ? 'text-green-400' : 'text-yellow-400'}`}>
@@ -534,27 +600,23 @@ function StudentViewCourseProgressPage() {
                       <div key={item._id}>
                         <div
                           className={`flex items-center space-x-3 text-sm font-medium cursor-pointer p-3 rounded-xl transition-all duration-300 border ${
-                            currentLecture?._id === item._id
-                              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl border-blue-500/50 scale-105'
-                              : 'text-white hover:bg-gray-700/50 border-transparent hover:border-gray-600/50 hover:shadow-md'
-                          }`}
-                          onClick={() => setCurrentLecture(item)}
-                        >
-                          <div className={`p-2 rounded-lg ${
-                            studentCurrentCourseProgress?.progress?.find(
-                              (progressItem) => progressItem.lectureId === item._id
-                            )?.viewed
-                              ? 'bg-green-500/20'
-                              : 'bg-blue-500/20'
-                          }`}>
-                            {studentCurrentCourseProgress?.progress?.find(
-                              (progressItem) => progressItem.lectureId === item._id
-                            )?.viewed ? (
-                              <Check className="h-5 w-5 text-green-400" />
-                            ) : (
-                              <Play className="h-5 w-5 text-blue-400" />
-                            )}
-                          </div>
+                          currentLecture?._id === item._id
+                            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-xl border-blue-500/50 scale-105'
+                            : 'text-white hover:bg-gray-700/50 border-transparent hover:border-gray-600/50 hover:shadow-md'
+                        }`}
+                        onClick={() => setCurrentLecture(item)}
+                      >
+                        <div className={`p-2 rounded-lg ${
+                          studentCurrentCourseProgress?.userProgress?.completedLessons?.includes(item._id)
+                            ? 'bg-green-500/20'
+                            : 'bg-blue-500/20'
+                        }`}>
+                          {studentCurrentCourseProgress?.userProgress?.completedLessons?.includes(item._id) ? (
+                            <Check className="h-5 w-5 text-green-400" />
+                          ) : (
+                            <Play className="h-5 w-5 text-blue-400" />
+                          )}
+                        </div>
                           <div className="flex-1 min-w-0">
                             <span className="block truncate font-semibold">{item?.title}</span>
                             <span className="text-xs opacity-75">Lecture {studentCurrentCourseProgress?.courseDetails?.curriculum.indexOf(item) + 1}</span>
@@ -580,10 +642,7 @@ function StudentViewCourseProgressPage() {
                         {courseQuizzes
                           .filter((quiz) => quiz.lectureId === item._id)
                           .map((quiz) => {
-                            const quizProgress = studentCurrentCourseProgress?.quizzesProgress?.find(
-                              (qp) => qp.quizId === quiz._id
-                            );
-                            const isQuizCompleted = quizProgress?.completed;
+                            const isQuizCompleted = studentCurrentCourseProgress?.userProgress?.completedQuizzes?.includes(quiz._id);
 
                             return (
                               <div
@@ -620,12 +679,9 @@ function StudentViewCourseProgressPage() {
                   {courseQuizzes
                     .filter((quiz) => !quiz.lectureId)
                     .map((quiz) => {
-                      const quizProgress = studentCurrentCourseProgress?.quizzesProgress?.find(
-                        (qp) => qp.quizId === quiz._id
-                      );
                       // Final quizzes are now always available after enrollment
                       const isQuizAvailable = true;
-                      const isQuizCompleted = quizProgress?.completed;
+                      const isQuizCompleted = studentCurrentCourseProgress?.userProgress?.completedQuizzes?.includes(quiz._id);
 
                       return (
                         <div
@@ -679,27 +735,17 @@ function StudentViewCourseProgressPage() {
                   <h2 className="text-xl font-bold mb-4">Course Quizzes</h2>
                   {courseQuizzes.length > 0 ? (
                     courseQuizzes.map((quiz) => {
-                      const quizProgress = studentCurrentCourseProgress?.quizzesProgress?.find(
-                        (qp) => qp.quizId === quiz._id
-                      );
-                      const isQuizCompleted = quizProgress?.completed;
+                      const isQuizCompleted = studentCurrentCourseProgress?.userProgress?.completedQuizzes?.includes(quiz._id);
                       const isLectureQuiz = quiz.lectureId;
 
                       let isQuizAvailable = false;
                       if (isLectureQuiz) {
-                        const lecture = studentCurrentCourseProgress?.courseDetails?.curriculum.find(
-                          (lec) => lec._id === quiz.lectureId
-                        );
-                        isQuizAvailable = studentCurrentCourseProgress?.progress?.find(
-                          (progressItem) => progressItem.lectureId === lecture?._id
-                        )?.viewed;
+                        // Check if the associated lecture is completed
+                        isQuizAvailable = studentCurrentCourseProgress?.userProgress?.completedLessons?.includes(quiz.lectureId);
                       } else {
-                        // Final quiz - available after all lectures are viewed
-                        isQuizAvailable = studentCurrentCourseProgress?.courseDetails?.curriculum.every(
-                          (lecture) => studentCurrentCourseProgress?.progress?.find(
-                            (progressItem) => progressItem.lectureId === lecture._id
-                          )?.viewed
-                        );
+                        // Final quiz - available after all lectures are completed
+                        const totalLectures = studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 0;
+                        isQuizAvailable = studentCurrentCourseProgress?.userProgress?.completedLessons?.length === totalLectures;
                       }
 
                       return (
@@ -821,16 +867,16 @@ function StudentViewCourseProgressPage() {
                     </h3>
                     <div className="space-y-4">
                       <div className={`flex items-center space-x-4 p-4 rounded-xl border-2 transition-all duration-300 ${
-                        studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length === studentCurrentCourseProgress?.courseDetails?.curriculum?.length
+                        (studentCurrentCourseProgress?.userProgress?.completedLessons?.length || 0) === studentCurrentCourseProgress?.courseDetails?.curriculum?.length
                           ? 'bg-green-500/10 border-green-500/30'
                           : 'bg-gray-800/50 border-gray-600/30'
                       }`}>
                         <div className={`p-2 rounded-lg ${
-                          studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length === studentCurrentCourseProgress?.courseDetails?.curriculum?.length
+                          (studentCurrentCourseProgress?.userProgress?.completedLessons?.length || 0) === studentCurrentCourseProgress?.courseDetails?.curriculum?.length
                             ? 'bg-green-500/20'
                             : 'bg-blue-500/20'
                         }`}>
-                          {studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length === studentCurrentCourseProgress?.courseDetails?.curriculum?.length ? (
+                          {(studentCurrentCourseProgress?.userProgress?.completedLessons?.length || 0) === studentCurrentCourseProgress?.courseDetails?.curriculum?.length ? (
                             <Check className="h-6 w-6 text-green-400" />
                           ) : (
                             <Play className="h-6 w-6 text-blue-400" />
@@ -843,28 +889,28 @@ function StudentViewCourseProgressPage() {
                               <div
                                 className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
                                 style={{
-                                  width: `${overallProgressPercentage}%`
+                                  width: `${videoProgressPercentage}%`
                                 }}
                               ></div>
                             </div>
                             <span className="text-sm font-medium text-gray-300">
-                              {studentCurrentCourseProgress?.progress?.filter(p => p.viewed).length || 0}/{studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 0}
+                              {studentCurrentCourseProgress?.userProgress?.completedLessons?.length || 0}/{studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 0}
                             </span>
                           </div>
                         </div>
                       </div>
 
                       <div className={`flex items-center space-x-4 p-4 rounded-xl border-2 transition-all duration-300 ${
-                        studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length === courseQuizzes?.length
+                        (studentCurrentCourseProgress?.userProgress?.completedQuizzes?.length || 0) === courseQuizzes?.length
                           ? 'bg-green-500/10 border-green-500/30'
                           : 'bg-gray-800/50 border-gray-600/30'
                       }`}>
                         <div className={`p-2 rounded-lg ${
-                          studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length === courseQuizzes?.length
+                          (studentCurrentCourseProgress?.userProgress?.completedQuizzes?.length || 0) === courseQuizzes?.length
                             ? 'bg-green-500/20'
                             : 'bg-purple-500/20'
                         }`}>
-                          {studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length === courseQuizzes?.length ? (
+                          {(studentCurrentCourseProgress?.userProgress?.completedQuizzes?.length || 0) === courseQuizzes?.length ? (
                             <Check className="h-6 w-6 text-green-400" />
                           ) : (
                             <BookOpen className="h-6 w-6 text-purple-400" />
@@ -877,12 +923,12 @@ function StudentViewCourseProgressPage() {
                               <div
                                 className="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500"
                                 style={{
-                                  width: `${courseQuizzes?.length > 0 ? (studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length / courseQuizzes.length) * 100 : 0}%`
+                                  width: `${courseQuizzes?.length > 0 ? ((studentCurrentCourseProgress?.userProgress?.completedQuizzes?.length || 0) / courseQuizzes.length) * 100 : 0}%`
                                 }}
                               ></div>
                             </div>
                             <span className="text-sm font-medium text-gray-300">
-                              {studentCurrentCourseProgress?.quizzesProgress?.filter(q => q.completed).length || 0}/{courseQuizzes?.length || 0}
+                              {studentCurrentCourseProgress?.userProgress?.completedQuizzes?.length || 0}/{courseQuizzes?.length || 0}
                             </span>
                           </div>
                         </div>
@@ -891,7 +937,7 @@ function StudentViewCourseProgressPage() {
                       {(() => {
                         const finalQuizzes = courseQuizzes?.filter(quiz => !quiz.lectureId) || [];
                         const completedFinalQuizzes = finalQuizzes.filter(quiz =>
-                          studentCurrentCourseProgress?.quizzesProgress?.find(qp => qp.quizId === quiz._id && qp.completed)
+                          studentCurrentCourseProgress?.userProgress?.completedQuizzes?.includes(quiz._id)
                         ).length;
                         return finalQuizzes.length > 0 ? (
                           <div className={`flex items-center space-x-4 p-4 rounded-xl border-2 transition-all duration-300 ${

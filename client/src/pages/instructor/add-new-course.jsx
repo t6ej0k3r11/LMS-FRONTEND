@@ -11,7 +11,8 @@ import {
 import { AuthContext } from "@/context/auth-context";
 import { InstructorContext } from "@/context/instructor-context";
 import {
-  addNewCourseService,
+  createCourseDraftService,
+  publishCourseService,
   fetchInstructorCourseDetailsService,
   updateCourseByIdService,
 } from "@/services";
@@ -80,7 +81,7 @@ function AddNewCoursePage() {
     return true;
   }
 
-  async function handleCreateCourse() {
+  async function handleCreateCourse(action = "draft") {
     const courseFinalFormData = {
       instructorId: auth?.user?._id,
       instructorName: auth?.user?.userName,
@@ -88,16 +89,30 @@ function AddNewCoursePage() {
       ...courseLandingFormData,
       students: [],
       curriculum: courseCurriculumFormData,
-      isPublished: true,
+      status: action === "publish" ? "published" : "draft",
     };
 
-    const response =
-      currentEditedCourseId !== null
-        ? await updateCourseByIdService(
-            currentEditedCourseId,
-            courseFinalFormData
-          )
-        : await addNewCourseService(courseFinalFormData);
+    let response;
+    if (currentEditedCourseId !== null) {
+      // For editing existing courses
+      response = await updateCourseByIdService(
+        currentEditedCourseId,
+        courseFinalFormData
+      );
+    } else {
+      // For new courses
+      if (action === "publish") {
+        // First create as draft, then publish
+        const draftResponse = await createCourseDraftService(courseFinalFormData);
+        if (draftResponse?.success) {
+          response = await publishCourseService(draftResponse.data._id);
+        } else {
+          response = draftResponse;
+        }
+      } else {
+        response = await createCourseDraftService(courseFinalFormData);
+      }
+    }
 
     if (response?.success) {
       setCourseLandingFormData(courseLandingInitialFormData);
@@ -145,13 +160,23 @@ function AddNewCoursePage() {
     <div className="container mx-auto p-4">
       <div className="flex justify-between">
         <h1 className="text-3xl font-extrabold mb-5">Create a new course</h1>
-        <Button
-          disabled={!validateFormData()}
-          className="text-sm tracking-wider font-bold px-8"
-          onClick={handleCreateCourse}
-        >
-          SUBMIT
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            disabled={!validateFormData()}
+            variant="outline"
+            className="text-sm tracking-wider font-bold px-6"
+            onClick={() => handleCreateCourse("draft")}
+          >
+            Save as Draft
+          </Button>
+          <Button
+            disabled={!validateFormData()}
+            className="text-sm tracking-wider font-bold px-6"
+            onClick={() => handleCreateCourse("publish")}
+          >
+            Publish Course
+          </Button>
+        </div>
       </div>
       <Card>
         <CardContent>

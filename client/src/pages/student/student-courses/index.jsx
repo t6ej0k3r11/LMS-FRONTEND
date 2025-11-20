@@ -92,7 +92,7 @@ function StudentCoursesPage() {
               progress?.quizzesProgress?.find(qp => qp.quizId === quiz._id && qp.completed)
             ).length;
 
-            const isCompleted = progress?.completed;
+            const isCompleted = progress?.completed || progress?.isCompleted;
             const lecturesViewed = progress?.progress?.filter(p => p.viewed).length || 0;
             const totalLectures = progress?.courseDetails?.curriculum?.length || 0;
 

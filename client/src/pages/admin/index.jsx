@@ -12,8 +12,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Users, BookOpen, Shield, Activity, LogOut, Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 
 import { useToast } from "../../hooks/use-toast";
-import { getAllUsersService, deleteUserService, deactivateUserService, reactivateUserService, getAdminStatsService, getRecentActivitiesService } from "../../services";
+import { getAllUsersService, deleteUserService, deactivateUserService, reactivateUserService, getAdminStatsService, getRecentActivitiesService, getPendingInstructorsService, approveInstructorService, rejectInstructorService } from "../../services";
 import CourseManagement from "./course-management";
+import QuestionBankManagement from "./question-bank-management";
 
 function AdminDashboard() {
   const { auth, logout } = useContext(AuthContext);
@@ -40,6 +41,13 @@ function AdminDashboard() {
   });
   const [recentActivities, setRecentActivities] = useState([]);
   const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  // Instructor management state
+  const [pendingInstructors, setPendingInstructors] = useState([]);
+  const [instructorsLoading, setInstructorsLoading] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [selectedInstructor, setSelectedInstructor] = useState(null);
+  const [rejectionReason, setRejectionReason] = useState("");
 
   // Fetch users function
   const fetchUsers = useCallback(async () => {
@@ -161,12 +169,80 @@ function AdminDashboard() {
     }
   }, [activeTab, fetchUsers]);
 
+  // Fetch pending instructors
+  const fetchPendingInstructors = useCallback(async () => {
+    setInstructorsLoading(true);
+    try {
+      const response = await getPendingInstructorsService();
+      setPendingInstructors(response.data.instructors);
+    } catch (error) {
+      console.error("Failed to fetch pending instructors:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch pending instructors. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setInstructorsLoading(false);
+    }
+  }, [toast]);
+
+  // Handle approve instructor
+  const handleApproveInstructor = async (instructorId) => {
+    try {
+      await approveInstructorService(instructorId);
+      toast({
+        title: "Success",
+        description: "Instructor application approved successfully.",
+      });
+      fetchPendingInstructors();
+    } catch (error) {
+      console.error("Failed to approve instructor:", error);
+      toast({
+        title: "Error",
+        description: "Failed to approve instructor. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle reject instructor
+  const handleRejectInstructor = async () => {
+    if (!selectedInstructor || !rejectionReason.trim()) return;
+
+    try {
+      await rejectInstructorService(selectedInstructor._id, rejectionReason);
+      toast({
+        title: "Success",
+        description: "Instructor application rejected successfully.",
+      });
+      fetchPendingInstructors();
+      setRejectDialogOpen(false);
+      setSelectedInstructor(null);
+      setRejectionReason("");
+    } catch (error) {
+      console.error("Failed to reject instructor:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reject instructor. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Effect to fetch dashboard data
   useEffect(() => {
     if (activeTab === "overview") {
       fetchDashboardData();
     }
   }, [activeTab, fetchDashboardData]);
+
+  // Effect to fetch instructors
+  useEffect(() => {
+    if (activeTab === "instructors") {
+      fetchPendingInstructors();
+    }
+  }, [activeTab, fetchPendingInstructors]);
 
   // Format date helper
   const formatDate = (dateString) => {
@@ -247,11 +323,13 @@ function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
-          <TabsList className="glass-effect border border-white/40 grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl p-1">
+          <TabsList className="glass-effect border border-white/40 grid w-full grid-cols-2 sm:grid-cols-6 rounded-2xl p-1">
             {[
               { value: "overview", label: "Overview" },
               { value: "users", label: "User Management" },
+              { value: "instructors", label: "Instructor Applications" },
               { value: "courses", label: "Course Approval" },
+              { value: "questions", label: "Question Bank" },
               { value: "audit", label: "Audit Logs" },
             ].map((tab) => (
               <TabsTrigger
@@ -555,8 +633,122 @@ function AdminDashboard() {
             </AlertDialog>
           </TabsContent>
 
+          <TabsContent value="instructors" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Instructor Applications</CardTitle>
+                <p className="text-sm text-muted-foreground">Review and approve/reject pending instructor applications.</p>
+              </CardHeader>
+              <CardContent>
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Applied Date</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {instructorsLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            Loading...
+                          </TableCell>
+                        </TableRow>
+                      ) : pendingInstructors.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8">
+                            No pending instructor applications
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        pendingInstructors.map((instructor) => (
+                          <TableRow key={instructor._id}>
+                            <TableCell className="font-mono text-sm">{instructor._id.slice(-8)}</TableCell>
+                            <TableCell>{instructor.userName}</TableCell>
+                            <TableCell>{instructor.userEmail}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{instructor.status}</Badge>
+                            </TableCell>
+                            <TableCell>{formatDate(instructor.createdAt)}</TableCell>
+                            <TableCell>
+                              <div className="flex gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleApproveInstructor(instructor._id)}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => {
+                                    setSelectedInstructor(instructor);
+                                    setRejectDialogOpen(true);
+                                  }}
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Reject Confirmation Dialog */}
+            <AlertDialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reject Instructor Application</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Please provide a reason for rejecting the application of {selectedInstructor?.userName}.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="py-4">
+                  <textarea
+                    className="w-full p-2 border rounded-md"
+                    placeholder="Rejection reason..."
+                    value={rejectionReason}
+                    onChange={(e) => setRejectionReason(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => {
+                    setRejectDialogOpen(false);
+                    setSelectedInstructor(null);
+                    setRejectionReason("");
+                  }}>
+                    Cancel
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleRejectInstructor}
+                    className="bg-red-600 hover:bg-red-700"
+                    disabled={!rejectionReason.trim()}
+                  >
+                    Reject
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </TabsContent>
+
           <TabsContent value="courses" className="space-y-6">
             <CourseManagement />
+          </TabsContent>
+
+          <TabsContent value="questions" className="space-y-6">
+            <QuestionBankManagement />
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">

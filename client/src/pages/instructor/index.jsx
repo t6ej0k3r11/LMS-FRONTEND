@@ -4,19 +4,36 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AuthContext } from "@/context/auth-context";
 import { InstructorContext } from "@/context/instructor-context";
-import { fetchInstructorCourseListService } from "@/services";
+import { fetchInstructorCourseListService, checkAuthService } from "@/services";
 import { BarChart, Book, LogOut, FileQuestion, AlignJustify, X } from "lucide-react";
 import logoImage from "@/assets/logo.jpg";
+import WaitingForApproval from "./waiting-for-approval";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 function InstructorDashboardpage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showMobileNav, setShowMobileNav] = useState(false);
-  const { resetCredentials } = useContext(AuthContext);
+  const [userStatus, setUserStatus] = useState(null);
+  const { resetCredentials, auth } = useContext(AuthContext);
   const { instructorCoursesList, setInstructorCoursesList } =
     useContext(InstructorContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const response = await checkAuthService();
+        if (response.success) {
+          setUserStatus(response.data.user.status);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user info:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, []);
 
   useEffect(() => {
     const fetchAllCourses = async () => {
@@ -37,6 +54,11 @@ function InstructorDashboardpage() {
 
     fetchAllCourses();
   }, [setInstructorCoursesList]);
+
+  // Check if instructor is approved
+  if (userStatus !== null && auth.user?.role === 'instructor' && userStatus !== 'approved') {
+    return <WaitingForApproval />;
+  }
 
   const menuItems = [
     {

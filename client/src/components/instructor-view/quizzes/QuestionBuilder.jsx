@@ -203,7 +203,14 @@ function QuestionBuilder({ questions, setQuestions }) {
       {questions.map((question, index) => (
         <Card key={index}>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">Question {index + 1}</CardTitle>
+            <CardTitle className="text-base">
+              Question {index + 1}
+              {question.mode === "bank" && (
+                <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  From Question Bank
+                </span>
+              )}
+            </CardTitle>
             <Button
               type="button"
               variant="destructive"
@@ -214,47 +221,134 @@ function QuestionBuilder({ questions, setQuestions }) {
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Question Type</Label>
-                <Select
-                  value={question.type}
-                  onValueChange={(value) => updateQuestion(index, "type", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
-                    <SelectItem value="true-false">True/False</SelectItem>
-                    <SelectItem value="short-answer">Short Answer</SelectItem>
-                    <SelectItem value="essay">Essay</SelectItem>
-                    <SelectItem value="broad-text">Broad Text Question</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Points</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={question.points}
-                  onChange={(e) => updateQuestion(index, "points", parseInt(e.target.value))}
-                />
-              </div>
-            </div>
+            {question.mode === "bank" ? (
+              // Bank question - read-only display
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Question Type</Label>
+                    <div className="p-2 bg-gray-50 rounded border">
+                      {question.type === "multiple-choice" ? "Multiple Choice" :
+                       question.type === "true-false" ? "True/False" :
+                       question.type === "short-answer" ? "Short Answer" :
+                       question.type === "essay" ? "Essay" :
+                       question.type === "broad-text" ? "Broad Text Question" : question.type}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Points</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={question.points}
+                      onChange={(e) => updateQuestion(index, "points", parseInt(e.target.value))}
+                    />
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label>Question</Label>
-              <Textarea
-                value={question.question}
-                onChange={(e) => updateQuestion(index, "question", e.target.value)}
-                placeholder="Enter your question"
-                rows={3}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label>Question</Label>
+                  <div className="p-3 bg-gray-50 rounded border min-h-[80px]">
+                    {question.question}
+                  </div>
+                </div>
 
-            {renderQuestionType(question, index)}
+                {question.type === "multiple-choice" && question.options && question.options.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Options</Label>
+                    <div className="space-y-2">
+                      {question.options.map((option, optionIndex) => (
+                        <div key={optionIndex} className="p-2 bg-gray-50 rounded border flex items-center">
+                          <span className="text-sm mr-2">{String.fromCharCode(65 + optionIndex)}.</span>
+                          <span className="flex-1">{option}</span>
+                          {option === question.correctAnswer && (
+                            <span className="text-green-600 text-sm font-medium ml-2">✓ Correct</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {question.type === "true-false" && (
+                  <div className="space-y-2">
+                    <Label>Correct Answer</Label>
+                    <div className="p-2 bg-gray-50 rounded border">
+                      {question.correctAnswer === "true" ? "True" : "False"}
+                    </div>
+                  </div>
+                )}
+
+                {(question.type === "short-answer" || question.type === "essay" || question.type === "broad-text") && question.correctAnswer && (
+                  <div className="space-y-2">
+                    <Label>Sample Answer</Label>
+                    <div className="p-3 bg-gray-50 rounded border min-h-[60px]">
+                      {question.correctAnswer}
+                    </div>
+                  </div>
+                )}
+
+                {question.explanation && (
+                  <div className="space-y-2">
+                    <Label>Explanation</Label>
+                    <div className="p-3 bg-gray-50 rounded border min-h-[60px]">
+                      {question.explanation}
+                    </div>
+                  </div>
+                )}
+
+                <div className="text-sm text-gray-600">
+                  <strong>Subject:</strong> {question.subject} |
+                  <strong> Difficulty:</strong> {question.difficulty} |
+                  <strong> Tags:</strong> {question.tags?.join(", ") || "None"}
+                </div>
+              </div>
+            ) : (
+              // Custom question - editable
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Question Type</Label>
+                    <Select
+                      value={question.type}
+                      onValueChange={(value) => updateQuestion(index, "type", value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="multiple-choice">Multiple Choice</SelectItem>
+                        <SelectItem value="true-false">True/False</SelectItem>
+                        <SelectItem value="short-answer">Short Answer</SelectItem>
+                        <SelectItem value="essay">Essay</SelectItem>
+                        <SelectItem value="broad-text">Broad Text Question</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Points</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={question.points}
+                      onChange={(e) => updateQuestion(index, "points", parseInt(e.target.value))}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Question</Label>
+                  <Textarea
+                    value={question.question}
+                    onChange={(e) => updateQuestion(index, "question", e.target.value)}
+                    placeholder="Enter your question"
+                    rows={3}
+                  />
+                </div>
+
+                {renderQuestionType(question, index)}
+              </div>
+            )}
           </CardContent>
         </Card>
       ))}
