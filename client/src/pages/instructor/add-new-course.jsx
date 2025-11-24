@@ -18,6 +18,7 @@ import {
 } from "@/services";
 import { useContext, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 function AddNewCoursePage() {
   const {
@@ -93,32 +94,53 @@ function AddNewCoursePage() {
     };
 
     let response;
-    if (currentEditedCourseId !== null) {
-      // For editing existing courses
-      response = await updateCourseByIdService(
-        currentEditedCourseId,
-        courseFinalFormData
-      );
-    } else {
-      // For new courses
-      if (action === "publish") {
-        // First create as draft, then publish
-        const draftResponse = await createCourseDraftService(courseFinalFormData);
-        if (draftResponse?.success) {
-          response = await publishCourseService(draftResponse.data._id);
-        } else {
-          response = draftResponse;
-        }
+    try {
+      if (currentEditedCourseId !== null) {
+        // For editing existing courses
+        response = await updateCourseByIdService(
+          currentEditedCourseId,
+          courseFinalFormData
+        );
       } else {
-        response = await createCourseDraftService(courseFinalFormData);
+        // For new courses
+        if (action === "publish") {
+          // First create as draft, then publish
+          const draftResponse = await createCourseDraftService(courseFinalFormData);
+          if (draftResponse?.success) {
+            response = await publishCourseService(draftResponse.data._id);
+          } else {
+            response = draftResponse;
+          }
+        } else {
+          response = await createCourseDraftService(courseFinalFormData);
+        }
       }
-    }
 
-    if (response?.success) {
-      setCourseLandingFormData(courseLandingInitialFormData);
-      setCourseCurriculumFormData(courseCurriculumInitialFormData);
-      navigate(-1);
-      setCurrentEditedCourseId(null);
+      if (response?.success) {
+        const actionText = currentEditedCourseId !== null ? "updated" : (action === "publish" ? "published" : "saved as draft");
+        toast({
+          title: "Success",
+          description: `Course ${actionText} successfully!`,
+          variant: "default",
+        });
+        setCourseLandingFormData(courseLandingInitialFormData);
+        setCourseCurriculumFormData(courseCurriculumInitialFormData);
+        navigate(-1);
+        setCurrentEditedCourseId(null);
+      } else {
+        toast({
+          title: "Error",
+          description: response?.message || "Failed to create/update course",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Course creation/update error:", error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to create/update course",
+        variant: "destructive",
+      });
     }
 
     console.log(courseFinalFormData, "courseFinalFormData");

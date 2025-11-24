@@ -2,6 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { initialSignInFormData, initialSignUpFormData } from "@/config";
 import { createContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
+import { toast } from "@/hooks/use-toast";
 
 // Dynamic import to avoid circular dependency
 const getServices = async () => {
@@ -29,25 +30,18 @@ export default function AuthProvider({ children }) {
   async function handleRegisterUser(event) {
     event.preventDefault();
 
-    console.log("🔍 DEBUG: handleRegisterUser called");
-    console.log("🔍 DEBUG: Current signUpFormData:", signUpFormData);
-
     // Clear previous field errors
     setSignUpFieldErrors({});
 
     // Client-side validation: Check if role is selected
     if (!signUpFormData.role || signUpFormData.role === "") {
-      console.log("🔍 DEBUG: Role validation failed - no role selected");
       setSignUpFieldErrors({ role: "Please select a role." });
       return { success: false, message: "Please select a role." };
     }
 
-    console.log("🔍 DEBUG: Role validation passed, proceeding with registration");
-    console.log("Registration data:", signUpFormData);
     try {
       const { registerService } = await getServices();
       const response = await registerService(signUpFormData);
-      console.log("Registration response:", response);
 
       if (response.success) {
         // Reset form on success
@@ -61,17 +55,6 @@ export default function AuthProvider({ children }) {
         return { success: false, message: response.message };
       }
     } catch (error) {
-      console.error("Registration error:", error);
-      console.log("🔍 DEBUG: Error response data:", error.response?.data);
-      console.log("🔍 DEBUG: Error status:", error.response?.status);
-      console.log("🔍 DEBUG: Full error response:", error.response);
-      console.log("🔍 DEBUG: Error message from server:", error.response?.data?.message);
-      console.log("🔍 DEBUG: Error details from server:", error.response?.data);
-      console.log("🔍 DEBUG: Validation errors array:", error.response?.data?.errors);
-      console.log("🔍 DEBUG: First validation error:", error.response?.data?.errors?.[0]);
-      console.log("🔍 DEBUG: First validation error field:", error.response?.data?.errors?.[0]?.field);
-      console.log("🔍 DEBUG: First validation error message:", error.response?.data?.errors?.[0]?.message);
-
       // Handle field-specific validation errors
       if (error.response?.data?.errors && Array.isArray(error.response.data.errors)) {
         const fieldErrors = {};
@@ -116,6 +99,11 @@ export default function AuthProvider({ children }) {
           refreshToken: data.data.refreshToken,
         });
         setSignInFieldErrors({});
+        toast({
+          title: "Success",
+          description: "Login successful! Welcome back.",
+          variant: "default",
+        });
         return { success: true, message: data.message };
       } else {
         setAuth({
@@ -123,10 +111,14 @@ export default function AuthProvider({ children }) {
           user: null,
           refreshToken: null,
         });
+        toast({
+          title: "Error",
+          description: data.message || "Login failed. Please check your credentials.",
+          variant: "destructive",
+        });
         return { success: false, message: data.message };
       }
     } catch (error) {
-      console.error("Login error:", error);
       setAuth({
         authenticate: false,
         user: null,
@@ -144,6 +136,12 @@ export default function AuthProvider({ children }) {
         setSignInFieldErrors(fieldErrors);
       }
 
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Login failed. Please check your credentials.",
+        variant: "destructive",
+      });
+
       return {
         success: false,
         message: error.response?.data?.message || "Login failed. Please check your credentials."
@@ -154,9 +152,7 @@ export default function AuthProvider({ children }) {
   //check auth user
 
   async function checkAuthUser() {
-    console.log("🔍 DEBUG: checkAuthUser called");
     const accessToken = sessionStorage.getItem("accessToken");
-    console.log("🔍 DEBUG: accessToken exists:", !!accessToken);
     if (!accessToken) {
       setAuth({
         authenticate: false,
@@ -223,13 +219,16 @@ export default function AuthProvider({ children }) {
       user: null,
       refreshToken: null,
     });
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+      variant: "default",
+    });
   }
 
   useEffect(() => {
-    console.log("🔍 DEBUG: AuthProvider useEffect running");
     // Initialize refresh token from sessionStorage if available
     const storedRefreshToken = sessionStorage.getItem("refreshToken");
-    console.log("🔍 DEBUG: storedRefreshToken:", storedRefreshToken);
     if (storedRefreshToken) {
       setAuth(prev => ({ ...prev, refreshToken: storedRefreshToken }));
     }
@@ -255,11 +254,7 @@ export default function AuthProvider({ children }) {
         setSignUpFieldErrors,
       }}
     >
-      {(() => {
-        console.log("🔍 DEBUG: AuthProvider rendering children");
-        console.log("🔍 DEBUG: loading state:", loading);
-        return loading ? <Skeleton /> : children;
-      })()}
+      {loading ? <Skeleton /> : children}
     </AuthContext.Provider>
   );
 }

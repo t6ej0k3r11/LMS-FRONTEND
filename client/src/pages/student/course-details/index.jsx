@@ -60,13 +60,25 @@ function StudentViewCourseDetailsPage() {
       if (response?.success) {
         setEnrollmentSuccess(true);
         setEnrollmentStatus({ enrolled: true, completed: false });
-        toast.success("Enrollment successful!");
+        toast({
+          title: "Success",
+          description: "Enrollment successful!",
+          variant: "default",
+        });
       } else {
-        toast.error(response?.message || "Enrollment failed.");
+        toast({
+          title: "Error",
+          description: response?.message || "Enrollment failed.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Enrollment error:", error);
-      toast.error(error.response?.data?.message || "Enrollment failed.");
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Enrollment failed.",
+        variant: "destructive",
+      });
     } finally {
       setIsEnrolling(false);
     }
@@ -80,15 +92,27 @@ function StudentViewCourseDetailsPage() {
           window.location.href = response.data.approveUrl;
         } else {
           // Simulated payment, enrollment successful
-          toast.success("Enrollment successful!");
+          toast({
+            title: "Success",
+            description: "Enrollment successful!",
+            variant: "default",
+          });
           // Perhaps refresh or navigate to course
         }
       } else {
-        toast.error(response?.message || "Payment creation failed");
+        toast({
+          title: "Error",
+          description: response?.message || "Payment creation failed",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Payment error:", error);
-      toast.error(error.response?.data?.message || "Payment failed.");
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Payment failed.",
+        variant: "destructive",
+      });
     }
   };
 

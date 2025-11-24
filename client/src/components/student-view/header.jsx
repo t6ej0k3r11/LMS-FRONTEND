@@ -2,15 +2,16 @@ import {
   TvMinimalPlay,
   BookOpen,
   Compass,
-  BellRing,
   Menu,
   X,
+  MessageCircle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
 import { useContext, useState } from "react";
 import { AuthContext } from "@/context/auth-context";
 import logoImage from "@/assets/logo.jpg";
+import NotificationDropdown from "../common/notification-dropdown";
 
 function StudentViewCommonHeader() {
   const navigate = useNavigate();
@@ -32,6 +33,11 @@ function StudentViewCommonHeader() {
       label: "My Courses",
       action: () => navigate("/student-courses"),
       icon: <BookOpen className="h-4 w-4" aria-hidden="true" />,
+    },
+    {
+      label: "Messages",
+      action: () => navigate("/chat"),
+      icon: <MessageCircle className="h-4 w-4" aria-hidden="true" />,
     },
   ];
 
@@ -64,14 +70,7 @@ function StudentViewCommonHeader() {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="rounded-2xl bg-white/70 text-muted-foreground hover:text-primary"
-              aria-label="Notifications"
-            >
-              <BellRing className="h-5 w-5" />
-            </Button>
+            <NotificationDropdown />
             <Button
               variant="soft"
               className="hidden sm:inline-flex text-xs sm:text-sm"

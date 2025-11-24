@@ -124,8 +124,41 @@ const createAxiosInstance = async () => {
 
     // Add response interceptor
     axiosInstance.interceptors.response.use(
-      (response) => response,
+      async (response) => {
+        // Show success toast for responses with messages
+        if (response.data?.success && response.data?.message) {
+          const { toast } = await import("@/hooks/use-toast");
+          toast({
+            title: "Success",
+            description: response.data.message,
+            variant: "default", // Green for success
+          });
+        }
+        return response;
+      },
       async (error) => {
+        // Show toast for API errors
+        const { toast } = await import("@/hooks/use-toast");
+        let errorMessage = "An error occurred";
+
+        if (error.response) {
+          // Server responded with error status
+          errorMessage =
+            error.response.data?.message ||
+            `Request failed with status ${error.response.status}`;
+        } else if (error.request) {
+          // Network error
+          errorMessage = "Network error - please check your connection";
+        } else {
+          // Other error
+          errorMessage = error.message || "An unexpected error occurred";
+        }
+
+        toast({
+          title: "Error",
+          description: errorMessage,
+          variant: "destructive",
+        });
         const originalRequest = error.config;
 
         if (error.response?.status === 401 && !originalRequest._retry) {

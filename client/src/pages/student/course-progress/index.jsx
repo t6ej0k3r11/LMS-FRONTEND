@@ -24,6 +24,7 @@ import { Check, ChevronLeft, ChevronRight, Play, BookOpen, Lock, List, Trophy, I
 import { useContext, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Confetti from "react-confetti";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 function StudentViewCourseProgressPage() {
   const navigate = useNavigate();
@@ -249,6 +250,13 @@ function StudentViewCourseProgressPage() {
           ...prev,
           [currentLecture._id]: 1
         }));
+
+        // Show success toast for lecture completion
+        toast({
+          title: "Lecture Completed!",
+          description: `"${currentLecture.title}" has been marked as completed.`,
+          variant: "default",
+        });
       }
     } catch (error) {
       console.error("Error updating course progress:", error);

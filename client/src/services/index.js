@@ -13,6 +13,16 @@ export async function loginService(formData) {
   const instance = await axiosInstance();
   const { data } = await instance.post("/auth/login", formData);
 
+  // Show success toast for login
+  if (data.success) {
+    const { toast } = await import("@/hooks/use-toast");
+    toast({
+      title: "Login Successful",
+      description: "Welcome back!",
+      variant: "default",
+    });
+  }
+
   return data;
 }
 
@@ -33,6 +43,23 @@ export async function refreshTokenService() {
   const { data } = await instance.post("/auth/refresh-token", {
     refreshToken,
   });
+
+  return data;
+}
+
+export async function logoutService() {
+  const instance = await axiosInstance();
+  const { data } = await instance.post("/auth/logout");
+
+  // Show success toast for logout
+  if (data.success) {
+    const { toast } = await import("@/hooks/use-toast");
+    toast({
+      title: "Logged Out",
+      description: "You have been logged out successfully.",
+      variant: "default",
+    });
+  }
 
   return data;
 }
@@ -101,6 +128,16 @@ export async function addNewCourseService(formData) {
   const instance = await axiosInstance();
 
   const { data } = await instance.post(`/instructor/course/add`, formData);
+
+  // Show success toast for course creation
+  if (data.success) {
+    const { toast } = await import("@/hooks/use-toast");
+    toast({
+      title: "Course Created",
+      description: "Your course has been created successfully!",
+      variant: "default",
+    });
+  }
 
   return data;
 }
@@ -206,6 +243,16 @@ export async function captureAndFinalizePaymentService(
     orderId,
   });
 
+  // Show success toast for enrollment
+  if (data.success) {
+    const { toast } = await import("@/hooks/use-toast");
+    toast({
+      title: "Enrollment Successful",
+      description: "You have been enrolled in the course!",
+      variant: "default",
+    });
+  }
+
   return data;
 }
 
@@ -273,6 +320,16 @@ export async function updateLectureProgressService(
       status,
     }
   );
+
+  // Show success toast for lecture completion
+  if (data.success && status === "completed") {
+    const { toast } = await import("@/hooks/use-toast");
+    toast({
+      title: "Lecture Completed",
+      description: "Great job! You've completed this lecture.",
+      variant: "default",
+    });
+  }
 
   return data;
 }
@@ -414,6 +471,16 @@ export async function finalizeQuizAttemptService(quizId, attemptId) {
     `/student/quiz/${quizId}/attempt/${attemptId}/finalize`
   );
 
+  // Show success toast for quiz submission
+  if (data.success) {
+    const { toast } = await import("@/hooks/use-toast");
+    toast({
+      title: "Quiz Submitted",
+      description: "Your quiz has been submitted successfully!",
+      variant: "default",
+    });
+  }
+
   return data;
 }
 
@@ -550,6 +617,7 @@ export const authService = {
   login: loginService,
   checkAuth: checkAuthService,
   refreshToken: refreshTokenService,
+  logout: logoutService,
 };
 
 export const courseService = {
@@ -653,6 +721,88 @@ export async function getQuestionsForInstructorsService(queryParams = {}) {
   const { data } = await instance.get(
     `/instructor/quiz/questions/for-instructors?${queryString}`
   );
+
+  return data;
+}
+
+// Notification services
+export async function getUserNotificationsService(queryParams = {}) {
+  const instance = await axiosInstance();
+
+  const queryString = new URLSearchParams(queryParams).toString();
+  const { data } = await instance.get(`/notifications?${queryString}`);
+
+  return data;
+}
+
+export async function getUnreadNotificationCountService() {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.get("/notifications/unread-count");
+
+  return data;
+}
+
+export async function markNotificationAsReadService(notificationId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.patch(
+    `/notifications/${notificationId}/read`
+  );
+
+  return data;
+}
+
+export async function markAllNotificationsAsReadService() {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.patch("/notifications/mark-all-read");
+
+  return data;
+}
+
+export async function deleteNotificationService(notificationId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.delete(`/notifications/${notificationId}`);
+
+  return data;
+}
+
+// Message services
+export async function getChatPartnersService() {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.get("/messages/list");
+
+  return data;
+}
+
+export async function getChatHistoryService(userId, receiverId, courseId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.get(
+    `/messages/history/${userId}/${receiverId}?courseId=${courseId}`
+  );
+
+  return data;
+}
+
+export async function sendMessageService(messageData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post("/messages/send", messageData);
+
+  return data;
+}
+
+export async function markMessagesAsSeenService(senderId, courseId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post("/messages/mark-seen", {
+    senderId,
+    courseId,
+  });
 
   return data;
 }

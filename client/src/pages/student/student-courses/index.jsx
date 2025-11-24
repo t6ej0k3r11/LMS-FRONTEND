@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AuthContext } from "@/context/auth-context";
 import { StudentContext } from "@/context/student-context";
 import { fetchStudentBoughtCoursesService, getCurrentCourseProgressService, getStudentQuizzesByCourseService } from "@/services";
-import { Watch, BookOpen, CheckCircle, AlertCircle } from "lucide-react";
+import { Watch, BookOpen, CheckCircle, AlertCircle, MessageCircle } from "lucide-react";
+import ChatPage from "@/pages/chat";
 import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -79,10 +81,23 @@ function StudentCoursesPage() {
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">My Courses</h1>
-        <p className="text-gray-600 text-sm sm:text-base">Continue your learning journey</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Student Dashboard</h1>
+        <p className="text-gray-600 text-sm sm:text-base">Manage your courses and communications</p>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+      <Tabs defaultValue="courses" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="courses" className="flex items-center gap-2">
+            <BookOpen className="h-4 w-4" />
+            My Courses
+          </TabsTrigger>
+          <TabsTrigger value="messages" className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4" />
+            Messages
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="courses">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {studentBoughtCoursesList && studentBoughtCoursesList.length > 0 ? (
           studentBoughtCoursesList.map((course) => {
             const progress = courseProgress[course.courseId];
@@ -167,7 +182,13 @@ function StudentCoursesPage() {
             </Button>
           </div>
         )}
-      </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="messages">
+          <ChatPage />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

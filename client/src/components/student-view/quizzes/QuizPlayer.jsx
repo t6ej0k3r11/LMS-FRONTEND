@@ -12,6 +12,7 @@ import PropTypes from 'prop-types';
 
 import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 import {
   getCurrentCourseProgressService,
   getQuizForTakingService,
@@ -276,14 +277,27 @@ function QuizPlayer({ validation }) {
 
         // Use the correct nested route without '/student/' prefix
         navigate(`/quiz-results/${quizId}`);
+        toast({
+          title: "Success",
+          description: "Quiz submitted successfully!",
+          variant: "default",
+        });
       } else {
         console.error("Quiz submission failed:", response);
-        alert("Failed to submit quiz. Please try again.");
+        toast({
+          title: "Error",
+          description: "Failed to submit quiz. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error submitting quiz:", error);
       console.error("Error details:", error.response?.data || error.message);
-      alert("An error occurred while submitting the quiz. Please try again.");
+      toast({
+        title: "Error",
+        description: "An error occurred while submitting the quiz. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
       setShowConfirmDialog(false);
@@ -322,14 +336,27 @@ function QuizPlayer({ validation }) {
 
         // Use the correct nested route without '/student/' prefix
         navigate(`/quiz-results/${quizId}`);
+        toast({
+          title: "Success",
+          description: "Quiz finalized successfully!",
+          variant: "default",
+        });
       } else {
         console.error("Quiz finalization failed:", response);
-        alert("Failed to finalize quiz. Please try again.");
+        toast({
+          title: "Error",
+          description: "Failed to finalize quiz. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error finalizing quiz:", error);
       console.error("Error details:", error.response?.data || error.message);
-      alert("An error occurred while finalizing the quiz. Please try again.");
+      toast({
+        title: "Error",
+        description: "An error occurred while finalizing the quiz. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setSubmitting(false);
     }

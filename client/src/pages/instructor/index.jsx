@@ -1,13 +1,15 @@
 import InstructorCourses from "@/components/instructor-view/courses";
 import InstructorDashboard from "@/components/instructor-view/dashboard";
+import ChatPage from "@/pages/chat";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { AuthContext } from "@/context/auth-context";
 import { InstructorContext } from "@/context/instructor-context";
 import { fetchInstructorCourseListService, checkAuthService } from "@/services";
-import { BarChart, Book, LogOut, FileQuestion, AlignJustify, X } from "lucide-react";
+import { BarChart, Book, LogOut, FileQuestion, AlignJustify, X, MessageCircle } from "lucide-react";
 import logoImage from "@/assets/logo.jpg";
 import WaitingForApproval from "./waiting-for-approval";
+import NotificationDropdown from "@/components/common/notification-dropdown";
 import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -74,6 +76,12 @@ function InstructorDashboardpage() {
       label: "Courses",
       value: "courses",
       component: <InstructorCourses listOfCourses={instructorCoursesList} />,
+    },
+    {
+      icon: MessageCircle,
+      label: "Messages",
+      value: "messages",
+      component: <ChatPage />,
     },
     {
       icon: FileQuestion,
@@ -159,6 +167,7 @@ function InstructorDashboardpage() {
               </p>
             </div>
             <div className="flex items-center gap-3 lg:hidden">
+              <NotificationDropdown />
               <Button variant="secondary" className="rounded-full" onClick={() => navigate("/instructor/create-new-course")}>
                 New Course
               </Button>

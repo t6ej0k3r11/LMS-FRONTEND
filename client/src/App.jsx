@@ -23,6 +23,8 @@ import QuizResults from "./components/instructor-view/quizzes/QuizResults";
 import QuizPlayerPage from "./pages/student/quiz-player";
 import StudentQuizResults from "./components/student-view/quizzes/QuizResults";
 import AdminDashboard from "./pages/admin";
+import ChatPage from "./pages/chat";
+import NotificationsPage from "./pages/notifications";
 import Footer from "./components/Footer";
 
 // Temporary simple component to test rendering
@@ -186,6 +188,8 @@ function App() {
         />
         <Route path="quiz-player/:quizId" element={<QuizPlayerPage />} />
         <Route path="quiz-results/:quizId" element={<StudentQuizResults />} />
+        <Route path="chat" element={<ChatPage />} />
+        <Route path="notifications" element={<NotificationsPage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

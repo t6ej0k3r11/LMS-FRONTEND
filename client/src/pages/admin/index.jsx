@@ -15,6 +15,7 @@ import { useToast } from "../../hooks/use-toast";
 import { getAllUsersService, deleteUserService, deactivateUserService, reactivateUserService, getAdminStatsService, getRecentActivitiesService, getPendingInstructorsService, approveInstructorService, rejectInstructorService } from "../../services";
 import CourseManagement from "./course-management";
 import QuestionBankManagement from "./question-bank-management";
+import ChatPage from "@/pages/chat";
 
 function AdminDashboard() {
   const { auth, logout } = useContext(AuthContext);
@@ -340,12 +341,13 @@ function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
-          <TabsList className="glass-effect border border-white/40 grid w-full grid-cols-2 sm:grid-cols-6 rounded-2xl p-1">
+          <TabsList className="glass-effect border border-white/40 grid w-full grid-cols-2 sm:grid-cols-7 rounded-2xl p-1">
             {[
               { value: "overview", label: "Overview" },
               { value: "users", label: "User Management" },
               { value: "instructors", label: "Instructor Applications" },
               { value: "courses", label: "Course Approval" },
+              { value: "messages", label: "Messages" },
               { value: "questions", label: "Question Bank" },
               { value: "audit", label: "Audit Logs" },
             ].map((tab) => (
@@ -768,6 +770,10 @@ function AdminDashboard() {
 
           <TabsContent value="courses" className="space-y-6">
             <CourseManagement />
+          </TabsContent>
+
+          <TabsContent value="messages" className="space-y-6">
+            <ChatPage />
           </TabsContent>
 
           <TabsContent value="questions" className="space-y-6">

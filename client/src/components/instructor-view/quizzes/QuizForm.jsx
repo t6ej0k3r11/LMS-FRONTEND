@@ -18,7 +18,7 @@ function QuizForm() {
   const { instructorCoursesList, setInstructorCoursesList } = useContext(InstructorContext);
   const [loading, setLoading] = useState(false);
   const [lectures, setLectures] = useState([]);
-  const [courseId, setCourseId] = useState(paramCourseId);
+  const [courseId, setCourseId] = useState(paramCourseId && paramCourseId !== "undefined" ? paramCourseId : null);
   const [showQuestionBank, setShowQuestionBank] = useState(false);
 
   console.log("QuizForm: lectures state =", lectures);
@@ -118,6 +118,11 @@ function QuizForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!courseId) {
+      alert("Course ID is required. Please navigate from the course quiz management page.");
+      return;
+    }
 
     if (!formData.title.trim()) {
       alert("Please enter a quiz title");
