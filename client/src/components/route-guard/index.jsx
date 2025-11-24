@@ -5,11 +5,7 @@ import PropTypes from "prop-types";
 function RouteGuard({ authenticated, user, element }) {
   const location = useLocation();
 
-  console.log("🔍 DEBUG: RouteGuard check for:", location.pathname);
-  console.log("🔍 DEBUG: Auth state:", { authenticated, userRole: user?.role });
-
   if (!authenticated && !location.pathname.includes("/auth")) {
-    console.log("🔍 DEBUG: Not authenticated, redirecting to /auth");
     return <Navigate to="/auth" />;
   }
 
@@ -21,7 +17,6 @@ function RouteGuard({ authenticated, user, element }) {
       location.pathname.includes("admin") ||
       location.pathname.includes("/auth"))
   ) {
-    console.log("🔍 DEBUG: Non-instructor/admin accessing protected route, redirecting to /home");
     return <Navigate to="/home" />;
   }
 
@@ -31,7 +26,6 @@ function RouteGuard({ authenticated, user, element }) {
     !location.pathname.includes("instructor") &&
     !location.pathname.includes("admin")
   ) {
-    console.log("🔍 DEBUG: Instructor accessing non-instructor route, redirecting to /instructor");
     return <Navigate to="/instructor" />;
   }
 
@@ -41,11 +35,9 @@ function RouteGuard({ authenticated, user, element }) {
     !location.pathname.includes("admin") &&
     !location.pathname.includes("instructor")
   ) {
-    console.log("🔍 DEBUG: Admin accessing non-admin route, redirecting to /admin");
     return <Navigate to="/admin" />;
   }
 
-  console.log("🔍 DEBUG: Route access granted for path:", location.pathname);
   return <Fragment>{element}</Fragment>;
 }
 

@@ -9,22 +9,51 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { DollarSign, Users, BookOpen, Eye, Sparkles, TrendingUp } from "lucide-react";
+import { useState, useEffect } from "react";
+import { fetchEnrolledStudentsService } from "@/services";
+import { toast } from "@/hooks/use-toast";
 
 function InstructorDashboard({ listOfCourses }) {
+  const [enrolledStudents, setEnrolledStudents] = useState([]);
+  const [loadingStudents, setLoadingStudents] = useState(true);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoadingStudents(true);
+        const response = await fetchEnrolledStudentsService();
+        if (response?.success) {
+          setEnrolledStudents(response.data);
+        } else {
+          toast({
+            title: "Error",
+            description: response?.message || "Failed to fetch enrolled students",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching enrolled students:", error);
+        toast({
+          title: "Error",
+          description: "An error occurred while fetching enrolled students",
+          variant: "destructive",
+        });
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
   function calculateTotalStudentsAndProfit() {
-    const { totalStudents, totalProfit, studentList, totalRewatches } = listOfCourses.reduce(
+    const { totalStudents, totalProfit, totalRewatches } = listOfCourses.reduce(
       (acc, course) => {
         const studentCount = course.students.length;
         acc.totalStudents += studentCount;
         acc.totalProfit += course.pricing * studentCount;
 
         course.students.forEach((student) => {
-          acc.studentList.push({
-            courseTitle: course.title,
-            studentName: student.studentName,
-            studentEmail: student.studentEmail,
-            rewatchCount: student.rewatchCount || 0,
-          });
           acc.totalRewatches += student.rewatchCount || 0;
         });
 
@@ -33,7 +62,6 @@ function InstructorDashboard({ listOfCourses }) {
       {
         totalStudents: 0,
         totalProfit: 0,
-        studentList: [],
         totalRewatches: 0,
       }
     );
@@ -41,15 +69,11 @@ function InstructorDashboard({ listOfCourses }) {
     return {
       totalProfit,
       totalStudents,
-      studentList,
       totalRewatches,
     };
   }
 
-  console.log(calculateTotalStudentsAndProfit());
-
-  const { totalStudents, totalProfit, totalRewatches, studentList } =
-    calculateTotalStudentsAndProfit();
+  const { totalStudents, totalProfit, totalRewatches } = calculateTotalStudentsAndProfit();
 
   const highlightCourse = listOfCourses.reduce(
     (top, course) => {
@@ -158,11 +182,11 @@ function InstructorDashboard({ listOfCourses }) {
       <Card className="rounded-[30px] border-white/60 bg-white/90 shadow-[0_35px_80px_rgba(9,42,31,0.14)]">
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="text-xl font-semibold text-foreground">Students List</CardTitle>
-            <p className="text-sm text-muted-foreground">Recent enrollments and engagement levels</p>
+            <CardTitle className="text-xl font-semibold text-foreground">Enrolled Students</CardTitle>
+            <p className="text-sm text-muted-foreground">Students enrolled in your courses</p>
           </div>
           <span className="rounded-full bg-[hsla(var(--brand-green)/0.12)] px-4 py-1 text-xs font-medium text-primary">
-            {studentList.length} learners tracked
+            {enrolledStudents.length} learners enrolled
           </span>
         </CardHeader>
         <CardContent>
@@ -170,34 +194,45 @@ function InstructorDashboard({ listOfCourses }) {
             <Table className="w-full">
               <TableHeader>
                 <TableRow className="border-white/70">
-                  <TableHead className="text-muted-foreground">Course Name</TableHead>
                   <TableHead className="text-muted-foreground">Student Name</TableHead>
                   <TableHead className="text-muted-foreground">Student Email</TableHead>
-                  <TableHead className="text-muted-foreground">Rewatch Count</TableHead>
+                  <TableHead className="text-muted-foreground">Enrolled Courses</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {studentList.length ? (
-                  studentList.map((studentItem, index) => (
+                {loadingStudents ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
+                      Loading students...
+                    </TableCell>
+                  </TableRow>
+                ) : enrolledStudents.length ? (
+                  enrolledStudents.map((student) => (
                     <TableRow
-                      key={`${studentItem.studentEmail}-${index}`}
+                      key={student.id}
                       className="border-white/60 bg-white/60 transition-colors hover:bg-white/80"
                     >
                       <TableCell className="font-semibold text-foreground">
-                        {studentItem.courseTitle}
+                        {student.name}
                       </TableCell>
-                      <TableCell>{studentItem.studentName}</TableCell>
-                      <TableCell className="text-muted-foreground">{studentItem.studentEmail}</TableCell>
+                      <TableCell className="text-muted-foreground">{student.email}</TableCell>
                       <TableCell>
-                        <span className="rounded-full bg-[hsla(var(--brand-green)/0.15)] px-3 py-1 text-sm font-medium text-primary">
-                          {studentItem.rewatchCount}
-                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {student.enrolledCourses.map((course, idx) => (
+                            <span
+                              key={idx}
+                              className="rounded-full bg-[hsla(var(--brand-green)/0.15)] px-2 py-1 text-xs font-medium text-primary"
+                            >
+                              {course.title}
+                            </span>
+                          ))}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                    <TableCell colSpan={3} className="py-8 text-center text-muted-foreground">
                       No students enrolled yet.
                     </TableCell>
                   </TableRow>

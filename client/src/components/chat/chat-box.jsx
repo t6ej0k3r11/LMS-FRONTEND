@@ -31,6 +31,9 @@ export default function ChatBox({ selectedUser }) {
   const [isTyping, setIsTyping] = useState(false);
   const [chatHistory, setChatHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMoreHistory, setHasMoreHistory] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -50,36 +53,68 @@ export default function ChatBox({ selectedUser }) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleLoadMore = async () => {
+    const nextPage = currentPage + 1;
+    setCurrentPage(nextPage);
+    // Load more history
+    try {
+      setLoadingMore(true);
+      const response = await getChatHistoryService(
+        auth.user._id,
+        selectedUser.userId,
+        selectedUser.courseId || null,
+        nextPage,
+        50
+      );
+      if (response.success) {
+        setChatHistory(prev => [...response.data.messages, ...prev]);
+        setHasMoreHistory(response.data.pagination.hasMore);
+      }
+    } catch (error) {
+      console.error("Failed to load more chat history:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   useEffect(() => {
     scrollToBottom();
   }, [chatMessages]);
 
   // Load chat history when user is selected
   useEffect(() => {
+    if (!selectedUser?.userId || !auth.user?._id) {
+      setChatHistory([]);
+      setCurrentPage(1);
+      setHasMoreHistory(false);
+      return;
+    }
+
     const loadChatHistory = async () => {
-      if (selectedUser && selectedUser.userId) {
-        try {
-          setLoadingHistory(true);
-          const response = await getChatHistoryService(
-            auth.user._id,
-            selectedUser.userId,
-            selectedUser.courseId || null
-          );
-          if (response.success) {
-            setChatHistory(response.data);
-          }
-        } catch (error) {
-          console.error("Failed to load chat history:", error);
-        } finally {
-          setLoadingHistory(false);
+      try {
+        setLoadingHistory(true);
+        const response = await getChatHistoryService(
+          auth.user._id,
+          selectedUser.userId,
+          selectedUser.courseId || null,
+          1,
+          50
+        );
+        if (response.success) {
+          setChatHistory(Array.isArray(response.data.messages) ? response.data.messages : []);
+          setHasMoreHistory(response.data.pagination.hasMore);
         }
-      } else {
-        setChatHistory([]);
+      } catch (error) {
+        console.error("Failed to load chat history:", error);
+      } finally {
+        setLoadingHistory(false);
       }
     };
 
     loadChatHistory();
-  }, [selectedUser, auth.user._id]);
+    setCurrentPage(1);
+    setHasMoreHistory(false);
+  }, [selectedUser?.userId, selectedUser?.courseId, auth.user?._id]);
 
   useEffect(() => {
     if (selectedUser && selectedUser.userId) {
@@ -146,6 +181,18 @@ export default function ChatBox({ selectedUser }) {
       {/* Messages */}
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
+          {hasMoreHistory && (
+            <div className="text-center py-2">
+              <Button
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+                variant="outline"
+                size="sm"
+              >
+                {loadingMore ? "Loading..." : "Load More Messages"}
+              </Button>
+            </div>
+          )}
           {loadingHistory && (
             <div className="text-center py-4">
               <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mx-auto"></div>

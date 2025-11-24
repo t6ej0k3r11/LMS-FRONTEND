@@ -85,18 +85,15 @@ export default function AuthProvider({ children }) {
       const data = await loginService(signInFormData);
 
       if (data.success) {
-        sessionStorage.setItem(
+        localStorage.setItem(
           "accessToken",
           data.data.accessToken
         );
-        sessionStorage.setItem(
-          "refreshToken",
-          data.data.refreshToken
-        );
+        // Note: refreshToken is now handled via httpOnly cookies
         setAuth({
           authenticate: true,
           user: data.data.user,
-          refreshToken: data.data.refreshToken,
+          refreshToken: null, // No longer stored in localStorage
         });
         setSignInFieldErrors({});
         toast({
@@ -152,7 +149,7 @@ export default function AuthProvider({ children }) {
   //check auth user
 
   async function checkAuthUser() {
-    const accessToken = sessionStorage.getItem("accessToken");
+    const accessToken = localStorage.getItem("accessToken");
     if (!accessToken) {
       setAuth({
         authenticate: false,
@@ -170,7 +167,7 @@ export default function AuthProvider({ children }) {
         setAuth({
           authenticate: true,
           user: data.data.user,
-          refreshToken: sessionStorage.getItem("refreshToken"),
+          refreshToken: null, // No longer stored in localStorage
         });
         setLoading(false);
       } else {
@@ -183,7 +180,7 @@ export default function AuthProvider({ children }) {
       }
     } catch (error) {
       if (error?.response?.status === 401) {
-        sessionStorage.removeItem("accessToken");
+        localStorage.removeItem("accessToken");
         setAuth({
           authenticate: false,
           user: null,
@@ -202,8 +199,7 @@ export default function AuthProvider({ children }) {
   }
 
   function resetCredentials() {
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("refreshToken");
+    localStorage.removeItem("accessToken");
     setAuth({
       authenticate: false,
       user: null,
@@ -211,27 +207,29 @@ export default function AuthProvider({ children }) {
     });
   }
 
-  function logout() {
-    sessionStorage.removeItem("accessToken");
-    sessionStorage.removeItem("refreshToken");
-    setAuth({
-      authenticate: false,
-      user: null,
-      refreshToken: null,
-    });
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-      variant: "default",
-    });
+  async function logout() {
+    try {
+      const { logoutService } = await getServices();
+      await logoutService();
+    } catch (error) {
+      console.error("Logout error:", error);
+    } finally {
+      // Always clear local storage and state
+      localStorage.removeItem("accessToken");
+      setAuth({
+        authenticate: false,
+        user: null,
+        refreshToken: null,
+      });
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+        variant: "default",
+      });
+    }
   }
 
   useEffect(() => {
-    // Initialize refresh token from sessionStorage if available
-    const storedRefreshToken = sessionStorage.getItem("refreshToken");
-    if (storedRefreshToken) {
-      setAuth(prev => ({ ...prev, refreshToken: storedRefreshToken }));
-    }
     checkAuthUser();
   }, []);
 

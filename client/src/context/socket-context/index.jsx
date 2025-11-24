@@ -14,10 +14,10 @@ export default function SocketProvider({ children }) {
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
   useEffect(() => {
-    if (auth.authenticate && auth.user) {
+    if (auth.authenticate && auth.user?._id) {
       const token = sessionStorage.getItem("accessToken");
-      if (token) {
-        // Connect to socket server
+      if (token && !socketRef.current) {
+        // Only create socket if it doesn't exist
         socketRef.current = io(import.meta.env.VITE_API_URL || "http://localhost:5000", {
           auth: {
             token: token,
@@ -91,7 +91,7 @@ export default function SocketProvider({ children }) {
         setIsConnected(false);
       }
     };
-  }, [auth.authenticate, auth.user]);
+  }, [auth.authenticate, auth.user?._id]);
 
   const sendMessage = (receiverId, message, courseId = null) => {
     if (socketRef.current && isConnected) {
