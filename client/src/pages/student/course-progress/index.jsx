@@ -24,7 +24,10 @@ import {
   Info,
   MessageSquare,
   Bell,
-  Edit3
+  Edit3,
+  Lock,
+  AlertCircle,
+  CheckCircle
 } from "lucide-react";
 import { useContext, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Confetti from "react-confetti";
@@ -60,6 +63,10 @@ function StudentViewCourseProgressPage() {
   // New state for Udemy-style features
   const [activeTab, setActiveTab] = useState("overview");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Loading and error states
+  const [progressLoading, setProgressLoading] = useState(false);
+  const [progressError, setProgressError] = useState(null);
 
   // Use backend progress data instead of calculating locally
   const { overallProgressPercentage, videoProgressPercentage, completedLecturesCount } = useMemo(() => {
@@ -100,8 +107,41 @@ function StudentViewCourseProgressPage() {
     };
   }, [studentCurrentCourseProgress, currentLecture, realTimeProgress]);
 
+  const fetchUserProgress = useCallback(async () => {
+    if (!auth?.authenticate) {
+      setProgressError("Authentication required");
+      return;
+    }
+
+    try {
+      const response = await getUserCourseProgressService(id);
+      if (response?.success) {
+        // Update progress in context with the simplified data
+        setStudentCurrentCourseProgress(prev => ({
+          ...prev,
+          userProgress: {
+            completedLessons: response?.data?.completedLessons || [],
+            completedQuizzes: response?.data?.completedQuizzes || [],
+            videoProgressPercentage: response?.data?.videoProgressPercentage || 0,
+            overallProgressPercentage: response?.data?.overallProgressPercentage || 0,
+            isCompleted: response?.data?.isCompleted || false,
+            completionDate: response?.data?.completionDate,
+            lastUpdated: response?.data?.lastUpdated,
+          }
+        }));
+        setProgressError(null);
+      } else {
+        setProgressError(response?.message || "Failed to fetch user progress");
+      }
+    } catch (error) {
+      console.error("Error fetching user progress:", error);
+      setProgressError(error.message || "Failed to fetch user progress");
+    }
+  }, [id, setStudentCurrentCourseProgress, auth?.authenticate]);
+
   const handleProgressUpdate = useCallback(async (progressData) => {
-    if (!currentLecture) return;
+    if (!currentLecture || !auth?.authenticate) return;
+
     // Debounce progress updates to prevent excessive state updates
     if (Math.abs((currentLecture?.progressValue || 0) - progressData.progressValue) > 0.01) {
       console.log("Progress update received:", progressData.progressValue);
@@ -120,97 +160,115 @@ function StudentViewCourseProgressPage() {
 
       // Save progress to database
       try {
-        await updateLectureProgressService(
+        const response = await updateLectureProgressService(
           studentCurrentCourseProgress?.courseDetails?._id,
           currentLecture._id,
           progressData.progressValue
         );
+
+        if (response?.success) {
+          // Refetch progress data for real-time updates
+          await fetchUserProgress();
+        }
       } catch (error) {
         console.error("Error saving progress:", error);
       }
     }
-  }, [currentLecture, studentCurrentCourseProgress?.courseDetails?._id]);
+  }, [currentLecture, studentCurrentCourseProgress?.courseDetails?._id, auth?.authenticate, fetchUserProgress]);
 
   const fetchCurrentCourseProgress = useCallback(async () => {
-    const response = await getCurrentCourseProgressService(id);
-    if (response?.success) {
-      if (!response?.data?.isPurchased) {
-        setLockCourse(true);
-      } else {
-        setStudentCurrentCourseProgress({
-          courseDetails: response?.data?.courseDetails,
-          progress: response?.data?.progress,
-          quizzesProgress: response?.data?.quizzesProgress || [],
-        });
-
-        if (response?.data?.completed) {
-          setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
-          setShowCourseCompleteDialog(true);
-          setShowConfetti(true);
-
-          return;
-        }
-
-        if (response?.data?.progress?.length === 0) {
-          setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
-        } else {
-          const lastIndexOfViewedAsTrue = response?.data?.progress.reduceRight(
-            (acc, obj, index) => {
-              return acc === -1 && obj.viewed ? index : acc;
-            },
-            -1
-          );
-
-          const nextLectureIndex = lastIndexOfViewedAsTrue + 1;
-          const nextLecture = response?.data?.courseDetails?.curriculum[nextLectureIndex];
-
-          // If all lectures are viewed, show the last lecture
-          if (!nextLecture) {
-            setCurrentLecture(response?.data?.courseDetails?.curriculum[response?.data?.courseDetails?.curriculum.length - 1]);
-          } else {
-            setCurrentLecture(nextLecture);
-          }
-
-          // Initialize real-time progress from database
-          const progressMap = {};
-          response?.data?.progress.forEach(p => {
-            progressMap[p.lectureId] = p.progressValue || (p.viewed ? 1 : 0);
-          });
-          setRealTimeProgress(progressMap);
-        }
-      }
+    if (!auth?.authenticate) {
+      setProgressError("Authentication required");
+      return;
     }
-  }, [id, setStudentCurrentCourseProgress]);
 
-  const fetchUserProgress = useCallback(async () => {
+    setProgressLoading(true);
+    setProgressError(null);
+
     try {
-      const response = await getUserCourseProgressService(id);
+      const response = await getCurrentCourseProgressService(id);
       if (response?.success) {
-        // Update progress in context with the simplified data
-        setStudentCurrentCourseProgress(prev => ({
-          ...prev,
-          userProgress: {
-            completedLessons: response?.data?.completedLessons || [],
-            completedQuizzes: response?.data?.completedQuizzes || [],
-            videoProgressPercentage: response?.data?.videoProgressPercentage || 0,
-            overallProgressPercentage: response?.data?.overallProgressPercentage || 0,
-            isCompleted: response?.data?.isCompleted || false,
-            completionDate: response?.data?.completionDate,
-            lastUpdated: response?.data?.lastUpdated,
+        if (!response?.data?.isPurchased) {
+          setLockCourse(true);
+        } else {
+          setStudentCurrentCourseProgress({
+            courseDetails: response?.data?.courseDetails,
+            progress: response?.data?.progress,
+            quizzesProgress: response?.data?.quizzesProgress || [],
+          });
+
+          if (response?.data?.completed) {
+            setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
+            setShowCourseCompleteDialog(true);
+            setShowConfetti(true);
+
+            return;
           }
-        }));
+
+          if (response?.data?.progress?.length === 0) {
+            setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
+          } else {
+            const lastIndexOfViewedAsTrue = response?.data?.progress.reduceRight(
+              (acc, obj, index) => {
+                return acc === -1 && obj.viewed ? index : acc;
+              },
+              -1
+            );
+
+            const nextLectureIndex = lastIndexOfViewedAsTrue + 1;
+            const nextLecture = response?.data?.courseDetails?.curriculum[nextLectureIndex];
+
+            // If all lectures are viewed, show the last lecture
+            if (!nextLecture) {
+              setCurrentLecture(response?.data?.courseDetails?.curriculum[response?.data?.courseDetails?.curriculum.length - 1]);
+            } else {
+              setCurrentLecture(nextLecture);
+            }
+
+            // Initialize real-time progress from database
+            const progressMap = {};
+            response?.data?.progress.forEach(p => {
+              progressMap[p.lectureId] = p.progressValue || (p.viewed ? 1 : 0);
+            });
+            setRealTimeProgress(progressMap);
+          }
+        }
+      } else {
+        setProgressError(response?.message || "Failed to fetch course progress");
+        toast({
+          title: "Error",
+          description: response?.message || "Failed to fetch course progress",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      console.error("Error fetching user progress:", error);
+      console.error("Error fetching course progress:", error);
+      setProgressError(error.message || "Failed to fetch course progress");
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to fetch course progress",
+        variant: "destructive",
+      });
+    } finally {
+      setProgressLoading(false);
     }
-  }, [id, setStudentCurrentCourseProgress]);
+  }, [id, setStudentCurrentCourseProgress, auth?.authenticate]);
 
   const fetchCourseQuizzes = useCallback(async () => {
-    const response = await getStudentQuizzesByCourseService(id);
-    if (response?.success) {
-      setCourseQuizzes(response.data || []);
+    if (!auth?.authenticate) {
+      return;
     }
-  }, [id]);
+
+    try {
+      const response = await getStudentQuizzesByCourseService(id);
+      if (response?.success) {
+        setCourseQuizzes(response.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching course quizzes:", error);
+      // Don't show toast for quizzes as they might be optional
+    }
+  }, [id, auth?.authenticate]);
 
   const updateCourseProgress = useCallback(async (isRewatch = false) => {
     if (!currentLecture || !auth?.user?._id || !studentCurrentCourseProgress?.courseDetails?._id) return;
@@ -236,33 +294,8 @@ function StudentViewCourseProgressPage() {
       );
 
       if (response?.success) {
-        // Update context with the simplified progress data
-        setStudentCurrentCourseProgress(prev => {
-          const updatedCompletedLessons = prev?.userProgress?.completedLessons || [];
-          if (!updatedCompletedLessons.includes(currentLecture._id)) {
-            updatedCompletedLessons.push(currentLecture._id);
-          }
-
-          // Recalculate video progress percentage
-          const totalLectures = prev?.courseDetails?.curriculum?.length || 1;
-          const newVideoProgressPercentage = Math.round((updatedCompletedLessons.length / totalLectures) * 100);
-
-          // Calculate overall progress (videos 50% + quizzes 50%)
-          // We don't have courseQuizzes in context here, so we'll use a simple calculation
-          // This will be updated when fetchUserProgress is called
-          const newOverallProgressPercentage = Math.round(newVideoProgressPercentage * 0.5 + 50); // Assume 50% for quizzes initially
-
-          return {
-            ...prev,
-            userProgress: {
-              ...prev.userProgress,
-              completedLessons: updatedCompletedLessons,
-              videoProgressPercentage: newVideoProgressPercentage,
-              overallProgressPercentage: newOverallProgressPercentage,
-              lastUpdated: new Date().toISOString(),
-            }
-          };
-        });
+        // Refetch progress data for real-time updates
+        await fetchUserProgress();
 
         setLectureProgress(prev => ({
           ...prev,
@@ -275,13 +308,24 @@ function StudentViewCourseProgressPage() {
           description: `"${currentLecture.title}" has been marked as completed.`,
           variant: "default",
         });
+      } else {
+        toast({
+          title: "Error",
+          description: response?.message || "Failed to update progress",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error updating course progress:", error);
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to update progress",
+        variant: "destructive",
+      });
       // Reset the flag if the request failed
       markedAsViewedRef.current[currentLecture._id] = false;
     }
-  }, [currentLecture, auth?.user?._id, studentCurrentCourseProgress?.courseDetails?._id, studentCurrentCourseProgress?.progress, setStudentCurrentCourseProgress]);
+  }, [currentLecture, auth?.user?._id, studentCurrentCourseProgress?.courseDetails?._id, studentCurrentCourseProgress?.progress, fetchUserProgress]);
 
   async function handleRewatchCourse() {
     const response = await resetCourseProgressService(
@@ -398,6 +442,57 @@ function StudentViewCourseProgressPage() {
 
   console.log(currentLecture, "currentLecture");
 
+  // Authentication check
+  if (!auth?.authenticate) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Lock className="h-10 w-10 text-red-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Authentication Required</h2>
+          <p className="text-gray-600 mb-4">Please log in to access your course progress.</p>
+          <Button onClick={() => navigate("/auth")} className="bg-blue-600 hover:bg-blue-700">
+            Go to Login
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state
+  if (progressLoading && !studentCurrentCourseProgress?.courseDetails) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center mx-auto mb-4 animate-spin">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full"></div>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Loading Course Progress</h2>
+          <p className="text-gray-600">Please wait while we fetch your progress data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (progressError && !studentCurrentCourseProgress?.courseDetails) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <div className="w-20 h-20 bg-gradient-to-br from-red-100 to-red-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="h-10 w-10 text-red-600" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Error Loading Progress</h2>
+          <p className="text-gray-600 mb-4">{progressError}</p>
+          <Button onClick={fetchCurrentCourseProgress} className="bg-blue-600 hover:bg-blue-700">
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       {showConfetti && <Confetti />}
@@ -511,28 +606,86 @@ function StudentViewCourseProgressPage() {
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Progress</h3>
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-gray-600">Lectures</span>
+                            <span className="text-sm text-gray-600">Overall Progress</span>
                             <span className="text-sm font-medium text-gray-900">
-                              {completedLecturesCount}/{studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 0}
+                              {overallProgressPercentage}%
                             </span>
                           </div>
                           <div className="w-full bg-gray-200 rounded-full h-2">
                             <div
                               className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${overallProgressPercentage}%` }}
+                            ></div>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Video Progress</span>
+                            <span className="text-sm font-medium text-gray-900">
+                              {videoProgressPercentage}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div
+                              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                               style={{ width: `${videoProgressPercentage}%` }}
                             ></div>
                           </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-gray-600">Lectures Completed</span>
+                            <span className="text-sm font-medium text-gray-900">
+                              {completedLecturesCount}/{studentCurrentCourseProgress?.courseDetails?.curriculum?.length || 0}
+                            </span>
+                          </div>
+
+                          {studentCurrentCourseProgress?.userProgress?.lastUpdated && (
+                            <div className="text-xs text-gray-500">
+                              Last updated: {new Date(studentCurrentCourseProgress.userProgress.lastUpdated).toLocaleString()}
+                            </div>
+                          )}
+
+                          {studentCurrentCourseProgress?.userProgress?.isCompleted && studentCurrentCourseProgress?.userProgress?.completionDate && (
+                            <div className="text-xs text-green-600 font-medium">
+                              Completed on: {new Date(studentCurrentCourseProgress.userProgress.completionDate).toLocaleDateString()}
+                            </div>
+                          )}
                         </div>
                       </div>
 
                       <div className="bg-gray-50 p-6 rounded-lg">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Certificate</h3>
-                        <CertificateButton
-                          courseId={studentCurrentCourseProgress?.courseDetails?._id}
-                          isCompleted={studentCurrentCourseProgress?.userProgress?.isCompleted}
-                          overallProgress={overallProgressPercentage}
-                        />
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Module Status</h3>
+                        <div className="space-y-3">
+                          {studentCurrentCourseProgress?.courseDetails?.curriculum?.map((lecture, index) => {
+                            const isCompleted = studentCurrentCourseProgress?.userProgress?.completedLessons?.includes(lecture._id);
+                            return (
+                              <div key={lecture._id} className="flex items-center justify-between p-2 rounded border">
+                                <div className="flex items-center space-x-2">
+                                  {isCompleted ? (
+                                    <CheckCircle className="h-4 w-4 text-green-600" />
+                                  ) : (
+                                    <div className="h-4 w-4 rounded-full border-2 border-gray-300"></div>
+                                  )}
+                                  <span className={`text-sm ${isCompleted ? 'text-green-700 font-medium' : 'text-gray-600'}`}>
+                                    Module {index + 1}: {lecture.title}
+                                  </span>
+                                </div>
+                                <span className={`text-xs px-2 py-1 rounded-full ${isCompleted ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                  {isCompleted ? 'Completed' : 'Pending'}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
+                    </div>
+
+                    <div className="bg-gray-50 p-6 rounded-lg">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4">Certificate</h3>
+                      <CertificateButton
+                        courseId={studentCurrentCourseProgress?.courseDetails?._id}
+                        isCompleted={studentCurrentCourseProgress?.userProgress?.isCompleted}
+                        overallProgress={overallProgressPercentage}
+                      />
                     </div>
                   </div>
                 </TabsContent>
