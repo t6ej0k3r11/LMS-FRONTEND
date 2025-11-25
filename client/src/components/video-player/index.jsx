@@ -2,16 +2,26 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import ReactPlayer from "react-player";
 import { Slider } from "../ui/slider";
 import { Button } from "../ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import PropTypes from "prop-types";
 import {
   Maximize,
   Minimize,
   Pause,
   Play,
-  RotateCcw,
-  RotateCw,
   Volume2,
   VolumeX,
+  Settings,
+  SkipBack,
+  SkipForward,
+  Subtitles,
+  Clock,
 } from "lucide-react";
 
 function VideoPlayer({
@@ -20,6 +30,7 @@ function VideoPlayer({
   url,
   onProgressUpdate,
   progressData,
+  lectureId,
 }) {
   VideoPlayer.propTypes = {
     width: PropTypes.string,
@@ -27,7 +38,9 @@ function VideoPlayer({
     url: PropTypes.string,
     onProgressUpdate: PropTypes.func.isRequired,
     progressData: PropTypes.object.isRequired,
+    lectureId: PropTypes.string,
   };
+
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(0.5);
   const [muted, setMuted] = useState(false);
@@ -35,6 +48,11 @@ function VideoPlayer({
   const [seeking, setSeeking] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [duration, setDuration] = useState(0);
+  const [showSettings, setShowSettings] = useState(false);
+  const [subtitlesEnabled, setSubtitlesEnabled] = useState(false);
+  const [chapters, setChapters] = useState([]);
 
   const playerRef = useRef(null);
   const playerContainerRef = useRef(null);
@@ -44,18 +62,57 @@ function VideoPlayer({
     setPlaying(!playing);
   }
 
+  // Remember last position functionality
+  useEffect(() => {
+    if (lectureId && url) {
+      const savedPosition = localStorage.getItem(`video_position_${lectureId}`);
+      if (savedPosition) {
+        const position = parseFloat(savedPosition);
+        setPlayed(position);
+        // Seek to saved position after player is ready
+        setTimeout(() => {
+          playerRef.current?.seekTo(position);
+        }, 1000);
+      }
+    }
+  }, [lectureId, url]);
+
+  // Save position periodically
+  useEffect(() => {
+    if (lectureId && played > 0) {
+      const savePosition = () => {
+        localStorage.setItem(`video_position_${lectureId}`, played.toString());
+      };
+
+      const timeoutId = setTimeout(savePosition, 5000); // Save every 5 seconds
+      return () => clearTimeout(timeoutId);
+    }
+  }, [lectureId, played]);
+
   function handleProgress(state) {
     if (!seeking) {
       setPlayed(state.played);
     }
   }
 
+  function handleDuration(duration) {
+    setDuration(duration);
+    // Mock chapters - in real implementation, this would come from video metadata
+    const mockChapters = [
+      { time: 0, title: "Introduction" },
+      { time: duration * 0.25, title: "Main Concepts" },
+      { time: duration * 0.5, title: "Examples" },
+      { time: duration * 0.75, title: "Summary" }
+    ];
+    setChapters(mockChapters);
+  }
+
   function handleRewind() {
-    playerRef?.current?.seekTo(playerRef?.current?.getCurrentTime() - 5);
+    playerRef?.current?.seekTo(playerRef?.current?.getCurrentTime() - 10);
   }
 
   function handleForward() {
-    playerRef?.current?.seekTo(playerRef?.current?.getCurrentTime() + 5);
+    playerRef?.current?.seekTo(playerRef?.current?.getCurrentTime() + 10);
   }
 
   function handleToggleMute() {
@@ -74,6 +131,14 @@ function VideoPlayer({
 
   function handleVolumeChange(newValue) {
     setVolume(newValue[0]);
+  }
+
+  function handlePlaybackRateChange(rate) {
+    setPlaybackRate(parseFloat(rate));
+  }
+
+  function handleChapterClick(chapterTime) {
+    playerRef.current?.seekTo(chapterTime / duration);
   }
 
   function pad(string) {
@@ -138,7 +203,7 @@ function VideoPlayer({
   return (
     <div
       ref={playerContainerRef}
-      className={`relative bg-gray-900 rounded-lg overflow-hidden shadow-2xl transition-all duration-300 ease-in-out 
+      className={`relative bg-gray-900 rounded-lg overflow-hidden shadow-2xl transition-all duration-300 ease-in-out
       ${isFullScreen ? "w-screen h-screen" : ""}
       `}
       style={{ width, height }}
@@ -154,11 +219,35 @@ function VideoPlayer({
         playing={playing}
         volume={volume}
         muted={muted}
+        playbackRate={playbackRate}
         onProgress={handleProgress}
+        onDuration={handleDuration}
       />
+
+      {/* Chapters overlay */}
+      {chapters.length > 0 && showControls && !isFullScreen && (
+        <div className="absolute top-4 left-4 right-4 bg-black/50 rounded-lg p-3">
+          <div className="flex items-center space-x-2 text-white text-sm">
+            <Clock className="h-4 w-4" />
+            <span className="font-medium">Chapters:</span>
+            <div className="flex space-x-3 overflow-x-auto">
+              {chapters.map((chapter, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleChapterClick(chapter.time)}
+                  className="text-xs bg-white/20 hover:bg-white/30 px-2 py-1 rounded whitespace-nowrap transition-colors"
+                >
+                  {chapter.title}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {showControls && (
         <div
-          className={`absolute bottom-0 left-0 right-0 bg-gray-800 bg-opacity-75 p-4 transition-opacity duration-300 ${
+          className={`absolute bottom-0 left-0 right-0 bg-gray-800 bg-opacity-90 p-4 transition-opacity duration-300 ${
             showControls ? "opacity-100" : "opacity-0"
           }`}
         >
@@ -190,7 +279,7 @@ function VideoPlayer({
                 variant="ghost"
                 size="icon"
               >
-                <RotateCcw className="h-6 w-6" />
+                <SkipBack className="h-5 w-5" />
               </Button>
               <Button
                 onClick={handleForward}
@@ -198,7 +287,7 @@ function VideoPlayer({
                 variant="ghost"
                 size="icon"
               >
-                <RotateCw className="h-6 w-6" />
+                <SkipForward className="h-5 w-5" />
               </Button>
               <Button
                 onClick={handleToggleMute}
@@ -217,14 +306,52 @@ function VideoPlayer({
                 max={100}
                 step={1}
                 onValueChange={(value) => handleVolumeChange([value[0] / 100])}
-                className="w-24 "
+                className="w-24"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="text-white">
-                {formatTime(played * (playerRef?.current?.getDuration() || 0))}/{" "}
-                {formatTime(playerRef?.current?.getDuration() || 0)}
+
+            <div className="flex items-center space-x-3">
+              {/* Playback Speed */}
+              <Select value={playbackRate.toString()} onValueChange={handlePlaybackRateChange}>
+                <SelectTrigger className="w-20 h-8 bg-transparent border-gray-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0.5">0.5x</SelectItem>
+                  <SelectItem value="0.75">0.75x</SelectItem>
+                  <SelectItem value="1">1x</SelectItem>
+                  <SelectItem value="1.25">1.25x</SelectItem>
+                  <SelectItem value="1.5">1.5x</SelectItem>
+                  <SelectItem value="2">2x</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Subtitles Toggle */}
+              <Button
+                onClick={() => setSubtitlesEnabled(!subtitlesEnabled)}
+                className={`text-white bg-transparent hover:text-white hover:bg-gray-700 ${
+                  subtitlesEnabled ? 'text-blue-400' : ''
+                }`}
+                variant="ghost"
+                size="icon"
+              >
+                <Subtitles className="h-5 w-5" />
+              </Button>
+
+              {/* Settings */}
+              <Button
+                onClick={() => setShowSettings(!showSettings)}
+                className="text-white bg-transparent hover:text-white hover:bg-gray-700"
+                variant="ghost"
+                size="icon"
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
+
+              <div className="text-white text-sm font-mono min-w-20 text-center">
+                {formatTime(played * duration)} / {formatTime(duration)}
               </div>
+
               <Button
                 className="text-white bg-transparent hover:text-white hover:bg-gray-700"
                 variant="ghost"
@@ -239,6 +366,13 @@ function VideoPlayer({
               </Button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Resume indicator */}
+      {played > 0 && played < 0.9 && (
+        <div className="absolute top-4 right-4 bg-black/70 text-white text-xs px-2 py-1 rounded">
+          Resume from {formatTime(played * duration)}
         </div>
       )}
     </div>
