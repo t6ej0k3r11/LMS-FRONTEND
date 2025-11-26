@@ -9,6 +9,7 @@ import { useContext } from "react";
 import { AuthContext } from "./context/auth-context";
 import InstructorDashboardpage from "./pages/instructor";
 import StudentViewCommonLayout from "./components/student-view/common-layout";
+import DashboardLayout from "./components/common/dashboard-layout";
 import StudentHomePage from "./pages/student/home";
 import NotFoundPage from "./pages/not-found";
 import AddNewCoursePage from "./pages/instructor/add-new-course";
@@ -23,8 +24,11 @@ import QuizResults from "./components/instructor-view/quizzes/QuizResults";
 import QuizPlayerPage from "./pages/student/quiz-player";
 import StudentQuizResults from "./components/student-view/quizzes/QuizResults";
 import AdminDashboard from "./pages/admin";
+import AdminProfilePage from "./pages/admin/profile";
+import InstructorProfilePage from "./pages/instructor/profile";
 import ChatPage from "./pages/chat";
 import NotificationsPage from "./pages/notifications";
+import ProfilePage from "./pages/profile";
 import Footer from "./components/Footer";
 
 // Temporary simple component to test rendering
@@ -76,23 +80,29 @@ function App() {
         }
       />
       <Route
-        path="/instructor"
+        path="/admin/*"
+        element={
+          <ProtectedAdminRoute>
+            <DashboardLayout userRole="admin" />
+          </ProtectedAdminRoute>
+        }
+      >
+        <Route path="" element={<AdminDashboard />} />
+        <Route path="profile" element={<AdminProfilePage />} />
+      </Route>
+      <Route
+        path="/instructor/*"
         element={
           <RouteGuard
-            element={<InstructorDashboardpage />}
+            element={<DashboardLayout userRole="instructor" />}
             authenticated={auth?.authenticate}
             user={auth?.user}
           />
         }
-      />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedAdminRoute>
-            <AdminDashboard />
-          </ProtectedAdminRoute>
-        }
-      />
+      >
+        <Route path="" element={<InstructorDashboardpage />} />
+        <Route path="profile" element={<InstructorProfilePage />} />
+      </Route>
       <Route
         path="/instructor/create-new-course"
         element={
@@ -190,6 +200,7 @@ function App() {
         <Route path="quiz-results/:quizId" element={<StudentQuizResults />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
+        <Route path="profile" element={<ProfilePage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

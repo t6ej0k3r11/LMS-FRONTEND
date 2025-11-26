@@ -1,4 +1,5 @@
 import { useContext, useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AuthContext } from "../../context/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Button } from "../../components/ui/button";
@@ -9,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../components/ui/dropdown-menu";
-import { Users, BookOpen, Shield, Activity, LogOut, Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Users, BookOpen, Shield, Activity, Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 
 import { useToast } from "../../hooks/use-toast";
 import { getAllUsersService, deleteUserService, deactivateUserService, reactivateUserService, getAdminStatsService, getRecentActivitiesService, getPendingInstructorsService, approveInstructorService, rejectInstructorService } from "../../services";
@@ -18,6 +19,7 @@ import QuestionBankManagement from "./question-bank-management";
 import ChatPage from "@/pages/chat";
 
 function AdminDashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { auth, logout } = useContext(AuthContext);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
@@ -51,6 +53,24 @@ function AdminDashboard() {
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [selectedInstructor, setSelectedInstructor] = useState(null);
   const [rejectionReason, setRejectionReason] = useState("");
+
+  // Read tab from URL on mount and when URL changes
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab && ["overview", "users", "instructors", "courses", "messages", "questions", "audit"].includes(tab)) {
+      setActiveTab(tab);
+    } else {
+      setActiveTab("overview");
+    }
+  }, [searchParams]);
+
+  // Handle tab changes and update URL
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set("tab", tab);
+    setSearchParams(newSearchParams);
+  };
 
   // Debounce search term
   useEffect(() => {
@@ -269,28 +289,18 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_hsla(var(--brand-green)/0.18),_transparent_60%)]">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-10">
-        {/* Header */}
-        <div className="glass-effect rounded-[32px] border border-white/40 px-6 py-6 sm:px-10 sm:py-8 mb-6 sm:mb-8">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-sm uppercase tracking-[0.4em] text-muted-foreground">Admin Command</p>
-              <h1 className="text-3xl sm:text-4xl font-bold text-foreground">Admin Dashboard</h1>
-              <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
-                Welcome back, {auth?.user?.userName}! Keep DeshGory humming with thoughtful oversight and quick approvals.
-              </p>
-              <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-xs font-medium text-muted-foreground">
-                <Sparkles className="h-4 w-4 text-[hsl(var(--brand-red))]" />
-                {stats.pendingCourses} pending items need review
-              </div>
-            </div>
-            <Button variant="secondary" onClick={logout} className="rounded-full self-start">
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
+    <div className="space-y-6">
+      {/* Dashboard Header */}
+      <div className="text-center">
+        <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">Admin Dashboard</h1>
+        <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+          Welcome back, {auth?.user?.userName}! Keep DeshGory humming with thoughtful oversight and quick approvals.
+        </p>
+        <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-xs font-medium text-muted-foreground">
+          <Sparkles className="h-4 w-4 text-[hsl(var(--brand-red))]" />
+          {stats.pendingCourses} pending items need review
         </div>
+      </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
@@ -340,7 +350,7 @@ function AdminDashboard() {
         </div>
 
         {/* Main Content Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-5">
           <TabsList className="glass-effect border border-white/40 grid w-full grid-cols-2 sm:grid-cols-7 rounded-2xl p-1">
             {[
               { value: "overview", label: "Overview" },
@@ -820,7 +830,6 @@ function AdminDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
-      </div>
     </div>
   );
 }

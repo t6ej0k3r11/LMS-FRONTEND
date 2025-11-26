@@ -10,7 +10,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { signInFormControls, signUpFormControls } from "@/config";
 import { AuthContext } from "@/context/auth-context";
-import { Loader2 } from "lucide-react";
 import logoImage from "@/assets/logo.jpg";
 import { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -18,7 +17,6 @@ import { useToast } from "@/hooks/use-toast";
 
 function AuthPage() {
   const [activeTab, setActiveTab] = useState("signin");
-  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const {

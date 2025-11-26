@@ -823,3 +823,54 @@ export async function markMessagesAsSeenService(senderId, courseId) {
 
   return data;
 }
+
+// Profile services
+export async function getProfileService() {
+  const instance = axiosInstance;
+
+  const { data } = await instance.get("/profile");
+
+  return data;
+}
+
+export async function updateProfileService(profileData) {
+  const instance = axiosInstance;
+
+  const { data } = await instance.put("/profile", profileData);
+
+  return data;
+}
+
+export async function updateNotificationPreferencesService(preferences) {
+  const instance = axiosInstance;
+
+  const { data } = await instance.put("/profile/notifications", {
+    preferences,
+  });
+
+  return data;
+}
+
+export async function changePasswordService(passwordData) {
+  const instance = axiosInstance;
+
+  const { data } = await instance.put("/profile/password", passwordData);
+
+  return data;
+}
+
+export async function deleteAccountService() {
+  const instance = axiosInstance;
+
+  const { data } = await instance.delete("/profile/account");
+
+  return data;
+}
+
+export async function uploadAvatarService(formData) {
+  const instance = axiosInstance;
+
+  const { data } = await instance.post("/profile/avatar", formData);
+
+  return data;
+}

@@ -5,6 +5,7 @@ import {
   Menu,
   X,
   MessageCircle,
+  User,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -38,6 +39,11 @@ function StudentViewCommonHeader() {
       label: "Messages",
       action: () => navigate("/chat"),
       icon: <MessageCircle className="h-4 w-4" aria-hidden="true" />,
+    },
+    {
+      label: "Profile",
+      action: () => navigate("/profile"),
+      icon: <User className="h-4 w-4" aria-hidden="true" />,
     },
   ];
 
