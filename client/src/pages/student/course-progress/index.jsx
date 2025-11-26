@@ -139,6 +139,13 @@ function StudentViewCourseProgressPage() {
     }
   }, [id, setStudentCurrentCourseProgress, auth?.authenticate]);
 
+  const fetchCourseQuizzes = useCallback(async () => {
+    const response = await getStudentQuizzesByCourseService(id);
+    if (response?.success) {
+      setCourseQuizzes(response.data || []);
+    }
+  }, [id]);
+
   const handleProgressUpdate = useCallback(async (progressData) => {
     if (!currentLecture || !auth?.authenticate) return;
 
@@ -197,10 +204,13 @@ function StudentViewCourseProgressPage() {
             quizzesProgress: response?.data?.quizzesProgress || [],
           });
 
-          if (response?.data?.completed) {
-            setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
-            setShowCourseCompleteDialog(true);
-            setShowConfetti(true);
+        // Fetch quizzes since course is purchased
+        await fetchCourseQuizzes();
+
+        if (response?.data?.completed) {
+          setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
+          setShowCourseCompleteDialog(true);
+          setShowConfetti(true);
 
             return;
           }
@@ -252,7 +262,7 @@ function StudentViewCourseProgressPage() {
     } finally {
       setProgressLoading(false);
     }
-  }, [id, setStudentCurrentCourseProgress, auth?.authenticate]);
+  }, [id, setStudentCurrentCourseProgress, fetchCourseQuizzes, auth?.authenticate]);
 
   const fetchCourseQuizzes = useCallback(async () => {
     if (!auth?.authenticate) {

@@ -1,14 +1,17 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AuthContext } from "@/context/auth-context";
 import { StudentContext } from "@/context/student-context";
-import { fetchStudentBoughtCoursesService, getCurrentCourseProgressService, getStudentQuizzesByCourseService } from "@/services";
-import { Watch, BookOpen, CheckCircle, AlertCircle, MessageCircle } from "lucide-react";
+import { fetchStudentBoughtCoursesService, getCurrentCourseProgressService, getStudentQuizzesByCourseService, getStudentPaymentsService } from "@/services";
+import { Watch, BookOpen, CheckCircle, AlertCircle, CreditCard, Eye } from "lucide-react";
 import ChatPage from "@/pages/chat";
 import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import PaymentDetailsModal from "@/components/student-view/payment/PaymentDetailsModal";
 
 function StudentCoursesPage() {
   const { auth } = useContext(AuthContext);
@@ -18,6 +21,10 @@ function StudentCoursesPage() {
   const { toast } = useToast();
   const [courseProgress, setCourseProgress] = useState({});
   const [courseQuizzes, setCourseQuizzes] = useState({});
+  const [payments, setPayments] = useState([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState(null);
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
   const fetchStudentBoughtCourses = useCallback(async () => {
     if (!auth?.user?._id) return;
@@ -74,18 +81,64 @@ function StudentCoursesPage() {
     }
   }, [auth?.user?._id, setStudentBoughtCoursesList, toast]);
 
+  const fetchStudentPayments = useCallback(async () => {
+    if (!auth?.user?._id) return;
+
+    setPaymentsLoading(true);
+    try {
+      const response = await getStudentPaymentsService();
+      if (response?.success) {
+        setPayments(response.data.payments || []);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load your payments. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching student payments:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load your payments. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setPaymentsLoading(false);
+    }
+  }, [auth?.user?._id, toast]);
+
   useEffect(() => {
     fetchStudentBoughtCourses();
   }, [fetchStudentBoughtCourses]);
+
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      pending: { variant: "secondary", label: "Pending" },
+      approved: { variant: "default", label: "Approved" },
+      rejected: { variant: "destructive", label: "Rejected" },
+      verified: { variant: "default", label: "Approved" },
+      failed: { variant: "destructive", label: "Rejected" },
+    };
+    const config = statusConfig[status] || statusConfig.pending;
+    return <Badge variant={config.variant}>{config.label}</Badge>;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
+  };
 
   return (
     <div className="p-4 sm:p-6 max-w-7xl mx-auto">
       <div className="mb-6 sm:mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Student Dashboard</h1>
-        <p className="text-gray-600 text-sm sm:text-base">Manage your courses and communications</p>
+        <p className="text-gray-600 text-sm sm:text-base">Manage your courses, communications and payments</p>
       </div>
       <Tabs defaultValue="courses" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="courses">My Courses</TabsTrigger>
+          <TabsTrigger value="payments" onClick={fetchStudentPayments}>My Payments</TabsTrigger>
           <TabsTrigger value="courses" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
             My Courses

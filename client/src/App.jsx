@@ -31,6 +31,14 @@ import NotificationsPage from "./pages/notifications";
 import ProfilePage from "./pages/profile";
 import Footer from "./components/Footer";
 
+// Payment pages
+import PaymentSelectionPage from "./pages/student/payment";
+import OnlinePaymentPage from "./pages/student/payment/online";
+import OfflinePaymentPage from "./pages/student/payment/offline";
+import PaymentSuccessPage from "./pages/student/payment/success";
+import PaymentFailPage from "./pages/student/payment/fail";
+import PaymentCancelPage from "./pages/student/payment/cancel";
+
 // Temporary simple component to test rendering
 // function TestComponent() {
 //   return (
@@ -190,6 +198,12 @@ function App() {
           path="course/details/:id"
           element={<StudentViewCourseDetailsPage />}
         />
+        <Route path="payment" element={<PaymentSelectionPage />} />
+        <Route path="payment/online" element={<OnlinePaymentPage />} />
+        <Route path="payment/offline" element={<OfflinePaymentPage />} />
+        <Route path="payment/success" element={<PaymentSuccessPage />} />
+        <Route path="payment/fail" element={<PaymentFailPage />} />
+        <Route path="payment/cancel" element={<PaymentCancelPage />} />
         <Route path="payment-return" element={<PaypalPaymentReturnPage />} />
         <Route path="student-courses" element={<StudentCoursesPage />} />
         <Route

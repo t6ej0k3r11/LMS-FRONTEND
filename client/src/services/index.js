@@ -874,3 +874,83 @@ export async function uploadAvatarService(formData) {
 
   return data;
 }
+
+// Payment services
+import { PAYMENT_CONFIG } from "@/config/paymentConfig";
+
+export async function initOnlinePaymentService(paymentData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post(PAYMENT_CONFIG.ROUTES.INIT_ONLINE, paymentData);
+
+  return data;
+}
+
+export async function submitOfflinePaymentService(formData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post(PAYMENT_CONFIG.ROUTES.OFFLINE_SUBMIT, formData);
+
+  return data;
+}
+
+export async function getStudentPaymentsService() {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.get(PAYMENT_CONFIG.ROUTES.MY_PAYMENTS);
+
+  return data;
+}
+
+export async function getPaymentDetailsService(paymentId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.get(`${PAYMENT_CONFIG.ROUTES.PAYMENT_DETAILS}/${paymentId}`);
+
+  return data;
+}
+
+// Admin payment services
+export async function getAllPaymentsService(queryParams = {}) {
+  const instance = await axiosInstance();
+
+  const queryString = new URLSearchParams(queryParams).toString();
+  const { data } = await instance.get(`${PAYMENT_CONFIG.ROUTES.ADMIN_PAYMENTS}?${queryString}`);
+
+  return data;
+}
+
+export async function updatePaymentStatusService(paymentId, statusData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.put(`${PAYMENT_CONFIG.ROUTES.ADMIN_UPDATE_STATUS}/${paymentId}`, statusData);
+
+  return data;
+}
+
+export async function addPaymentNoteService(paymentId, noteData) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.post(`/admin/payment/${paymentId}/note`, noteData);
+
+  return data;
+}
+
+export async function getAdminPaymentDetailsService(paymentId) {
+  const instance = await axiosInstance();
+
+  const { data } = await instance.get(`${PAYMENT_CONFIG.ROUTES.ADMIN_PAYMENT_BY_ID}/${paymentId}`);
+
+  return data;
+}
+
+export const paymentService = {
+  initOnlinePayment: initOnlinePaymentService,
+  submitOfflinePayment: submitOfflinePaymentService,
+  getStudentPayments: getStudentPaymentsService,
+  getPaymentDetails: getPaymentDetailsService,
+  getAllPayments: getAllPaymentsService,
+  updatePaymentStatus: updatePaymentStatusService,
+  addPaymentNote: addPaymentNoteService,
+  getAdminPaymentDetails: getAdminPaymentDetailsService,
+};
