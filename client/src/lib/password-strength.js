@@ -8,9 +8,8 @@ export const evaluatePasswordStrength = (password) => {
     score += 2;
   } else if (password.length >= 8) {
     score += 1;
-    feedback.push("Consider using at least 12 characters for better security");
   } else {
-    feedback.push("Password must be at least 8 characters long");
+    feedback.push("Consider using at least 8 characters for better security");
   }
 
   // Character variety

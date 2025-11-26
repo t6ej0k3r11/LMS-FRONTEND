@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../components/ui/dropdown-menu";
-import { Users, BookOpen, Shield, Activity, LogOut, Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Users, BookOpen, Shield, Activity, LogOut, Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight, Sparkles, CheckCircle, XCircle } from "lucide-react";
 
 import { useToast } from "../../hooks/use-toast";
-import { getAllUsersService, deleteUserService, deactivateUserService, reactivateUserService, getAdminStatsService, getRecentActivitiesService } from "../../services";
+import { getAllUsersService, deleteUserService, deactivateUserService, reactivateUserService, getAdminStatsService, getRecentActivitiesService, getAllPaymentsService, updatePaymentStatusService } from "../../services";
 import CourseManagement from "./course-management";
+import AdminPaymentDetailsModal from "../../components/AdminPaymentDetailsModal";
 
 function AdminDashboard() {
   const { auth, logout } = useContext(AuthContext);
@@ -40,6 +41,19 @@ function AdminDashboard() {
   });
   const [recentActivities, setRecentActivities] = useState([]);
   const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  // Payment management state
+  const [payments, setPayments] = useState([]);
+  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  const [paymentFilters, setPaymentFilters] = useState({
+    method: "all",
+    status: "all",
+    page: 1,
+    limit: 10,
+  });
+  const [totalPaymentPages, setTotalPaymentPages] = useState(1);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
 
   // Fetch users function
   const fetchUsers = useCallback(async () => {
@@ -161,12 +175,66 @@ function AdminDashboard() {
     }
   }, [activeTab, fetchUsers]);
 
+  // Payment management functions
+  const fetchPayments = useCallback(async () => {
+    setPaymentsLoading(true);
+    try {
+      const params = {
+        page: paymentFilters.page,
+        limit: paymentFilters.limit,
+      };
+      if (paymentFilters.method !== "all") {
+        params.method = paymentFilters.method;
+      }
+      if (paymentFilters.status !== "all") {
+        params.status = paymentFilters.status;
+      }
+      const response = await getAllPaymentsService(params);
+      setPayments(response.data.payments || []);
+      setTotalPaymentPages(response.data.pagination?.totalPages || 1);
+    } catch (error) {
+      console.error("Failed to fetch payments:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch payments. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setPaymentsLoading(false);
+    }
+  }, [paymentFilters, toast]);
+
+  const handlePaymentStatusUpdate = async (paymentId, newStatus) => {
+    try {
+      await updatePaymentStatusService(paymentId, { status: newStatus });
+      toast({
+        title: "Success",
+        description: `Payment ${newStatus} successfully.`,
+      });
+      fetchPayments();
+    } catch (error) {
+      console.error("Failed to update payment status:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update payment status. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Effect to fetch dashboard data
   useEffect(() => {
     if (activeTab === "overview") {
       fetchDashboardData();
     }
   }, [activeTab, fetchDashboardData]);
+
+  // Effect to fetch payments when payments tab is active
+  useEffect(() => {
+    if (activeTab === "payments") {
+      fetchPayments();
+    }
+  }, [activeTab, fetchPayments]);
 
   // Format date helper
   const formatDate = (dateString) => {
@@ -247,11 +315,12 @@ function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
-          <TabsList className="glass-effect border border-white/40 grid w-full grid-cols-2 sm:grid-cols-4 rounded-2xl p-1">
+          <TabsList className="glass-effect border border-white/40 grid w-full grid-cols-2 sm:grid-cols-5 rounded-2xl p-1">
             {[
               { value: "overview", label: "Overview" },
               { value: "users", label: "User Management" },
               { value: "courses", label: "Course Approval" },
+              { value: "payments", label: "Payment Management" },
               { value: "audit", label: "Audit Logs" },
             ].map((tab) => (
               <TabsTrigger
@@ -559,6 +628,170 @@ function AdminDashboard() {
             <CourseManagement />
           </TabsContent>
 
+          <TabsContent value="payments" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Management</CardTitle>
+                <p className="text-sm text-muted-foreground">Review and manage student payment submissions</p>
+              </CardHeader>
+              <CardContent>
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                  <Select
+                    value={paymentFilters.method}
+                    onValueChange={(value) => setPaymentFilters(prev => ({ ...prev, method: value, page: 1 }))}
+                  >
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Payment Method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Methods</SelectItem>
+                      <SelectItem value="online">Online</SelectItem>
+                      <SelectItem value="offline">Offline</SelectItem>
+                      <SelectItem value="bkash">bKash</SelectItem>
+                      <SelectItem value="nagad">Nagad</SelectItem>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="office_cash">Office Cash</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select
+                    value={paymentFilters.status}
+                    onValueChange={(value) => setPaymentFilters(prev => ({ ...prev, status: value, page: 1 }))}
+                  >
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Payments Table */}
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Student</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Method</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paymentsLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-8">
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mx-auto mb-2"></div>
+                            Loading payments...
+                          </TableCell>
+                        </TableRow>
+                      ) : payments.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={8} className="text-center py-8">
+                            No payments found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        payments.map((payment) => (
+                          <TableRow key={payment._id}>
+                            <TableCell className="font-mono text-sm">{payment._id.slice(-8)}</TableCell>
+                            <TableCell>{payment.userId?.userName}</TableCell>
+                            <TableCell className="max-w-xs truncate">{payment.courseId?.title}</TableCell>
+                            <TableCell>৳{payment.amount.toLocaleString()}</TableCell>
+                            <TableCell className="capitalize">{payment.method.replace('_', ' ')}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  payment.status === 'verified' ? 'default' :
+                                  payment.status === 'failed' ? 'destructive' : 'secondary'
+                                }
+                              >
+                                {payment.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{formatDate(payment.createdAt)}</TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  {payment.status === 'pending' && (
+                                    <>
+                                      <DropdownMenuItem
+                                        onClick={() => handlePaymentStatusUpdate(payment._id, 'verified')}
+                                        className="text-green-600"
+                                      >
+                                        <CheckCircle className="mr-2 h-4 w-4" />
+                                        Approve
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={() => handlePaymentStatusUpdate(payment._id, 'failed')}
+                                        className="text-red-600"
+                                      >
+                                        <XCircle className="mr-2 h-4 w-4" />
+                                        Reject
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedPayment(payment._id);
+                                      setIsPaymentModalOpen(true);
+                                    }}
+                                  >
+                                    View Details
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Pagination */}
+                {totalPaymentPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-6">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPaymentFilters(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                      disabled={paymentFilters.page === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </Button>
+                    <span className="text-sm text-gray-600">
+                      Page {paymentFilters.page} of {totalPaymentPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPaymentFilters(prev => ({ ...prev, page: Math.min(totalPaymentPages, prev.page + 1) }))}
+                      disabled={paymentFilters.page === totalPaymentPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
           <TabsContent value="audit" className="space-y-6">
             <Card className="rounded-[30px] border-white/60 bg-white/90 shadow-[0_30px_70px_rgba(9,42,31,0.14)]">
               <CardHeader>
@@ -599,6 +832,16 @@ function AdminDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Payment Details Modal */}
+        <AdminPaymentDetailsModal
+          paymentId={selectedPayment}
+          isOpen={isPaymentModalOpen}
+          onClose={() => {
+            setIsPaymentModalOpen(false);
+            setSelectedPayment(null);
+          }}
+        />
       </div>
     </div>
   );

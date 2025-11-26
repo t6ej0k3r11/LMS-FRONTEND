@@ -69,6 +69,13 @@ function StudentViewCourseProgressPage() {
     };
   }, [studentCurrentCourseProgress, currentLecture, realTimeProgress]);
 
+  const fetchCourseQuizzes = useCallback(async () => {
+    const response = await getStudentQuizzesByCourseService(id);
+    if (response?.success) {
+      setCourseQuizzes(response.data || []);
+    }
+  }, [id]);
+
   const handleProgressUpdate = useCallback(async (progressData) => {
     if (!currentLecture) return;
     // Debounce progress updates to prevent excessive state updates
@@ -112,6 +119,9 @@ function StudentViewCourseProgressPage() {
           progress: response?.data?.progress,
           quizzesProgress: response?.data?.quizzesProgress || [],
         });
+
+        // Fetch quizzes since course is purchased
+        await fetchCourseQuizzes();
 
         if (response?.data?.completed) {
           setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
@@ -174,14 +184,7 @@ function StudentViewCourseProgressPage() {
         }
       }
     }
-  }, [auth?.user?._id, id, setStudentCurrentCourseProgress]);
-
-  const fetchCourseQuizzes = useCallback(async () => {
-    const response = await getStudentQuizzesByCourseService(id);
-    if (response?.success) {
-      setCourseQuizzes(response.data || []);
-    }
-  }, [id]);
+  }, [auth?.user?._id, id, setStudentCurrentCourseProgress, fetchCourseQuizzes]);
 
   const updateCourseProgress = useCallback(async (isRewatch = false) => {
     if (!currentLecture || !auth?.user?._id || !studentCurrentCourseProgress?.courseDetails?._id) return;
@@ -259,8 +262,7 @@ function StudentViewCourseProgressPage() {
 
   useEffect(() => {
     fetchCurrentCourseProgress();
-    fetchCourseQuizzes();
-  }, [id, fetchCurrentCourseProgress, fetchCourseQuizzes]);
+  }, [id, fetchCurrentCourseProgress]);
 
   // Track real-time progress updates
   const [lastProgressUpdate, setLastProgressUpdate] = useState(null);

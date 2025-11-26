@@ -18,15 +18,15 @@ function VideoPlayer({
   width = "100%",
   height = "100%",
   url,
-  onProgressUpdate,
-  progressData,
+  onProgressUpdate = () => {},
+  progressData = {},
 }) {
   VideoPlayer.propTypes = {
     width: PropTypes.string,
     height: PropTypes.string,
     url: PropTypes.string,
-    onProgressUpdate: PropTypes.func.isRequired,
-    progressData: PropTypes.object.isRequired,
+    onProgressUpdate: PropTypes.func,
+    progressData: PropTypes.object,
   };
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(0.5);
