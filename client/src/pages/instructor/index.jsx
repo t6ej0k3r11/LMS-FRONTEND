@@ -6,11 +6,10 @@ import { InstructorContext } from "@/context/instructor-context";
 import { fetchInstructorCourseListService, checkAuthService } from "@/services";
 import WaitingForApproval from "./waiting-for-approval";
 import { useContext, useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 function InstructorDashboardpage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [instructorStatus, setInstructorStatus] = useState(null);
   const { auth } = useContext(AuthContext);

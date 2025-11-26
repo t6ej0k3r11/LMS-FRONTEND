@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState } from "react";
 import PropTypes from "prop-types";
 import { Link, useNavigate, Outlet, useSearchParams } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -23,22 +23,9 @@ import {
 
 function DashboardLayout({ userRole = "student" }) {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { resetCredentials } = useContext(AuthContext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("dashboard");
-
-  // Read tab from URL on mount and when URL changes
-  useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (tab) {
-      setActiveTab(tab);
-    } else {
-      // Default tab based on role
-      const defaultTab = userRole === "student" ? "home" : "dashboard";
-      setActiveTab(defaultTab);
-    }
-  }, [searchParams, userRole]);
 
   function handleLogout() {
     resetCredentials();
