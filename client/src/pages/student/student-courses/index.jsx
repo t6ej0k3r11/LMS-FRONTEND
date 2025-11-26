@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AuthContext } from "@/context/auth-context";
 import { StudentContext } from "@/context/student-context";
 import { fetchStudentBoughtCoursesService, getCurrentCourseProgressService, getStudentQuizzesByCourseService, getStudentPaymentsService } from "@/services";
-import { Watch, BookOpen, CheckCircle, AlertCircle, CreditCard, Eye } from "lucide-react";
+import { Watch, BookOpen, CheckCircle, AlertCircle, CreditCard, Eye, MessageCircle } from "lucide-react";
 import ChatPage from "@/pages/chat";
 import { useContext, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
@@ -136,12 +136,14 @@ function StudentCoursesPage() {
         <p className="text-gray-600 text-sm sm:text-base">Manage your courses, communications and payments</p>
       </div>
       <Tabs defaultValue="courses" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="courses">My Courses</TabsTrigger>
-          <TabsTrigger value="payments" onClick={fetchStudentPayments}>My Payments</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="courses" className="flex items-center gap-2">
             <BookOpen className="h-4 w-4" />
             My Courses
+          </TabsTrigger>
+          <TabsTrigger value="payments" onClick={fetchStudentPayments} className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            My Payments
           </TabsTrigger>
           <TabsTrigger value="messages" className="flex items-center gap-2">
             <MessageCircle className="h-4 w-4" />
@@ -238,10 +240,90 @@ function StudentCoursesPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="payments">
+          <Card>
+            <CardHeader>
+              <CardTitle>My Payment History</CardTitle>
+              <p className="text-sm text-muted-foreground">View all your payment submissions and their status</p>
+            </CardHeader>
+            <CardContent>
+              {paymentsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                  <span className="ml-2">Loading payments...</span>
+                </div>
+              ) : payments.length === 0 ? (
+                <div className="text-center py-12">
+                  <CreditCard className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <h2 className="text-2xl font-bold text-gray-900 mb-2">No Payments Yet</h2>
+                  <p className="text-gray-600 mb-6">Your payment history will appear here once you make a purchase</p>
+                </div>
+              ) : (
+                <div className="border rounded-lg overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Method</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Additional Notes</TableHead>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {payments.map((payment) => (
+                        <TableRow key={payment._id}>
+                          <TableCell className="font-mono text-sm">{payment._id.slice(-8)}</TableCell>
+                          <TableCell className="max-w-xs truncate">{payment.courseId?.title}</TableCell>
+                          <TableCell>৳{payment.amount.toLocaleString()}</TableCell>
+                          <TableCell className="capitalize">{payment.method.replace('_', ' ')}</TableCell>
+                          <TableCell>
+                            {getStatusBadge(payment.status)}
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate">
+                            {payment.referenceNote || "—"}
+                          </TableCell>
+                          <TableCell>{formatDate(payment.createdAt)}</TableCell>
+                          <TableCell>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedPaymentId(payment._id);
+                                setPaymentModalOpen(true);
+                              }}
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="messages">
           <ChatPage />
         </TabsContent>
       </Tabs>
+
+      {/* Payment Details Modal */}
+      <PaymentDetailsModal
+        paymentId={selectedPaymentId}
+        isOpen={paymentModalOpen}
+        onClose={() => {
+          setPaymentModalOpen(false);
+          setSelectedPaymentId(null);
+        }}
+      />
     </div>
   );
 }

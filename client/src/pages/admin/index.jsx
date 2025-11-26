@@ -912,6 +912,7 @@ function AdminDashboard() {
                         <TableHead>Amount</TableHead>
                         <TableHead>Method</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Additional Notes</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
@@ -919,14 +920,14 @@ function AdminDashboard() {
                     <TableBody>
                       {paymentsLoading ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-8">
+                          <TableCell colSpan={9} className="text-center py-8">
                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900 mx-auto mb-2"></div>
                             Loading payments...
                           </TableCell>
                         </TableRow>
                       ) : payments.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} className="text-center py-8">
+                          <TableCell colSpan={9} className="text-center py-8">
                             No payments found
                           </TableCell>
                         </TableRow>
@@ -947,6 +948,9 @@ function AdminDashboard() {
                               >
                                 {payment.status}
                               </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-xs truncate">
+                              {payment.referenceNote || "—"}
                             </TableCell>
                             <TableCell>{formatDate(payment.createdAt)}</TableCell>
                             <TableCell>
@@ -1021,6 +1025,16 @@ function AdminDashboard() {
                 )}
               </CardContent>
             </Card>
+
+            {/* Admin Payment Details Modal */}
+            <AdminPaymentDetailsModal
+              paymentId={selectedPayment}
+              isOpen={isPaymentModalOpen}
+              onClose={() => {
+                setIsPaymentModalOpen(false);
+                setSelectedPayment(null);
+              }}
+            />
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">
@@ -1063,18 +1077,8 @@ function AdminDashboard() {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Payment Details Modal */}
-        <AdminPaymentDetailsModal
-          paymentId={selectedPayment}
-          isOpen={isPaymentModalOpen}
-          onClose={() => {
-            setIsPaymentModalOpen(false);
-            setSelectedPayment(null);
-          }}
-        />
       </div>
-    </div>
+    //</div>
   );
 }
 

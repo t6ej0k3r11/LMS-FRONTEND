@@ -139,12 +139,6 @@ function StudentViewCourseProgressPage() {
     }
   }, [id, setStudentCurrentCourseProgress, auth?.authenticate]);
 
-  const fetchCourseQuizzes = useCallback(async () => {
-    const response = await getStudentQuizzesByCourseService(id);
-    if (response?.success) {
-      setCourseQuizzes(response.data || []);
-    }
-  }, [id]);
 
   const handleProgressUpdate = useCallback(async (progressData) => {
     if (!currentLecture || !auth?.authenticate) return;
@@ -182,6 +176,22 @@ function StudentViewCourseProgressPage() {
       }
     }
   }, [currentLecture, studentCurrentCourseProgress?.courseDetails?._id, auth?.authenticate, fetchUserProgress]);
+
+  const fetchCourseQuizzes = useCallback(async () => {
+    if (!auth?.authenticate) {
+      return;
+    }
+
+    try {
+      const response = await getStudentQuizzesByCourseService(id);
+      if (response?.success) {
+        setCourseQuizzes(response.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching course quizzes:", error);
+      // Don't show toast for quizzes as they might be optional
+    }
+  }, [id, auth?.authenticate]);
 
   const fetchCurrentCourseProgress = useCallback(async () => {
     if (!auth?.authenticate) {
@@ -263,22 +273,6 @@ function StudentViewCourseProgressPage() {
       setProgressLoading(false);
     }
   }, [id, setStudentCurrentCourseProgress, fetchCourseQuizzes, auth?.authenticate]);
-
-  const fetchCourseQuizzes = useCallback(async () => {
-    if (!auth?.authenticate) {
-      return;
-    }
-
-    try {
-      const response = await getStudentQuizzesByCourseService(id);
-      if (response?.success) {
-        setCourseQuizzes(response.data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching course quizzes:", error);
-      // Don't show toast for quizzes as they might be optional
-    }
-  }, [id, auth?.authenticate]);
 
   const updateCourseProgress = useCallback(async (isRewatch = false) => {
     if (!currentLecture || !auth?.user?._id || !studentCurrentCourseProgress?.courseDetails?._id) return;

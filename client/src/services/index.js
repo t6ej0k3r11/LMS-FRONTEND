@@ -879,7 +879,7 @@ export async function uploadAvatarService(formData) {
 import { PAYMENT_CONFIG } from "@/config/paymentConfig";
 
 export async function initOnlinePaymentService(paymentData) {
-  const instance = await axiosInstance();
+  const instance = axiosInstance;
 
   const { data } = await instance.post(PAYMENT_CONFIG.ROUTES.INIT_ONLINE, paymentData);
 
@@ -887,7 +887,7 @@ export async function initOnlinePaymentService(paymentData) {
 }
 
 export async function submitOfflinePaymentService(formData) {
-  const instance = await axiosInstance();
+  const instance = axiosInstance;
 
   const { data } = await instance.post(PAYMENT_CONFIG.ROUTES.OFFLINE_SUBMIT, formData);
 
@@ -895,7 +895,7 @@ export async function submitOfflinePaymentService(formData) {
 }
 
 export async function getStudentPaymentsService() {
-  const instance = await axiosInstance();
+  const instance = axiosInstance;
 
   const { data } = await instance.get(PAYMENT_CONFIG.ROUTES.MY_PAYMENTS);
 
@@ -903,7 +903,7 @@ export async function getStudentPaymentsService() {
 }
 
 export async function getPaymentDetailsService(paymentId) {
-  const instance = await axiosInstance();
+  const instance = axiosInstance;
 
   const { data } = await instance.get(`${PAYMENT_CONFIG.ROUTES.PAYMENT_DETAILS}/${paymentId}`);
 
@@ -912,7 +912,7 @@ export async function getPaymentDetailsService(paymentId) {
 
 // Admin payment services
 export async function getAllPaymentsService(queryParams = {}) {
-  const instance = await axiosInstance();
+  const instance = axiosInstance;
 
   const queryString = new URLSearchParams(queryParams).toString();
   const { data } = await instance.get(`${PAYMENT_CONFIG.ROUTES.ADMIN_PAYMENTS}?${queryString}`);
@@ -921,7 +921,7 @@ export async function getAllPaymentsService(queryParams = {}) {
 }
 
 export async function updatePaymentStatusService(paymentId, statusData) {
-  const instance = await axiosInstance();
+  const instance = axiosInstance;
 
   const { data } = await instance.put(`${PAYMENT_CONFIG.ROUTES.ADMIN_UPDATE_STATUS}/${paymentId}`, statusData);
 
@@ -929,7 +929,7 @@ export async function updatePaymentStatusService(paymentId, statusData) {
 }
 
 export async function addPaymentNoteService(paymentId, noteData) {
-  const instance = await axiosInstance();
+  const instance = axiosInstance;
 
   const { data } = await instance.post(`/admin/payment/${paymentId}/note`, noteData);
 
@@ -937,7 +937,7 @@ export async function addPaymentNoteService(paymentId, noteData) {
 }
 
 export async function getAdminPaymentDetailsService(paymentId) {
-  const instance = await axiosInstance();
+  const instance = axiosInstance;
 
   const { data } = await instance.get(`${PAYMENT_CONFIG.ROUTES.ADMIN_PAYMENT_BY_ID}/${paymentId}`);
 

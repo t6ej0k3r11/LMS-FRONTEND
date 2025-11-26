@@ -252,7 +252,7 @@ function PaymentDetailsModal({ paymentId, isOpen, onClose }) {
 }
 
 PaymentDetailsModal.propTypes = {
-  paymentId: PropTypes.string.isRequired,
+  paymentId: PropTypes.string,
   isOpen: PropTypes.bool.isRequired,
   onClose: PropTypes.func.isRequired,
 };
