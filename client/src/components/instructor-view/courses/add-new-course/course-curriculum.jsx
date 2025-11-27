@@ -13,6 +13,7 @@ import {
   mediaUploadService,
 } from "@/services";
 import { useToast } from "@/hooks/use-toast";
+import useFileValidator from "@/hooks/useFileValidator";
 import { Upload, FileQuestion } from "lucide-react";
 import { useContext, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -30,6 +31,16 @@ function CourseCurriculum() {
   const { toast } = useToast();
   const bulkUploadInputRef = useRef(null);
   const navigate = useNavigate();
+
+  // File validation hooks
+  const singleFileValidator = useFileValidator({
+    allowedTypes: ['image', 'video', 'document', 'zip'],
+    multiple: false
+  });
+  const bulkFileValidator = useFileValidator({
+    allowedTypes: ['image', 'video', 'document', 'zip'],
+    multiple: true
+  });
 
   function handleNewLecture() {
     setCourseCurriculumFormData([
@@ -63,36 +74,14 @@ function CourseCurriculum() {
   async function handleSingleLectureUpload(event, currentIndex) {
     const selectedFile = event.target.files[0];
 
-    console.log("DEBUG: Starting single video upload");
-    console.log("DEBUG: Selected file:", {
-      name: selectedFile?.name,
-      size: selectedFile?.size,
-      type: selectedFile?.type,
-      sizeMB: selectedFile ? (selectedFile.size / 1024 / 1024).toFixed(2) : null
-    });
-
     if (selectedFile) {
-      // Validate file size (50MB limit)
-      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
-      console.log("DEBUG: Client-side validation - maxSize:", maxSize, "fileSize:", selectedFile.size);
-      if (selectedFile.size > maxSize) {
-        console.log("DEBUG: File size validation failed on client");
-        toast({
-          title: "File too large",
-          description: "File size exceeds 50MB limit. Please choose a smaller file.",
-          variant: "destructive",
-        });
-        return;
-      }
+      // Use the file validator hook
+      const validation = singleFileValidator.validateFile(selectedFile);
 
-      // Validate file type
-      const allowedTypes = ['application/pdf', 'video/mp4', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-      console.log("DEBUG: Client-side validation - allowedTypes:", allowedTypes, "fileType:", selectedFile.type);
-      if (!allowedTypes.includes(selectedFile.type)) {
-        console.log("DEBUG: File type validation failed on client");
+      if (!validation.valid) {
         toast({
-          title: "Invalid file type",
-          description: "Please select a valid file: PDF, MP4, or DOCX.",
+          title: "File validation failed",
+          description: validation.errors.join(', '),
           variant: "destructive",
         });
         return;
@@ -100,19 +89,15 @@ function CourseCurriculum() {
 
       const videoFormData = new FormData();
       videoFormData.append("file", selectedFile);
-      console.log("DEBUG: FormData created with file");
 
       try {
-        console.log("DEBUG: Calling mediaUploadService");
         setMediaUploadProgress(true);
         const response = await mediaUploadService(
           videoFormData,
           setMediaUploadProgressPercentage
         );
-        console.log("DEBUG: mediaUploadService response:", response);
 
         if (response.success) {
-          console.log("DEBUG: Upload successful, updating form data");
           let cpyCourseCurriculumFormData = [...courseCurriculumFormData];
           cpyCourseCurriculumFormData[currentIndex] = {
             ...cpyCourseCurriculumFormData[currentIndex],
@@ -122,8 +107,6 @@ function CourseCurriculum() {
           setCourseCurriculumFormData(cpyCourseCurriculumFormData);
           setMediaUploadProgress(false);
         } else {
-          console.log("DEBUG: Upload failed - response.success is false");
-          console.log("DEBUG: Response details:", response);
           toast({
             title: "Upload failed",
             description: response?.message || "Please try again.",
@@ -131,18 +114,7 @@ function CourseCurriculum() {
           });
         }
       } catch (error) {
-        console.error("DEBUG: Error uploading video:", error);
-        console.error("DEBUG: Error details:", {
-          message: error.message,
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          config: {
-            url: error.config?.url,
-            method: error.config?.method,
-            headers: error.config?.headers
-          }
-        });
+        console.error("Error uploading file:", error);
         toast({
           title: "Upload failed",
           description: "Please check your connection and try again.",
@@ -150,8 +122,6 @@ function CourseCurriculum() {
         });
         setMediaUploadProgress(false);
       }
-    } else {
-      console.log("DEBUG: No file selected");
     }
   }
 
@@ -204,27 +174,16 @@ function CourseCurriculum() {
   async function handleMediaBulkUpload(event) {
     const selectedFiles = Array.from(event.target.files);
 
-    // Validate files
-    const maxSize = 50 * 1024 * 1024; // 50MB per file
-    const allowedTypes = ['application/pdf', 'video/mp4', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    // Use the file validator hook for bulk validation
+    const validation = bulkFileValidator.validateFile(selectedFiles);
 
-    for (const file of selectedFiles) {
-      if (file.size > maxSize) {
-        toast({
-          title: "File too large",
-          description: `File "${file.name}" exceeds 50MB limit. Please choose smaller files.`,
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          title: "Invalid file type",
-          description: `File "${file.name}" is not supported. Please use PDF, MP4, or DOCX.`,
-          variant: "destructive",
-        });
-        return;
-      }
+    if (!validation.valid) {
+      toast({
+        title: "File validation failed",
+        description: validation.errors.join('; '),
+        variant: "destructive",
+      });
+      return;
     }
 
     const bulkFormData = new FormData();
@@ -237,7 +196,6 @@ function CourseCurriculum() {
         setMediaUploadProgressPercentage
       );
 
-      console.log(response, "bulk");
       if (response?.success) {
         let cpyCourseCurriculumFormdata =
           areAllCourseCurriculumFormDataObjectsEmpty(courseCurriculumFormData)
@@ -260,7 +218,7 @@ function CourseCurriculum() {
       } else {
         toast({
           title: "Bulk upload failed",
-          description: "Please try again.",
+          description: response?.message || "Please try again.",
           variant: "destructive",
         });
         setMediaUploadProgress(false);
@@ -300,7 +258,7 @@ function CourseCurriculum() {
           <Input
             type="file"
             ref={bulkUploadInputRef}
-            accept=".pdf,.mp4,.docx"
+            accept={bulkFileValidator.getAcceptedTypes()}
             multiple
             className="hidden"
             id="bulk-media-upload"
@@ -393,14 +351,14 @@ function CourseCurriculum() {
                     <Input
                       id={`lesson-upload-${index}`}
                       type="file"
-                      accept=".pdf,.mp4,.docx"
+                      accept={singleFileValidator.getAcceptedTypes()}
                       onChange={(event) =>
                         handleSingleLectureUpload(event, index)
                       }
                       className="mb-4"
                     />
                     <p className="text-sm text-gray-500">
-                      Supported formats: PDF, MP4, DOCX. Maximum file size: 50MB.
+                      Supported formats: Images, Videos, Documents, ZIP. Maximum file size: {singleFileValidator.getMaxSizeMB()}MB.
                     </p>
                   </div>
                 )}

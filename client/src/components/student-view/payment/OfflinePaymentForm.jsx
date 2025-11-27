@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Upload, X, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import useFileValidator from "@/hooks/useFileValidator";
 import { submitOfflinePaymentService } from "@/services";
 import { PAYMENT_CONFIG } from "@/config/paymentConfig";
 import PropTypes from 'prop-types';
@@ -32,6 +33,12 @@ function OfflinePaymentForm({ courseId, amount, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // File validation hook for payment proof
+  const paymentProofValidator = useFileValidator({
+    allowedTypes: ['image', 'document'],
+    multiple: false
+  });
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
@@ -44,22 +51,13 @@ function OfflinePaymentForm({ courseId, amount, onSuccess }) {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
-    // Validate file type
-    const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
-    if (!allowedTypes.includes(selectedFile.type)) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload a JPEG, PNG, or PDF file.",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Use the file validator hook
+    const validation = paymentProofValidator.validateFile(selectedFile);
 
-    // Validate file size (5MB max)
-    if (selectedFile.size > 5 * 1024 * 1024) {
+    if (!validation.valid) {
       toast({
-        title: "File too large",
-        description: "Please upload a file smaller than 5MB.",
+        title: "File validation failed",
+        description: validation.errors.join(', '),
         variant: "destructive",
       });
       return;
@@ -262,7 +260,7 @@ function OfflinePaymentForm({ courseId, amount, onSuccess }) {
                     Upload payment screenshot or receipt
                   </p>
                   <p className="text-xs text-gray-500 mb-4">
-                    JPEG, PNG, PDF up to 5MB
+                    Images, Documents up to {paymentProofValidator.getMaxSizeMB()}MB
                   </p>
                   <Button
                     type="button"
@@ -302,7 +300,7 @@ function OfflinePaymentForm({ courseId, amount, onSuccess }) {
               <input
                 id="file-upload"
                 type="file"
-                accept="image/jpeg,image/png,application/pdf"
+                accept={paymentProofValidator.getAcceptedTypes()}
                 onChange={handleFileChange}
                 className="hidden"
               />
