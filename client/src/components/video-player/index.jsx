@@ -28,8 +28,8 @@ function VideoPlayer({
   width = "100%",
   height = "100%",
   url,
-  onProgressUpdate,
-  progressData,
+  onProgressUpdate = () => {},
+  progressData = {},
   lectureId,
 }) {
   VideoPlayer.propTypes = {

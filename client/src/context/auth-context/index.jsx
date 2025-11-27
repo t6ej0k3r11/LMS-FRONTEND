@@ -160,6 +160,33 @@ export default function AuthProvider({ children }) {
       return;
     }
 
+    // Check if token is expired before making request
+    try {
+      const payload = JSON.parse(atob(accessToken.split('.')[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      if (payload.exp && payload.exp < currentTime) {
+        // Token expired, clear it
+        localStorage.removeItem("accessToken");
+        setAuth({
+          authenticate: false,
+          user: null,
+          refreshToken: null,
+        });
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // Invalid token format, clear it
+      localStorage.removeItem("accessToken");
+      setAuth({
+        authenticate: false,
+        user: null,
+        refreshToken: null,
+      });
+      setLoading(false);
+      return;
+    }
+
     try {
       const { checkAuthService } = await getServices();
       const data = await checkAuthService();

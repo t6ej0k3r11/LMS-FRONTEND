@@ -20,9 +20,9 @@ import {
 } from "@/services";
 import { sanitizeUserInput } from "@/lib/sanitizer";
 import { CheckCircle, Globe, Lock, PlayCircle, BookOpen } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 
 function StudentViewCourseDetailsPage() {
   const {
@@ -35,6 +35,7 @@ function StudentViewCourseDetailsPage() {
   } = useContext(StudentContext);
 
   const { auth } = useContext(AuthContext);
+  const { toast } = useToast();
 
   const [displayCurrentVideoFreePreview, setDisplayCurrentVideoFreePreview] =
     useState(null);
@@ -67,16 +68,17 @@ function StudentViewCourseDetailsPage() {
         });
       } else {
         toast({
-          title: "Error",
-          description: response?.message || "Enrollment failed.",
+          title: "Enrollment Error",
+          description: response?.message || "Failed to enroll in course. Please try again.",
           variant: "destructive",
         });
       }
     } catch (error) {
       console.error("Enrollment error:", error);
+      const errorMessage = error.response?.data?.message || error.message || "An unexpected error occurred. Please try again.";
       toast({
-        title: "Error",
-        description: error.response?.data?.message || "Enrollment failed.",
+        title: "Enrollment Error",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -84,41 +86,35 @@ function StudentViewCourseDetailsPage() {
     }
   };
 
-  const handleCreatePayment = async () => {
-    try {
-      const response = await createPaymentService({ courseId: studentViewCourseDetails?._id, paymentConfirmed: true });
-      if (response?.success) {
-        if (response?.data?.approveUrl) {
-          window.location.href = response.data.approveUrl;
-        } else {
-          // Simulated payment, enrollment successful
-          toast({
-            title: "Success",
-            description: "Enrollment successful!",
-            variant: "default",
-          });
-          // Perhaps refresh or navigate to course
-        }
-      } else {
-        toast({
-          title: "Error",
-          description: response?.message || "Payment creation failed",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("Payment error:", error);
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Payment failed.",
-        variant: "destructive",
-      });
-    }
+  const handleCreatePayment = () => {
+    // Navigate to payment selection page with course details
+    const params = new URLSearchParams({
+      courseId: studentViewCourseDetails?._id,
+      courseTitle: studentViewCourseDetails?.title,
+      amount: studentViewCourseDetails?.pricing,
+    });
+    navigate(`/payment?${params.toString()}`);
   };
 
   useEffect(() => {
     if (displayCurrentVideoFreePreview !== null) setShowFreePreviewDialog(true);
   }, [displayCurrentVideoFreePreview]);
+
+  const fetchCourseQuizzes = useCallback(async () => {
+    if (!currentCourseDetailsId) return;
+    try {
+      const response = await getStudentQuizzesByCourseService(currentCourseDetailsId);
+      if (response?.success) {
+        setCourseQuizzes(response.data);
+      }
+    } catch (error) {
+      console.log("Failed to fetch quizzes:", error);
+      // If 403 Forbidden, user hasn't purchased the course, so don't show quizzes
+      if (error.response?.status === 403) {
+        setCourseQuizzes([]);
+      }
+    }
+  }, [currentCourseDetailsId]);
 
   useEffect(() => {
     if (currentCourseDetailsId !== null) {
@@ -136,22 +132,6 @@ function StudentViewCourseDetailsPage() {
         }
       };
 
-      const fetchCourseQuizzes = async () => {
-        if (!currentCourseDetailsId) return;
-        try {
-          const response = await getStudentQuizzesByCourseService(currentCourseDetailsId);
-          if (response?.success) {
-            setCourseQuizzes(response.data);
-          }
-        } catch (error) {
-          console.log("Failed to fetch quizzes:", error);
-          // If 403 Forbidden, user hasn't purchased the course, so don't show quizzes
-          if (error.response?.status === 403) {
-            setCourseQuizzes([]);
-          }
-        }
-      };
-
       const checkEnrollment = async () => {
         if (!auth?.user?._id || !currentCourseDetailsId) return;
         const response = await checkCoursePurchaseInfoService(currentCourseDetailsId, auth.user._id);
@@ -161,12 +141,19 @@ function StudentViewCourseDetailsPage() {
       };
 
       fetchStudentViewCourseDetails();
-      fetchCourseQuizzes();
       if (auth?.authenticate) {
         checkEnrollment();
       }
     }
   }, [currentCourseDetailsId, setLoadingState, setStudentViewCourseDetails, auth?.authenticate, auth.user._id]);
+
+  useEffect(() => {
+    if (enrollmentStatus.enrolled && currentCourseDetailsId) {
+      fetchCourseQuizzes();
+    } else {
+      setCourseQuizzes([]);
+    }
+  }, [enrollmentStatus.enrolled, currentCourseDetailsId, fetchCourseQuizzes]);
 
   useEffect(() => {
     if (id) setCurrentCourseDetailsId(id);

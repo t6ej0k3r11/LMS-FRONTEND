@@ -139,6 +139,7 @@ function StudentViewCourseProgressPage() {
     }
   }, [id, setStudentCurrentCourseProgress, auth?.authenticate]);
 
+
   const handleProgressUpdate = useCallback(async (progressData) => {
     if (!currentLecture || !auth?.authenticate) return;
 
@@ -176,6 +177,22 @@ function StudentViewCourseProgressPage() {
     }
   }, [currentLecture, studentCurrentCourseProgress?.courseDetails?._id, auth?.authenticate, fetchUserProgress]);
 
+  const fetchCourseQuizzes = useCallback(async () => {
+    if (!auth?.authenticate) {
+      return;
+    }
+
+    try {
+      const response = await getStudentQuizzesByCourseService(id);
+      if (response?.success) {
+        setCourseQuizzes(response.data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching course quizzes:", error);
+      // Don't show toast for quizzes as they might be optional
+    }
+  }, [id, auth?.authenticate]);
+
   const fetchCurrentCourseProgress = useCallback(async () => {
     if (!auth?.authenticate) {
       setProgressError("Authentication required");
@@ -197,10 +214,13 @@ function StudentViewCourseProgressPage() {
             quizzesProgress: response?.data?.quizzesProgress || [],
           });
 
-          if (response?.data?.completed) {
-            setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
-            setShowCourseCompleteDialog(true);
-            setShowConfetti(true);
+        // Fetch quizzes since course is purchased
+        await fetchCourseQuizzes();
+
+        if (response?.data?.completed) {
+          setCurrentLecture(response?.data?.courseDetails?.curriculum[0]);
+          setShowCourseCompleteDialog(true);
+          setShowConfetti(true);
 
             return;
           }
@@ -252,23 +272,7 @@ function StudentViewCourseProgressPage() {
     } finally {
       setProgressLoading(false);
     }
-  }, [id, setStudentCurrentCourseProgress, auth?.authenticate]);
-
-  const fetchCourseQuizzes = useCallback(async () => {
-    if (!auth?.authenticate) {
-      return;
-    }
-
-    try {
-      const response = await getStudentQuizzesByCourseService(id);
-      if (response?.success) {
-        setCourseQuizzes(response.data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching course quizzes:", error);
-      // Don't show toast for quizzes as they might be optional
-    }
-  }, [id, auth?.authenticate]);
+  }, [id, setStudentCurrentCourseProgress, fetchCourseQuizzes, auth?.authenticate]);
 
   const updateCourseProgress = useCallback(async (isRewatch = false) => {
     if (!currentLecture || !auth?.user?._id || !studentCurrentCourseProgress?.courseDetails?._id) return;
