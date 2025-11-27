@@ -33,11 +33,18 @@ import {
   X
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import useFileValidator from "@/hooks/useFileValidator";
 
 function ProfilePage() {
   const { auth } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditing, setIsEditing] = useState(false);
+
+  // File validation hook for avatar uploads
+  const avatarValidator = useFileValidator({
+    allowedTypes: ['image'],
+    multiple: false
+  });
   const [profileData, setProfileData] = useState({
     fullName: "",
     email: "",
@@ -188,6 +195,18 @@ function ProfilePage() {
   const handleAvatarUpload = async (event) => {
     const file = event.target.files[0];
     if (file) {
+      // Use the file validator hook
+      const validation = avatarValidator.validateFile(file);
+
+      if (!validation.valid) {
+        toast({
+          title: "File validation failed",
+          description: validation.errors.join(', '),
+          variant: "destructive",
+        });
+        return;
+      }
+
       try {
         // Show preview immediately
         const reader = new FileReader();
@@ -377,7 +396,7 @@ function ProfilePage() {
                 <input
                   id="avatar-upload"
                   type="file"
-                  accept="image/*"
+                  accept={avatarValidator.getAcceptedTypes()}
                   className="hidden"
                   onChange={handleAvatarUpload}
                 />
