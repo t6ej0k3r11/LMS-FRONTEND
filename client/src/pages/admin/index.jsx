@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../components/ui/dropdown-menu";
-import { Users, BookOpen, Shield, Activity,  Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight, Sparkles, CheckCircle, XCircle } from "lucide-react";
+import { Users, BookOpen, Shield, Activity, Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight, Sparkles, CheckCircle, XCircle, DollarSign, Clock } from "lucide-react";
 
 
 import { useToast } from "../../hooks/use-toast";
@@ -20,11 +20,19 @@ import QuestionBankManagement from "./question-bank-management";
 import ChatPage from "@/pages/chat";
 import AdminPaymentDetailsModal from "../../components/AdminPaymentDetailsModal";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 function AdminDashboard() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { auth, logout } = useContext(AuthContext);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+
+  // Earnings state
+  const [earningsData, setEarningsData] = useState(null);
+  const [instructorEarnings, setInstructorEarnings] = useState([]);
+  const [courseEarnings, setCourseEarnings] = useState([]);
+  const [earningsLoading, setEarningsLoading] = useState(false);
 
   // User management state
   const [users, setUsers] = useState([]);
@@ -59,7 +67,7 @@ function AdminDashboard() {
   // Read tab from URL on mount and when URL changes
   useEffect(() => {
     const tab = searchParams.get("tab");
-    if (tab && ["overview", "users", "instructors", "courses", "messages", "questions", "audit"].includes(tab)) {
+    if (tab && ["overview", "users", "instructors", "courses", "messages", "questions", "payments", "earnings", "audit"].includes(tab)) {
       setActiveTab(tab);
     } else {
       setActiveTab("overview");
@@ -344,12 +352,68 @@ function AdminDashboard() {
     }
   }, [activeTab, fetchPendingInstructors]);
 
+  // Fetch earnings data
+  const fetchEarningsData = useCallback(async () => {
+    setEarningsLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const [summaryResponse, instructorResponse, courseResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/admin/earnings/summary`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE_URL}/admin/earnings/instructor-report`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE_URL}/admin/earnings/course-report`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      if (summaryResponse.ok) {
+        const summaryData = await summaryResponse.json();
+        if (summaryData.success) {
+          setEarningsData(summaryData.data);
+        }
+      }
+
+      if (instructorResponse.ok) {
+        const instructorData = await instructorResponse.json();
+        if (instructorData.success) {
+          setInstructorEarnings(instructorData.data);
+        }
+      }
+
+      if (courseResponse.ok) {
+        const courseData = await courseResponse.json();
+        if (courseData.success) {
+          setCourseEarnings(courseData.data);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching earnings data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch earnings data",
+        variant: "destructive",
+      });
+    } finally {
+      setEarningsLoading(false);
+    }
+  }, [toast]);
+
   // Effect to fetch payments when payments tab is active
   useEffect(() => {
     if (activeTab === "payments") {
       fetchPayments();
     }
   }, [activeTab, fetchPayments]);
+
+  // Effect to fetch earnings when earnings tab is active
+  useEffect(() => {
+    if (activeTab === "earnings") {
+      fetchEarningsData();
+    }
+  }, [activeTab, fetchEarningsData]);
 
   // Format date helper
   const formatDate = (dateString) => {
@@ -420,7 +484,7 @@ function AdminDashboard() {
 
         {/* Main Content Tabs */}
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-5">
-          <TabsList className="glass-effect border border-white/40 grid w-full grid-cols-2 sm:grid-cols-7 rounded-2xl p-1">
+          <TabsList className="glass-effect border border-white/40 grid w-full grid-cols-2 sm:grid-cols-8 rounded-2xl p-1">
             {[
               { value: "overview", label: "Overview" },
               { value: "users", label: "User Management" },
@@ -429,6 +493,7 @@ function AdminDashboard() {
               { value: "messages", label: "Messages" },
               { value: "questions", label: "Question Bank" },
               { value: "payments", label: "Payment Management" },
+              { value: "earnings", label: "Earnings Reports" },
               { value: "audit", label: "Audit Logs" },
             ].map((tab) => (
               <TabsTrigger
@@ -1036,6 +1101,183 @@ function AdminDashboard() {
                 setSelectedPayment(null);
               }}
             />
+          </TabsContent>
+
+          <TabsContent value="earnings" className="space-y-6">
+            <div className="space-y-6">
+              {/* Earnings Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <Card className="rounded-3xl border border-white/60 bg-white/85 shadow-[0_25px_60px_rgba(5,41,30,0.12)] transition-transform duration-300 hover:-translate-y-1">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-muted-foreground">Total Revenue</CardTitle>
+                    </div>
+                    <div className="rounded-2xl p-3 bg-green-100">
+                      <DollarSign className="h-5 w-5 text-green-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-foreground">
+                      {earningsLoading ? "..." : `৳${earningsData?.totalRevenue?.toLocaleString() || 0}`}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-3xl border border-white/60 bg-white/85 shadow-[0_25px_60px_rgba(5,41,30,0.12)] transition-transform duration-300 hover:-translate-y-1">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-muted-foreground">Platform Commission</CardTitle>
+                    </div>
+                    <div className="rounded-2xl p-3 bg-blue-100">
+                      <DollarSign className="h-5 w-5 text-blue-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-foreground">
+                      {earningsLoading ? "..." : `৳${earningsData?.totalPlatformCommission?.toLocaleString() || 0}`}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-3xl border border-white/60 bg-white/85 shadow-[0_25px_60px_rgba(5,41,30,0.12)] transition-transform duration-300 hover:-translate-y-1">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-muted-foreground">Instructor Earnings</CardTitle>
+                    </div>
+                    <div className="rounded-2xl p-3 bg-purple-100">
+                      <DollarSign className="h-5 w-5 text-purple-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-foreground">
+                      {earningsLoading ? "..." : `৳${earningsData?.totalInstructorEarnings?.toLocaleString() || 0}`}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="rounded-3xl border border-white/60 bg-white/85 shadow-[0_25px_60px_rgba(5,41,30,0.12)] transition-transform duration-300 hover:-translate-y-1">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <div>
+                      <CardTitle className="text-sm font-semibold text-muted-foreground">Pending Payouts</CardTitle>
+                    </div>
+                    <div className="rounded-2xl p-3 bg-orange-100">
+                      <Clock className="h-5 w-5 text-orange-600" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-3xl font-bold text-foreground">
+                      {earningsLoading ? "..." : `৳${earningsData?.pendingAmount?.toLocaleString() || 0}`}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Instructor Earnings Table */}
+              <Card className="rounded-[30px] border border-white/60 bg-white/90 shadow-[0_35px_80px_rgba(10,143,99,0.14)]">
+                <CardHeader>
+                  <CardTitle>Instructor Earnings Report</CardTitle>
+                  <p className="text-sm text-muted-foreground">Earnings breakdown by instructor</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Instructor</TableHead>
+                          <TableHead>Total Revenue</TableHead>
+                          <TableHead>Platform Commission</TableHead>
+                          <TableHead>Instructor Earnings</TableHead>
+                          <TableHead>Transactions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {earningsLoading ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8">
+                              Loading earnings data...
+                            </TableCell>
+                          </TableRow>
+                        ) : instructorEarnings.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8">
+                              No earnings data available
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          instructorEarnings.map((instructor) => (
+                            <TableRow key={instructor.instructorId}>
+                              <TableCell className="font-semibold">
+                                {instructor.instructorName}
+                              </TableCell>
+                              <TableCell>৳{instructor.totalRevenue?.toLocaleString() || 0}</TableCell>
+                              <TableCell>৳{instructor.platformCommission?.toLocaleString() || 0}</TableCell>
+                              <TableCell className="font-semibold text-green-600">
+                                ৳{instructor.totalEarnings?.toLocaleString() || 0}
+                              </TableCell>
+                              <TableCell>{instructor.transactionCount || 0}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Course Earnings Table */}
+              <Card className="rounded-[30px] border border-white/60 bg-white/90 shadow-[0_35px_80px_rgba(10,143,99,0.14)]">
+                <CardHeader>
+                  <CardTitle>Course Earnings Report</CardTitle>
+                  <p className="text-sm text-muted-foreground">Earnings breakdown by course</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Course</TableHead>
+                          <TableHead>Instructor</TableHead>
+                          <TableHead>Total Revenue</TableHead>
+                          <TableHead>Platform Commission</TableHead>
+                          <TableHead>Instructor Earnings</TableHead>
+                          <TableHead>Transactions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {earningsLoading ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8">
+                              Loading earnings data...
+                            </TableCell>
+                          </TableRow>
+                        ) : courseEarnings.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8">
+                              No earnings data available
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          courseEarnings.map((course) => (
+                            <TableRow key={course.courseId}>
+                              <TableCell className="font-semibold max-w-xs truncate">
+                                {course.courseTitle}
+                              </TableCell>
+                              <TableCell>{course.instructorName}</TableCell>
+                              <TableCell>৳{course.totalRevenue?.toLocaleString() || 0}</TableCell>
+                              <TableCell>৳{course.platformCommission?.toLocaleString() || 0}</TableCell>
+                              <TableCell className="font-semibold text-green-600">
+                                ৳{course.instructorEarnings?.toLocaleString() || 0}
+                              </TableCell>
+                              <TableCell>{course.transactionCount || 0}</TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="audit" className="space-y-6">

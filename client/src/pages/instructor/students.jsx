@@ -121,7 +121,7 @@ function InstructorStudentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Revenue</p>
-                <p className="text-3xl font-bold text-bangladesh-red">${totalRevenue.toLocaleString()}</p>
+                <p className="text-3xl font-bold text-bangladesh-red">৳{totalRevenue.toLocaleString()}</p>
               </div>
               <div className="rounded-2xl bg-gradient-red p-3">
                 <DollarSign className="h-6 w-6 text-white" />
@@ -150,7 +150,7 @@ function InstructorStudentsPage() {
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Avg. Revenue</p>
                 <p className="text-3xl font-bold text-bangladesh-red">
-                  ${filteredStudents.length > 0 ? (totalRevenue / filteredStudents.length).toFixed(0) : 0}
+                  ৳{filteredStudents.length > 0 ? (totalRevenue / filteredStudents.length).toFixed(0) : 0}
                 </p>
               </div>
               <div className="rounded-2xl bg-gradient-red p-3">
@@ -260,7 +260,7 @@ function InstructorStudentsPage() {
                       </td>
                       <td className="py-4 px-4">
                         <span className="font-medium text-bangladesh-green">
-                          ${student.enrolledCourses.reduce((acc, course) => {
+                          ৳{student.enrolledCourses.reduce((acc, course) => {
                             const courseData = instructorCoursesList.find(c => c.title === course.title);
                             return acc + (courseData?.pricing || 0);
                           }, 0)}
@@ -335,7 +335,7 @@ function InstructorStudentsPage() {
                   <CardContent className="p-4 text-center">
                     <DollarSign className="h-8 w-8 text-bangladesh-red mx-auto mb-2" />
                     <p className="text-2xl font-bold text-foreground">
-                      ${selectedStudent.enrolledCourses.reduce((acc, course) => {
+                      ৳{selectedStudent.enrolledCourses.reduce((acc, course) => {
                         const courseData = instructorCoursesList.find(c => c.title === course.title);
                         return acc + (courseData?.pricing || 0);
                       }, 0)}
@@ -369,7 +369,7 @@ function InstructorStudentsPage() {
                           </div>
                           <div className="text-right">
                             <p className="font-medium text-bangladesh-green">
-                              ${instructorCoursesList.find(c => c.title === course.title)?.pricing || 0}
+                              ৳{instructorCoursesList.find(c => c.title === course.title)?.pricing || 0}
                             </p>
                           </div>
                         </div>

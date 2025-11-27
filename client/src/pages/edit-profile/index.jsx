@@ -338,7 +338,7 @@ function EditProfilePage() {
               </div>
               <div className="p-3 bg-gradient-to-r from-red-100 to-red-50 rounded-lg">
                 <p className="text-sm text-gray-600">Total Earnings</p>
-                <p className="text-lg font-semibold text-red-800">${roleStats.earnings}</p>
+                <p className="text-lg font-semibold text-red-800">৳{roleStats.earnings}</p>
               </div>
             </CardContent>
           </Card>

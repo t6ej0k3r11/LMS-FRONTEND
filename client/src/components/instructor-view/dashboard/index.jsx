@@ -8,14 +8,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DollarSign, Users, BookOpen, Eye, Sparkles, TrendingUp, Bell, Clock, CheckCircle, AlertCircle } from "lucide-react";
+import { DollarSign, Users, BookOpen, Sparkles, TrendingUp, Bell, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { fetchEnrolledStudentsService } from "@/services";
 import { toast } from "@/hooks/use-toast";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 function InstructorDashboard({ listOfCourses }) {
   const [enrolledStudents, setEnrolledStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(true);
+  const [earningsData, setEarningsData] = useState(null);
+  const [loadingEarnings, setLoadingEarnings] = useState(true);
 
   useEffect(() => {
     const fetchStudents = async () => {
@@ -46,6 +50,35 @@ function InstructorDashboard({ listOfCourses }) {
     fetchStudents();
   }, []);
 
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      try {
+        setLoadingEarnings(true);
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_BASE_URL}/instructor/earnings/summary`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            setEarningsData(data.data);
+          }
+        } else {
+          console.error("Failed to fetch earnings data");
+        }
+      } catch (error) {
+        console.error("Error fetching earnings:", error);
+      } finally {
+        setLoadingEarnings(false);
+      }
+    };
+
+    fetchEarnings();
+  }, []);
+
   function calculateTotalStudentsAndProfit() {
     const { totalStudents, totalProfit, totalRewatches } = listOfCourses.reduce(
       (acc, course) => {
@@ -73,17 +106,17 @@ function InstructorDashboard({ listOfCourses }) {
     };
   }
 
-  const { totalStudents, totalProfit, totalRewatches } = calculateTotalStudentsAndProfit();
+  const { totalStudents } = calculateTotalStudentsAndProfit();
 
   const highlightCourse = listOfCourses.reduce(
     (top, course) => {
-      const score = course.students.length * course.pricing;
+      const score = course.students.length;
       if (score > top.score) {
         return {
           score,
           title: course.title,
           students: course.students.length,
-          revenue: course.students.length * course.pricing,
+          revenue: course.pricing, // Just show course price as example
         };
       }
       return top;
@@ -100,9 +133,9 @@ function InstructorDashboard({ listOfCourses }) {
     },
     {
       icon: DollarSign,
-      label: "Total Revenue",
-      value: `$${totalProfit.toLocaleString()}`,
-      meta: "Lifetime",
+      label: "Total Earnings",
+      value: loadingEarnings ? "..." : `৳${earningsData?.totalEarnings?.toLocaleString() || 0}`,
+      meta: "After commission",
     },
     {
       icon: BookOpen,
@@ -111,10 +144,10 @@ function InstructorDashboard({ listOfCourses }) {
       meta: "Published",
     },
     {
-      icon: Eye,
-      label: "Total Rewatches",
-      value: totalRewatches,
-      meta: "Engagement",
+      icon: DollarSign,
+      label: "Available Payout",
+      value: loadingEarnings ? "..." : `৳${earningsData?.availableForPayout?.toLocaleString() || 0}`,
+      meta: "Ready to withdraw",
     },
   ];
 
@@ -140,7 +173,7 @@ function InstructorDashboard({ listOfCourses }) {
               <div>
                 <p className="text-sm text-muted-foreground">Revenue</p>
                 <p className="text-3xl font-bold text-bangladesh-green">
-                  ${highlightCourse.revenue.toLocaleString()}
+                  ৳{highlightCourse.revenue.toLocaleString()}
                 </p>
               </div>
               <div className="text-right">
@@ -178,6 +211,42 @@ function InstructorDashboard({ listOfCourses }) {
           </Card>
         ))}
       </div>
+
+      {/* Earnings Overview Card */}
+      <Card className="rounded-[30px] border border-white/60 bg-white/90 shadow-[0_35px_80px_rgba(10,143,99,0.14)] hover:shadow-[0_40px_90px_rgba(10,143,99,0.18)] transition-shadow duration-300">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold text-foreground">Earnings Overview</CardTitle>
+          <p className="text-sm text-muted-foreground">Your income breakdown and payout status</p>
+        </CardHeader>
+        <CardContent>
+          {loadingEarnings ? (
+            <div className="text-center py-8 text-muted-foreground">Loading earnings data...</div>
+          ) : earningsData ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Total Earnings</p>
+                <p className="text-3xl font-bold text-bangladesh-green">
+                  ৳{earningsData.totalEarnings?.toLocaleString() || 0}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Paid Out</p>
+                <p className="text-3xl font-bold text-bangladesh-red">
+                  ৳{earningsData.paidOut?.toLocaleString() || 0}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Available for Payout</p>
+                <p className="text-3xl font-bold text-foreground">
+                  ৳{earningsData.availableForPayout?.toLocaleString() || 0}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">No earnings data available</div>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="rounded-[30px] border border-white/60 bg-white/90 shadow-[0_35px_80px_rgba(10,143,99,0.14)] hover:shadow-[0_40px_90px_rgba(10,143,99,0.18)] transition-shadow duration-300">
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -299,7 +368,7 @@ function InstructorDashboard({ listOfCourses }) {
                 <AlertCircle className="h-5 w-5 mt-0.5" />
                 <div>
                   <p className="text-sm font-medium">Payment received</p>
-                  <p className="text-xs opacity-90">$299.00 from course enrollment</p>
+                  <p className="text-xs opacity-90">৳299.00 from course enrollment</p>
                   <p className="text-xs opacity-75 mt-1">Just now</p>
                 </div>
               </div>
