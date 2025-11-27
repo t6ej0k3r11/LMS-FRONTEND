@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DollarSign, Users, BookOpen, Eye, Sparkles, TrendingUp } from "lucide-react";
+import { DollarSign, Users, BookOpen, Eye, Sparkles, TrendingUp, Bell, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { fetchEnrolledStudentsService } from "@/services";
 import { toast } from "@/hooks/use-toast";
@@ -128,18 +128,18 @@ function InstructorDashboard({ listOfCourses }) {
             <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
               Track students, revenue, and rewatches across every DeshGory cohort.
             </p>
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm text-muted-foreground">
-              <Sparkles className="h-4 w-4 text-[hsl(var(--brand-red))]" />
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-gradient-green text-white px-4 py-2 text-sm shadow-lg">
+              <Sparkles className="h-4 w-4" />
               {totalStudents || 0} students thriving this week
             </div>
           </div>
-          <div className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg">
+          <div className="rounded-3xl border border-white/60 bg-white/85 p-5 shadow-lg hover:shadow-xl transition-shadow duration-300">
             <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">Top Course</p>
             <h3 className="mt-2 text-xl font-semibold text-foreground">{highlightCourse.title}</h3>
             <div className="mt-4 flex items-end justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Revenue</p>
-                <p className="text-3xl font-bold text-[hsl(var(--brand-green))]">
+                <p className="text-3xl font-bold text-bangladesh-green">
                   ${highlightCourse.revenue.toLocaleString()}
                 </p>
               </div>
@@ -148,7 +148,7 @@ function InstructorDashboard({ listOfCourses }) {
                 <p className="text-2xl font-semibold text-foreground">{highlightCourse.students}</p>
               </div>
             </div>
-            <div className="mt-3 flex items-center gap-2 text-xs font-medium text-primary">
+            <div className="mt-3 flex items-center gap-2 text-xs font-medium text-bangladesh-red">
               <TrendingUp className="h-4 w-4" /> Real-time performance chart
             </div>
           </div>
@@ -159,7 +159,7 @@ function InstructorDashboard({ listOfCourses }) {
         {config.map((item, index) => (
           <Card
             key={index}
-            className="rounded-3xl border-white/60 bg-white/85 shadow-[0_20px_55px_rgba(3,106,78,0.12)] transition-transform duration-300 hover:-translate-y-1"
+            className="rounded-3xl border border-white/60 bg-white/90 shadow-[0_20px_55px_rgba(10,143,99,0.12)] transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_25px_65px_rgba(10,143,99,0.18)] hover:border-bangladesh-green/30"
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <div>
@@ -168,8 +168,8 @@ function InstructorDashboard({ listOfCourses }) {
                 </CardTitle>
                 <p className="text-xs text-muted-foreground">{item.meta}</p>
               </div>
-              <div className="rounded-2xl bg-[hsla(var(--brand-green)/0.12)] p-3">
-                <item.icon className="h-5 w-5 text-primary" />
+              <div className="rounded-2xl bg-gradient-green p-3 shadow-lg">
+                <item.icon className="h-5 w-5 text-white" />
               </div>
             </CardHeader>
             <CardContent>
@@ -179,13 +179,13 @@ function InstructorDashboard({ listOfCourses }) {
         ))}
       </div>
 
-      <Card className="rounded-[30px] border-white/60 bg-white/90 shadow-[0_35px_80px_rgba(9,42,31,0.14)]">
+      <Card className="rounded-[30px] border border-white/60 bg-white/90 shadow-[0_35px_80px_rgba(10,143,99,0.14)] hover:shadow-[0_40px_90px_rgba(10,143,99,0.18)] transition-shadow duration-300">
         <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="text-xl font-semibold text-foreground">Enrolled Students</CardTitle>
             <p className="text-sm text-muted-foreground">Students enrolled in your courses</p>
           </div>
-          <span className="rounded-full bg-[hsla(var(--brand-green)/0.12)] px-4 py-1 text-xs font-medium text-primary">
+          <span className="rounded-full bg-gradient-green text-white px-4 py-1 text-xs font-medium shadow-lg">
             {enrolledStudents.length} learners enrolled
           </span>
         </CardHeader>
@@ -210,7 +210,7 @@ function InstructorDashboard({ listOfCourses }) {
                   enrolledStudents.map((student) => (
                     <TableRow
                       key={student.id}
-                      className="border-white/60 bg-white/60 transition-colors hover:bg-white/80"
+                      className="border-white/60 bg-white/60 transition-all duration-300 hover:bg-white/80 hover:shadow-sm"
                     >
                       <TableCell className="font-semibold text-foreground">
                         {student.name}
@@ -221,7 +221,7 @@ function InstructorDashboard({ listOfCourses }) {
                           {student.enrolledCourses.map((course, idx) => (
                             <span
                               key={idx}
-                              className="rounded-full bg-[hsla(var(--brand-green)/0.15)] px-2 py-1 text-xs font-medium text-primary"
+                              className="rounded-full bg-bangladesh-green-light text-bangladesh-green px-2 py-1 text-xs font-medium hover:bg-bangladesh-green hover:text-white transition-colors duration-200"
                             >
                               {course.title}
                             </span>
@@ -242,6 +242,87 @@ function InstructorDashboard({ listOfCourses }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Recent Activity and Notifications */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Activity */}
+        <Card className="rounded-[30px] border border-white/60 bg-white/90 shadow-[0_35px_80px_rgba(10,143,99,0.14)] hover:shadow-[0_40px_90px_rgba(10,143,99,0.18)] transition-shadow duration-300">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <Clock className="h-5 w-5 text-bangladesh-green" />
+              Recent Activity
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">Latest updates from your courses</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-bangladesh-green-light/20 hover:bg-bangladesh-green-light/30 transition-colors duration-200">
+                <CheckCircle className="h-5 w-5 text-bangladesh-green mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">New student enrolled</p>
+                  <p className="text-xs text-muted-foreground">John Doe joined React Fundamentals</p>
+                  <p className="text-xs text-muted-foreground mt-1">2 hours ago</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-bangladesh-red-light/20 hover:bg-bangladesh-red-light/30 transition-colors duration-200">
+                <AlertCircle className="h-5 w-5 text-bangladesh-red mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Course submitted for review</p>
+                  <p className="text-xs text-muted-foreground">Advanced JavaScript is pending approval</p>
+                  <p className="text-xs text-muted-foreground mt-1">1 day ago</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-bangladesh-green-light/20 hover:bg-bangladesh-green-light/30 transition-colors duration-200">
+                <CheckCircle className="h-5 w-5 text-bangladesh-green mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Quiz completed</p>
+                  <p className="text-xs text-muted-foreground">Sarah completed CSS Grid Mastery quiz</p>
+                  <p className="text-xs text-muted-foreground mt-1">3 days ago</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Notifications Panel */}
+        <Card className="rounded-[30px] border border-white/60 bg-white/90 shadow-[0_35px_80px_rgba(227,38,54,0.14)] hover:shadow-[0_40px_90px_rgba(227,38,54,0.18)] transition-shadow duration-300">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-foreground flex items-center gap-2">
+              <Bell className="h-5 w-5 text-bangladesh-red" />
+              Notifications
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">Important updates and alerts</p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-gradient-red text-white shadow-lg">
+                <AlertCircle className="h-5 w-5 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Payment received</p>
+                  <p className="text-xs opacity-90">$299.00 from course enrollment</p>
+                  <p className="text-xs opacity-75 mt-1">Just now</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-bangladesh-red-light/20 hover:bg-bangladesh-red-light/30 transition-colors duration-200">
+                <Bell className="h-5 w-5 text-bangladesh-red mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Course approved</p>
+                  <p className="text-xs text-muted-foreground">Node.js Backend Development is now live</p>
+                  <p className="text-xs text-muted-foreground mt-1">5 hours ago</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-3 rounded-2xl bg-bangladesh-green-light/20 hover:bg-bangladesh-green-light/30 transition-colors duration-200">
+                <CheckCircle className="h-5 w-5 text-bangladesh-green mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium text-foreground">Weekly report ready</p>
+                  <p className="text-xs text-muted-foreground">Your performance analytics are available</p>
+                  <p className="text-xs text-muted-foreground mt-1">1 week ago</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

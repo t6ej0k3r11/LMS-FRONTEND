@@ -19,7 +19,7 @@ import {
   checkCoursePurchaseInfoService,
 } from "@/services";
 import { sanitizeUserInput } from "@/lib/sanitizer";
-import { CheckCircle, Globe, Lock, PlayCircle, BookOpen } from "lucide-react";
+import { CheckCircle, Globe, Lock, PlayCircle, BookOpen, AlertTriangle } from "lucide-react";
 import { useContext, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -253,6 +253,44 @@ function StudentViewCourseDetailsPage() {
               <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed" dangerouslySetInnerHTML={{ __html: sanitizeUserInput(studentViewCourseDetails?.description, true) }} />
             </CardContent>
           </Card>
+
+          {/* Prerequisites Section */}
+          {studentViewCourseDetails?.prerequisites && studentViewCourseDetails.prerequisites.length > 0 && (
+            <Card className="glass-effect hover:shadow-xl transition-all duration-300 border-0 shadow-lg">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-2xl font-bold text-gray-800 flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-orange-500 rounded-lg flex items-center justify-center">
+                    <AlertTriangle className="h-5 w-5 text-white" />
+                  </div>
+                  <span>Prerequisites Required</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-6">
+                  <div className="flex items-start space-x-3">
+                    <AlertTriangle className="h-6 w-6 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-amber-800 mb-2">
+                        Complete these courses before enrolling
+                      </h3>
+                      <p className="text-amber-700 mb-4">
+                        You must complete all prerequisite courses listed below before you can enroll in this course.
+                      </p>
+                      <div className="space-y-2">
+                        {studentViewCourseDetails.prerequisites.map((prereq, index) => (
+                          <div key={prereq._id || index} className="flex items-center space-x-3 bg-white/50 rounded-lg p-3 border border-amber-200">
+                            <CheckCircle className="h-5 w-5 text-amber-600" />
+                            <span className="font-medium text-gray-800">{sanitizeUserInput(prereq.title)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <Card className="glass-effect hover:shadow-xl transition-all duration-300 border-0 shadow-lg">
             <CardHeader className="pb-4">
               <CardTitle className="text-2xl font-bold text-gray-800 flex items-center space-x-3">

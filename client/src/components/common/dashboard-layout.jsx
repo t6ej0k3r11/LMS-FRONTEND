@@ -1,6 +1,6 @@
 import { useContext, useState } from "react";
 import PropTypes from "prop-types";
-import { Link, useNavigate, Outlet, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, Outlet, useSearchParams, useLocation } from "react-router-dom";
 import { Button } from "../ui/button";
 import { AuthContext } from "@/context/auth-context";
 import logoImage from "@/assets/logo.jpg";
@@ -16,13 +16,13 @@ import {
   Users,
   Shield,
   MessageCircle,
-  FileQuestion,
   TvMinimalPlay,
   Compass,
 } from "lucide-react";
 
 function DashboardLayout({ userRole = "student" }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { resetCredentials } = useContext(AuthContext);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -49,12 +49,14 @@ function DashboardLayout({ userRole = "student" }) {
     const commonItems = [
       {
         label: "Home",
+        path: userRole === "student" ? "/home" : `/${userRole}`,
         action: () => navigateWithTab(userRole === "student" ? "/home" : `/${userRole}`, null),
         icon: <Home className="h-4 w-4" />,
         roles: ["student", "instructor", "admin"],
       },
       {
         label: "Messages",
+        path: "/chat",
         action: () => navigate("/chat"),
         icon: <MessageCircle className="h-4 w-4" />,
         roles: ["student", "instructor", "admin"],
@@ -65,46 +67,84 @@ function DashboardLayout({ userRole = "student" }) {
       student: [
         {
           label: "Explore Courses",
+          path: "/courses",
           action: () => navigate("/courses"),
           icon: <Compass className="h-4 w-4" />,
         },
         {
           label: "My Courses",
+          path: "/student-courses",
           action: () => navigate("/student-courses"),
           icon: <BookOpen className="h-4 w-4" />,
+        },
+        {
+          label: "Settings",
+          path: "/settings",
+          action: () => navigate("/settings"),
+          icon: <Shield className="h-4 w-4" />,
         },
       ],
       instructor: [
         {
           label: "Dashboard",
-          action: () => navigateWithTab(`/${userRole}`, "dashboard"),
+          path: `/${userRole}`,
+          action: () => navigate(`/${userRole}`),
           icon: <BarChart3 className="h-4 w-4" />,
         },
         {
           label: "Courses",
-          action: () => navigateWithTab(`/${userRole}`, "courses"),
+          path: `/${userRole}/courses`,
+          action: () => navigate(`/${userRole}/courses`),
           icon: <BookOpen className="h-4 w-4" />,
         },
         {
-          label: "Quizzes",
-          action: () => navigate(`/${userRole}/quiz-management`),
-          icon: <FileQuestion className="h-4 w-4" />,
+          label: "Students",
+          path: `/${userRole}/students`,
+          action: () => navigate(`/${userRole}/students`),
+          icon: <Users className="h-4 w-4" />,
+        },
+        {
+          label: "Earnings",
+          path: `/${userRole}/earnings`,
+          action: () => navigate(`/${userRole}/earnings`),
+          icon: <BarChart3 className="h-4 w-4" />,
+        },
+        {
+          label: "Analytics",
+          path: `/${userRole}/analytics`,
+          action: () => navigate(`/${userRole}/analytics`),
+          icon: <BarChart3 className="h-4 w-4" />,
+        },
+        {
+          label: "Settings",
+          path: `/${userRole}/settings`,
+          action: () => navigate(`/${userRole}/settings`),
+          icon: <Shield className="h-4 w-4" />,
         },
       ],
       admin: [
         {
           label: "Dashboard",
+          path: `/${userRole}`,
           action: () => navigateWithTab(`/${userRole}`, "dashboard"),
           icon: <BarChart3 className="h-4 w-4" />,
         },
         {
           label: "User Management",
+          path: `/${userRole}/users`,
           action: () => navigateWithTab(`/${userRole}`, "users"),
           icon: <Users className="h-4 w-4" />,
         },
         {
           label: "Course Approval",
+          path: `/${userRole}/courses`,
           action: () => navigateWithTab(`/${userRole}`, "courses"),
+          icon: <Shield className="h-4 w-4" />,
+        },
+        {
+          label: "Settings",
+          path: `/${userRole}/settings`,
+          action: () => navigate(`/${userRole}/settings`),
           icon: <Shield className="h-4 w-4" />,
         },
       ],
@@ -112,6 +152,7 @@ function DashboardLayout({ userRole = "student" }) {
 
     const profileItem = {
       label: "Profile",
+      path: `/${userRole}/profile`,
       action: () => navigate(`/${userRole}/profile`),
       icon: <User className="h-4 w-4" />,
       roles: ["student", "instructor", "admin"],
@@ -125,6 +166,11 @@ function DashboardLayout({ userRole = "student" }) {
   };
 
   const navigationItems = getNavigationItems();
+
+  const isActive = (path) => {
+    if (path === `/${userRole}` && location.pathname === `/${userRole}`) return true;
+    return location.pathname.startsWith(path) && path !== `/${userRole}`;
+  };
 
   const getRoleDisplayName = () => {
     switch (userRole) {
@@ -217,9 +263,13 @@ function DashboardLayout({ userRole = "student" }) {
               {navigationItems.map((item) => (
                 <Button
                   key={item.label}
-                  variant="secondary"
+                  variant={isActive(item.path) ? "default" : "secondary"}
                   size="sm"
-                  className="rounded-2xl bg-white/90 text-sm"
+                  className={`rounded-2xl transition-all duration-300 ${
+                    isActive(item.path)
+                      ? "bg-gradient-green text-white shadow-lg transform scale-105"
+                      : "bg-white/90 text-sm hover:bg-white"
+                  }`}
                   onClick={item.action}
                 >
                   {item.icon}

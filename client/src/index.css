@@ -6,21 +6,26 @@
 
 @layer base {
   :root {
-    --brand-green: 158 64% 32%;
-    --brand-green-soft: 156 52% 42%;
-    --brand-green-bright: 154 80% 44%;
+    --brand-green: 158 85% 30%;
+    --brand-green-light: 140 70% 92%;
+    --brand-green-dark: 158 85% 18%;
     --brand-red: 354 86% 54%;
-    --brand-red-deep: 354 90% 46%;
+    --brand-red-light: 355 80% 92%;
+    --brand-red-dark: 354 86% 40%;
     --brand-ink: 209 24% 14%;
     --brand-stone: 210 14% 36%;
     --brand-cream: 47 64% 96%;
     --brand-mist: 156 46% 94%;
     --brand-night: 210 35% 8%;
 
-    --shadow-soft: 0 25px 60px rgba(4, 88, 60, 0.15);
+    --gradient-green: linear-gradient(135deg, #0A8F63, #0FCF8A);
+    --gradient-red: linear-gradient(135deg, #E32636, #FF6A7A);
+    --gradient-mix: linear-gradient(135deg, #E32636, #0A8F63);
+
+    --shadow-soft: 0 25px 60px rgba(10, 143, 99, 0.15);
     --shadow-card: 0 18px 45px rgba(11, 33, 27, 0.18);
-    --shadow-glow: 0 0 0 1px rgba(244, 42, 65, 0.18),
-      0 20px 45px rgba(3, 106, 78, 0.35);
+    --shadow-glow: 0 0 0 1px rgba(227, 38, 54, 0.18),
+      0 20px 45px rgba(10, 143, 99, 0.35);
 
     --background: var(--brand-cream);
     --foreground: var(--brand-ink);
@@ -36,17 +41,17 @@
     --muted-foreground: 156 14% 36%;
     --accent: var(--brand-red);
     --accent-foreground: 0 0% 100%;
-    --destructive: var(--brand-red-deep);
+    --destructive: var(--brand-red-dark);
     --destructive-foreground: 0 0% 100%;
     --border: 156 32% 86%;
     --input: 156 32% 86%;
-    --ring: var(--brand-green-bright);
+    --ring: 154 80% 44%;
     --chart-1: var(--brand-green);
-    --chart-2: 26 85% 58%;
-    --chart-3: var(--brand-red);
-    --chart-4: 198 78% 48%;
-    --chart-5: var(--brand-red);
-    --radius: 0.9rem;
+    --chart-2: var(--brand-red);
+    --chart-3: var(--brand-green-dark);
+    --chart-4: var(--brand-red-dark);
+    --chart-5: var(--brand-green-light);
+    --radius: 1.5rem;
   }
 
   .dark {
@@ -157,12 +162,8 @@
     transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 9999px;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    background-image: linear-gradient(
-      115deg,
-      hsl(var(--brand-green)) 0%,
-      hsl(var(--brand-green-bright)) 50%,
-      hsl(var(--brand-red)) 100%
-    );
+    background-image: var(--gradient-green) !important;
+    background-color: transparent !important;
     box-shadow: var(--shadow-soft);
   }
   .btn-primary:hover {
@@ -372,21 +373,23 @@
     text-wrap: balance;
   }
   .bg-primary {
-    background-image: linear-gradient(
-      115deg,
-      hsl(var(--brand-green)) 0%,
-      hsl(var(--brand-green-bright)) 50%,
-      hsl(var(--brand-red)) 100%
-    ) !important;
+    background-image: var(--gradient-green) !important;
     background-color: transparent !important;
   }
   .brand-gradient {
-    background-image: linear-gradient(
-      120deg,
-      hsl(var(--brand-green)),
-      hsl(var(--brand-red)),
-      hsl(var(--brand-red))
-    );
+    background-image: var(--gradient-mix);
+  }
+  .gradient-green {
+    background-image: var(--gradient-green) !important;
+    background-color: transparent !important;
+  }
+  .gradient-red {
+    background-image: var(--gradient-red) !important;
+    background-color: transparent !important;
+  }
+  .gradient-mix {
+    background-image: var(--gradient-mix) !important;
+    background-color: transparent !important;
   }
   .brand-glow {
     box-shadow: var(--shadow-glow);

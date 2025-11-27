@@ -874,3 +874,39 @@ export async function uploadAvatarService(formData) {
 
   return data;
 }
+
+// Settings services
+export async function getUserSettingsService() {
+  const instance = axiosInstance;
+
+  const { data } = await instance.get("/api/settings/me");
+
+  return data;
+}
+
+export async function updateUserSettingsService(settingsData) {
+  const instance = axiosInstance;
+
+  const { data } = await instance.put("/api/settings/update", settingsData);
+
+  return data;
+}
+
+export async function uploadProfilePictureService(formData) {
+  const instance = axiosInstance;
+
+  const { data } = await instance.post(
+    "/api/settings/upload-profile",
+    formData
+  );
+
+  return data;
+}
+
+export async function uploadCoverImageService(formData) {
+  const instance = axiosInstance;
+
+  const { data } = await instance.post("/api/settings/upload-cover", formData);
+
+  return data;
+}

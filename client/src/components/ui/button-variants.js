@@ -6,9 +6,9 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gradient-to-r from-[hsl(var(--brand-green))] via-[hsl(var(--brand-green-bright))] to-[hsl(var(--brand-red))] text-primary-foreground shadow-[0_15px_40px_rgba(3,106,78,0.3)] hover:shadow-[0_25px_55px_rgba(3,106,78,0.35)] hover:-translate-y-0.5",
+          "gradient-green text-primary-foreground shadow-[0_15px_40px_rgba(3,106,78,0.3)] hover:shadow-[0_25px_55px_rgba(3,106,78,0.35)] hover:-translate-y-0.5",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-[0_10px_25px_rgba(244,42,65,0.3)] hover:bg-destructive/90 hover:-translate-y-0.5",
+          "gradient-red text-destructive-foreground shadow-[0_10px_25px_rgba(244,42,65,0.3)] hover:-translate-y-0.5",
         outline:
           "border border-[hsla(var(--brand-green)/0.35)] bg-transparent text-foreground hover:text-primary hover:border-[hsla(var(--brand-green)/0.6)] hover:bg-[hsla(var(--brand-mist)/0.35)]",
         secondary:

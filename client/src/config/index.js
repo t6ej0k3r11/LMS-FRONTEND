@@ -193,6 +193,7 @@ export const courseLandingInitialFormData = {
   objectives: "",
   welcomeMessage: "",
   image: "",
+  prerequisites: [],
 };
 
 export const courseCurriculumInitialFormData = [
