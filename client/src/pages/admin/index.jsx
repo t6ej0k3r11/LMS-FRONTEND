@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../../components/ui/alert-dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../components/ui/dropdown-menu";
-import { Users, BookOpen, Shield, Activity, LogOut, Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight, Sparkles, CheckCircle, XCircle } from "lucide-react";
+import { Users, BookOpen, Shield, Activity,  Search, MoreHorizontal, UserCheck, UserX, Trash2, ChevronLeft, ChevronRight, Sparkles, CheckCircle, XCircle } from "lucide-react";
 
 import { useToast } from "../../hooks/use-toast";
 import { getAllUsersService, deleteUserService, deactivateUserService, reactivateUserService, getAdminStatsService, getRecentActivitiesService, getAllPaymentsService, updatePaymentStatusService, getPendingInstructorsService, approveInstructorService, rejectInstructorService } from "../../services";
