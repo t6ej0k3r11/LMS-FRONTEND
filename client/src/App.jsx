@@ -8,6 +8,13 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { useContext } from "react";
 import { AuthContext } from "./context/auth-context";
 import InstructorDashboardpage from "./pages/instructor";
+import InstructorCoursesPage from "./pages/instructor/courses";
+import InstructorStudentsPage from "./pages/instructor/students";
+import InstructorEarningsPage from "./pages/instructor/earnings";
+import InstructorAnalyticsPage from "./pages/instructor/analytics";
+import InstructorSettingsPage from "./pages/instructor/settings";
+import StudentSettingsPage from "./pages/student/settings";
+import AdminSettingsPage from "./pages/admin/settings";
 import StudentViewCommonLayout from "./components/student-view/common-layout";
 import DashboardLayout from "./components/common/dashboard-layout";
 import StudentHomePage from "./pages/student/home";
@@ -24,11 +31,10 @@ import QuizResults from "./components/instructor-view/quizzes/QuizResults";
 import QuizPlayerPage from "./pages/student/quiz-player";
 import StudentQuizResults from "./components/student-view/quizzes/QuizResults";
 import AdminDashboard from "./pages/admin";
-import AdminProfilePage from "./pages/admin/profile";
-import InstructorProfilePage from "./pages/instructor/profile";
 import ChatPage from "./pages/chat";
 import NotificationsPage from "./pages/notifications";
-import ProfilePage from "./pages/profile";
+import ViewProfilePage from "./pages/view-profile";
+import EditProfilePage from "./pages/edit-profile";
 import Footer from "./components/Footer";
 
 // Payment pages
@@ -96,7 +102,9 @@ function App() {
         }
       >
         <Route path="" element={<AdminDashboard />} />
-        <Route path="profile" element={<AdminProfilePage />} />
+        <Route path="settings" element={<AdminSettingsPage />} />
+        <Route path="profile" element={<ViewProfilePage />} />
+        <Route path="profile/edit" element={<EditProfilePage />} />
       </Route>
       <Route
         path="/instructor/*"
@@ -109,7 +117,14 @@ function App() {
         }
       >
         <Route path="" element={<InstructorDashboardpage />} />
-        <Route path="profile" element={<InstructorProfilePage />} />
+        <Route path="courses" element={<InstructorCoursesPage />} />
+        <Route path="students" element={<InstructorStudentsPage />} />
+        <Route path="earnings" element={<InstructorEarningsPage />} />
+        <Route path="analytics" element={<InstructorAnalyticsPage />} />
+        <Route path="settings" element={<InstructorSettingsPage />} />
+        <Route path="profile" element={<ViewProfilePage />} />
+        <Route path="profile/edit" element={<EditProfilePage />} />
+        <Route path="profile/edit" element={<EditProfilePage />} />
       </Route>
       <Route
         path="/instructor/create-new-course"
@@ -214,7 +229,9 @@ function App() {
         <Route path="quiz-results/:quizId" element={<StudentQuizResults />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="notifications" element={<NotificationsPage />} />
-        <Route path="profile" element={<ProfilePage />} />
+        <Route path="settings" element={<StudentSettingsPage />} />
+        <Route path="profile" element={<ViewProfilePage />} />
+        <Route path="profile/edit" element={<EditProfilePage />} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

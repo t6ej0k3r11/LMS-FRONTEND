@@ -50,6 +50,12 @@ export default {
           4: "hsl(var(--chart-4))",
           5: "hsl(var(--chart-5))",
         },
+        "bangladesh-green": "hsl(var(--brand-green))",
+        "bangladesh-red": "hsl(var(--brand-red))",
+        "bangladesh-green-light": "hsl(var(--brand-green-light))",
+        "bangladesh-red-light": "hsl(var(--brand-red-light))",
+        "bangladesh-green-dark": "hsl(var(--brand-green-dark))",
+        "bangladesh-red-dark": "hsl(var(--brand-red-dark))",
       },
       fontFamily: {
         sans: [
@@ -61,6 +67,11 @@ export default {
           "Roboto",
           "sans-serif",
         ],
+      },
+      backgroundImage: {
+        "gradient-green": "var(--gradient-green)",
+        "gradient-red": "var(--gradient-red)",
+        "gradient-mix": "var(--gradient-mix)",
       },
       animation: {
         "fade-in": "fadeIn 0.5s ease-in-out",

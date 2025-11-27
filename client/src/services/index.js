@@ -881,7 +881,10 @@ import { PAYMENT_CONFIG } from "@/config/paymentConfig";
 export async function initOnlinePaymentService(paymentData) {
   const instance = axiosInstance;
 
-  const { data } = await instance.post(PAYMENT_CONFIG.ROUTES.INIT_ONLINE, paymentData);
+  const { data } = await instance.post(
+    PAYMENT_CONFIG.ROUTES.INIT_ONLINE,
+    paymentData
+  );
 
   return data;
 }
@@ -889,7 +892,10 @@ export async function initOnlinePaymentService(paymentData) {
 export async function submitOfflinePaymentService(formData) {
   const instance = axiosInstance;
 
-  const { data } = await instance.post(PAYMENT_CONFIG.ROUTES.OFFLINE_SUBMIT, formData);
+  const { data } = await instance.post(
+    PAYMENT_CONFIG.ROUTES.OFFLINE_SUBMIT,
+    formData
+  );
 
   return data;
 }
@@ -905,7 +911,9 @@ export async function getStudentPaymentsService() {
 export async function getPaymentDetailsService(paymentId) {
   const instance = axiosInstance;
 
-  const { data } = await instance.get(`${PAYMENT_CONFIG.ROUTES.PAYMENT_DETAILS}/${paymentId}`);
+  const { data } = await instance.get(
+    `${PAYMENT_CONFIG.ROUTES.PAYMENT_DETAILS}/${paymentId}`
+  );
 
   return data;
 }
@@ -915,7 +923,9 @@ export async function getAllPaymentsService(queryParams = {}) {
   const instance = axiosInstance;
 
   const queryString = new URLSearchParams(queryParams).toString();
-  const { data } = await instance.get(`${PAYMENT_CONFIG.ROUTES.ADMIN_PAYMENTS}?${queryString}`);
+  const { data } = await instance.get(
+    `${PAYMENT_CONFIG.ROUTES.ADMIN_PAYMENTS}?${queryString}`
+  );
 
   return data;
 }
@@ -923,7 +933,10 @@ export async function getAllPaymentsService(queryParams = {}) {
 export async function updatePaymentStatusService(paymentId, statusData) {
   const instance = axiosInstance;
 
-  const { data } = await instance.put(`${PAYMENT_CONFIG.ROUTES.ADMIN_UPDATE_STATUS}/${paymentId}`, statusData);
+  const { data } = await instance.put(
+    `${PAYMENT_CONFIG.ROUTES.ADMIN_UPDATE_STATUS}/${paymentId}`,
+    statusData
+  );
 
   return data;
 }
@@ -931,7 +944,10 @@ export async function updatePaymentStatusService(paymentId, statusData) {
 export async function addPaymentNoteService(paymentId, noteData) {
   const instance = axiosInstance;
 
-  const { data } = await instance.post(`/admin/payment/${paymentId}/note`, noteData);
+  const { data } = await instance.post(
+    `/admin/payment/${paymentId}/note`,
+    noteData
+  );
 
   return data;
 }
@@ -939,7 +955,9 @@ export async function addPaymentNoteService(paymentId, noteData) {
 export async function getAdminPaymentDetailsService(paymentId) {
   const instance = axiosInstance;
 
-  const { data } = await instance.get(`${PAYMENT_CONFIG.ROUTES.ADMIN_PAYMENT_BY_ID}/${paymentId}`);
+  const { data } = await instance.get(
+    `${PAYMENT_CONFIG.ROUTES.ADMIN_PAYMENT_BY_ID}/${paymentId}`
+  );
 
   return data;
 }
@@ -954,3 +972,39 @@ export const paymentService = {
   addPaymentNote: addPaymentNoteService,
   getAdminPaymentDetails: getAdminPaymentDetailsService,
 };
+
+// Settings services
+export async function getUserSettingsService() {
+  const instance = axiosInstance;
+
+  const { data } = await instance.get("/api/settings/me");
+
+  return data;
+}
+
+export async function updateUserSettingsService(settingsData) {
+  const instance = axiosInstance;
+
+  const { data } = await instance.put("/api/settings/update", settingsData);
+
+  return data;
+}
+
+export async function uploadProfilePictureService(formData) {
+  const instance = axiosInstance;
+
+  const { data } = await instance.post(
+    "/api/settings/upload-profile",
+    formData
+  );
+
+  return data;
+}
+
+export async function uploadCoverImageService(formData) {
+  const instance = axiosInstance;
+
+  const { data } = await instance.post("/api/settings/upload-cover", formData);
+
+  return data;
+}
