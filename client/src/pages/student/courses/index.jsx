@@ -210,7 +210,7 @@ function StudentViewCoursesPage() {
                       </div>
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
                         <p className="font-bold text-xl sm:text-2xl text-blue-600">
-                          ${courseItem?.pricing}
+                          ৳{courseItem?.pricing}
                         </p>
                         <Button className="btn-primary px-4 sm:px-6 py-2 w-full sm:w-auto">
                           View Details

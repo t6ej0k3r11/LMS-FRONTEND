@@ -215,7 +215,7 @@ function InstructorCourses({ listOfCourses }) {
                         </span>
                       </TableCell>
                       <TableCell className="font-semibold text-[hsl(var(--brand-green))]">
-                        ${course?.students?.length * course?.pricing}
+                        ৳{course?.students?.length * course?.pricing}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

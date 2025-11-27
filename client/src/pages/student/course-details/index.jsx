@@ -365,7 +365,7 @@ function StudentViewCourseDetailsPage() {
                     {studentViewCourseDetails?.courseType === "free" || studentViewCourseDetails?.pricing === 0 ? (
                       <span className="text-green-600">Free</span>
                     ) : (
-                      <span className="text-blue-600">${studentViewCourseDetails?.pricing}</span>
+                      <span className="text-blue-600">৳{studentViewCourseDetails?.pricing}</span>
                     )}
                   </div>
                   {studentViewCourseDetails?.courseType === "free" || studentViewCourseDetails?.pricing === 0 ? (

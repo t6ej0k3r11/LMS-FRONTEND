@@ -218,7 +218,7 @@ function InstructorCoursesPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-bangladesh-red" />
-                    <span className="text-muted-foreground">${course.pricing || 0}</span>
+                    <span className="text-muted-foreground">৳{course.pricing || 0}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
@@ -231,7 +231,7 @@ function InstructorCoursesPage() {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Revenue</span>
                     <span className="font-semibold text-bangladesh-green">
-                      ${(course.students?.length || 0) * (course.pricing || 0)}
+                      ৳{(course.students?.length || 0) * (course.pricing || 0)}
                     </span>
                   </div>
                 </div>

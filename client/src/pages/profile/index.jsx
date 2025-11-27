@@ -334,7 +334,7 @@ function ProfilePage() {
                 <TrendingUp className="h-4 w-4 text-primary" />
                 Earnings
               </div>
-              <p className="text-2xl font-bold text-foreground">${roleStats.earnings}</p>
+              <p className="text-2xl font-bold text-foreground">৳{roleStats.earnings}</p>
             </Card>
           </div>
         );
