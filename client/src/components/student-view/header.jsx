@@ -1,11 +1,11 @@
 import {
   TvMinimalPlay,
   BookOpen,
-  Compass,
   Menu,
   X,
   MessageCircle,
   User,
+  LayoutDashboard,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -26,14 +26,19 @@ function StudentViewCommonHeader() {
 
   const navItems = [
     {
+      label: "Dashboard",
+      action: () => navigate("/dashboard"),
+      icon: <LayoutDashboard className="h-4 w-4" aria-hidden="true" />,
+    },
+    {
       label: "Explore Courses",
       action: () => navigate("/courses"),
-      icon: <Compass className="h-4 w-4" aria-hidden="true" />,
+      icon: <BookOpen className="h-4 w-4" aria-hidden="true" />,
     },
     {
       label: "My Courses",
       action: () => navigate("/student-courses"),
-      icon: <BookOpen className="h-4 w-4" aria-hidden="true" />,
+      icon: <TvMinimalPlay className="h-4 w-4" aria-hidden="true" />,
     },
     {
       label: "Messages",
@@ -80,9 +85,9 @@ function StudentViewCommonHeader() {
             <Button
               variant="soft"
               className="hidden sm:inline-flex text-xs sm:text-sm"
-              onClick={() => navigate("/student-courses")}
+              onClick={() => navigate("/dashboard")}
             >
-              Continue learning
+              My Dashboard
             </Button>
             <Button
               variant="ghost"

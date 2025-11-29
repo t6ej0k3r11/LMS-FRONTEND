@@ -236,7 +236,7 @@ function StudentHomePage() {
                       <div>
                         <p className="text-sm uppercase tracking-wide text-muted-foreground">Investment</p>
                         <p className="text-2xl font-bold text-[hsl(var(--brand-green))]">
-                          ${courseItem.pricing}
+                          ৳{courseItem.pricing}
                         </p>
                       </div>
                       <Button size="sm" className="btn-primary">

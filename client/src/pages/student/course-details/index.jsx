@@ -44,6 +44,7 @@ function StudentViewCourseDetailsPage() {
   const [showFreePreviewDialog, setShowFreePreviewDialog] = useState(false);
   const [courseQuizzes, setCourseQuizzes] = useState([]);
   const [enrollmentStatus, setEnrollmentStatus] = useState({ enrolled: false, completed: false });
+  const [enrollmentChecked, setEnrollmentChecked] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [enrollmentSuccess, setEnrollmentSuccess] = useState(false);
   const navigate = useNavigate();
@@ -135,19 +136,31 @@ function StudentViewCourseDetailsPage() {
       };
 
       const checkEnrollment = async () => {
-        if (!auth?.user?._id || !currentCourseDetailsId) return;
-        const response = await checkCoursePurchaseInfoService(currentCourseDetailsId, auth.user._id);
-        if (response?.success) {
-          setEnrollmentStatus(response.data);
+        if (!auth?.user?._id || !currentCourseDetailsId) {
+          setEnrollmentChecked(true);
+          return;
         }
+
+        try {
+          const response = await checkCoursePurchaseInfoService(currentCourseDetailsId, auth.user._id);
+
+          if (response?.success) {
+            setEnrollmentStatus(response.data);
+          } else {
+            setEnrollmentStatus({ enrolled: false, completed: false });
+          }
+        } catch (error) {
+          console.error("Error checking enrollment:", error);
+          setEnrollmentStatus({ enrolled: false, completed: false });
+        }
+
+        setEnrollmentChecked(true);
       };
 
       fetchStudentViewCourseDetails();
-      if (auth?.authenticate) {
-        checkEnrollment();
-      }
+      checkEnrollment(); // Always check enrollment, even if not authenticated (will be skipped)
     }
-  }, [currentCourseDetailsId, setLoadingState, setStudentViewCourseDetails, auth?.authenticate, auth.user._id]);
+  }, [currentCourseDetailsId, setLoadingState, setStudentViewCourseDetails, auth?.user?._id]);
 
   useEffect(() => {
     if (enrollmentStatus.enrolled && currentCourseDetailsId) {
@@ -158,7 +171,11 @@ function StudentViewCourseDetailsPage() {
   }, [enrollmentStatus.enrolled, currentCourseDetailsId, fetchCourseQuizzes]);
 
   useEffect(() => {
-    if (id) setCurrentCourseDetailsId(id);
+    if (id) {
+      setCurrentCourseDetailsId(id);
+      setEnrollmentChecked(false); // Reset enrollment check when course changes
+      setEnrollmentStatus({ enrolled: false, completed: false }); // Reset status
+    }
   }, [id, setCurrentCourseDetailsId]);
 
   useEffect(() => {
@@ -365,7 +382,7 @@ function StudentViewCourseDetailsPage() {
                     {studentViewCourseDetails?.courseType === "free" || studentViewCourseDetails?.pricing === 0 ? (
                       <span className="text-green-600">Free</span>
                     ) : (
-                      <span className="text-blue-600">${studentViewCourseDetails?.pricing}</span>
+                      <span className="text-blue-600">৳{studentViewCourseDetails?.pricing}</span>
                     )}
                   </div>
                   {studentViewCourseDetails?.courseType === "free" || studentViewCourseDetails?.pricing === 0 ? (
@@ -377,12 +394,16 @@ function StudentViewCourseDetailsPage() {
 
                 <div className="space-y-3">
                   {auth?.authenticate ? (
-                    enrollmentStatus.enrolled ? (
+                    !enrollmentChecked ? (
+                      <Button disabled className="w-full bg-gray-400 text-white font-semibold py-3 px-6 rounded-xl shadow-lg cursor-not-allowed">
+                        Checking Enrollment...
+                      </Button>
+                    ) : enrollmentStatus.enrolled ? (
                       <Button
                         onClick={() => navigate(`/course-progress/${id}`)}
                         className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                       >
-                        Continue Course
+                        Continue Learning
                       </Button>
                     ) : enrollmentSuccess ? (
                       <Button

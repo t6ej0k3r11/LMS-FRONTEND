@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save, Edit3, Trash2, Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Save, Edit3, Trash2, Plus, Search } from "lucide-react";
 import PropTypes from "prop-types";
 import { toast } from "@/hooks/use-toast";
 
@@ -16,6 +17,7 @@ function NotesSystem({ lectureId, lectureTitle }) {
   const [currentNote, setCurrentNote] = useState("");
   const [editingNoteId, setEditingNoteId] = useState(null);
   const [isAddingNote, setIsAddingNote] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Load notes from localStorage (in real app, this would be from API)
   useEffect(() => {
@@ -105,6 +107,17 @@ function NotesSystem({ lectureId, lectureTitle }) {
     });
   };
 
+  // Filter notes based on search query
+  const filteredNotes = useMemo(() => {
+    if (!searchQuery.trim()) return notes;
+
+    const query = searchQuery.toLowerCase();
+    return notes.filter(note =>
+      note.content.toLowerCase().includes(query) ||
+      note.lectureTitle.toLowerCase().includes(query)
+    );
+  }, [notes, searchQuery]);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -118,6 +131,20 @@ function NotesSystem({ lectureId, lectureTitle }) {
           Add Note
         </Button>
       </div>
+
+      {/* Search Input */}
+      {notes.length > 0 && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Search notes..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      )}
 
       {/* Add/Edit Note Form */}
       {(isAddingNote || editingNoteId) && (
@@ -163,8 +190,14 @@ function NotesSystem({ lectureId, lectureTitle }) {
             <p className="text-lg font-medium">No notes yet</p>
             <p className="text-sm">Add your first note to remember important points from this lecture.</p>
           </div>
+        ) : filteredNotes.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <Search className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium">No matching notes</p>
+            <p className="text-sm">Try adjusting your search query.</p>
+          </div>
         ) : (
-          notes.map((note) => (
+          filteredNotes.map((note) => (
             <Card key={note.id} className="border-gray-200 hover:shadow-md transition-shadow duration-200">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-3">

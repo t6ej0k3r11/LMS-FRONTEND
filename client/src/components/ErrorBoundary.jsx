@@ -20,9 +20,6 @@ class ErrorBoundary extends React.Component {
     });
 
     // In production, you might want to send this to a logging service
-    console.error('🔍 DEBUG: ErrorBoundary caught an error:', error, errorInfo);
-    console.error('🔍 DEBUG: Error message:', error.message);
-    console.error('🔍 DEBUG: Error stack:', error.stack);
   }
 
   render() {

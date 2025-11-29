@@ -8,9 +8,11 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
-  Trophy
+  Trophy,
+  Eye
 } from "lucide-react";
 import PropTypes from "prop-types";
+import { isLectureCompleted } from "@/lib/progressUtils";
 
 function CourseSidebar({
   curriculum = [],
@@ -19,7 +21,9 @@ function CourseSidebar({
   onLectureSelect,
   collapsed = false,
   courseQuizzes = [],
-  completedQuizzes = []
+  completedQuizzes = [],
+  courseId,
+  realTimeProgress = {}
 }) {
   CourseSidebar.propTypes = {
     curriculum: PropTypes.array,
@@ -28,10 +32,13 @@ function CourseSidebar({
     onLectureSelect: PropTypes.func.isRequired,
     collapsed: PropTypes.bool,
     courseQuizzes: PropTypes.array,
-    completedQuizzes: PropTypes.array
+    completedQuizzes: PropTypes.array,
+    courseId: PropTypes.string,
+    realTimeProgress: PropTypes.object
   };
 
   const [expandedSections, setExpandedSections] = useState({});
+  const [lectureProgress, setLectureProgress] = useState({});
 
   // Group curriculum by sections (if sections exist) or treat as single section
   const sections = curriculum.length > 0 ? [{
@@ -127,9 +134,14 @@ function CourseSidebar({
                 {expandedSections[sectionIndex] && (
                   <div className="bg-white">
                     {section.lectures.map((lecture, lectureIndex) => {
-                      const isCompleted = completedLessons.includes(lecture._id);
+                      const isCompleted = isLectureCompleted(lecture._id, [], realTimeProgress) ||
+                                          completedLessons.includes(lecture._id) ||
+                                          (lectureProgress[lecture._id]?.completed);
                       const isCurrent = currentLecture?._id === lecture._id;
                       const lectureQuizzes = courseQuizzes.filter(quiz => quiz.lectureId === lecture._id);
+                      const progress = lectureProgress[lecture._id];
+                      const progressValue = realTimeProgress[lecture._id] || progress?.progressValue || 0;
+                      const hasProgress = progressValue > 0 && progressValue < 1;
 
                       return (
                         <div key={lecture._id}>
@@ -140,7 +152,9 @@ function CourseSidebar({
                                 ? 'border-l-green-500 bg-gradient-to-r from-green-50 to-red-50'
                                 : isCompleted
                                   ? 'border-l-green-500 bg-gradient-to-r from-green-25 to-green-50'
-                                  : 'border-l-transparent'
+                                  : hasProgress
+                                    ? 'border-l-blue-400 bg-gradient-to-r from-blue-25 to-blue-50'
+                                    : 'border-l-transparent'
                             }`}
                           >
                             <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
@@ -148,10 +162,14 @@ function CourseSidebar({
                                 ? 'bg-green-100'
                                 : isCurrent
                                   ? 'bg-green-500'
-                                  : 'bg-gray-100'
+                                  : hasProgress
+                                    ? 'bg-blue-100'
+                                    : 'bg-gray-100'
                             }`}>
                               {isCompleted ? (
                                 <Check className="h-4 w-4 text-green-600" />
+                              ) : hasProgress ? (
+                                <Eye className="h-3 w-3 text-blue-600" />
                               ) : (
                                 <Play className="h-3 w-3 text-gray-600" />
                               )}
@@ -168,7 +186,7 @@ function CourseSidebar({
                                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                                 )}
                               </div>
-                              <div className="flex items-center space-x-3 text-xs text-gray-500">
+                              <div className="flex items-center space-x-3 text-xs text-gray-500 mb-2">
                                 <div className="flex items-center space-x-1">
                                   <Play className="h-3 w-3" />
                                   <span>Lecture {lectureIndex + 1}</span>
@@ -178,6 +196,15 @@ function CourseSidebar({
                                   <span>{formatDuration(lecture.duration)}</span>
                                 </div>
                               </div>
+                              {/* Progress bar for lectures with progress */}
+                              {hasProgress && !isCompleted && (
+                                <div className="w-full bg-gray-200 rounded-full h-1.5 mb-1">
+                                  <div
+                                    className="bg-blue-500 h-1.5 rounded-full transition-all duration-300"
+                                    style={{ width: `${progressValue * 100}%` }}
+                                  ></div>
+                                </div>
+                              )}
                             </div>
                           </button>
 

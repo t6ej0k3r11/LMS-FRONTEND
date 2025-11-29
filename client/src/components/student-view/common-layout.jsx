@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "react-router-dom";
 import StudentViewCommonHeader from "./header";
+import StudentPageLayout from "@/layouts/StudentPageLayout";
 
 function StudentViewCommonLayout() {
   const location = useLocation();
@@ -17,11 +18,11 @@ function StudentViewCommonLayout() {
 
       {!hideHeader && <StudentViewCommonHeader />}
 
-      <main className="relative z-10 px-4 sm:px-6 lg:px-10 py-6 lg:py-8 animate-fade-in">
+      <StudentPageLayout>
         <section className="mx-auto max-w-7xl w-full">
           <Outlet />
         </section>
-      </main>
+      </StudentPageLayout>
     </div>
   );
 }

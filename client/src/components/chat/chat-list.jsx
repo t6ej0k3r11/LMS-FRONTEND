@@ -55,12 +55,19 @@ export default function ChatList({ onSelectUser, selectedUser }) {
     ).length;
   };
 
+  // Remove duplicates based on userId (keep the first occurrence)
+  const uniqueUsers = users && Array.isArray(users)
+    ? users.filter((user, index, self) =>
+        index === self.findIndex(u => u.userId === user.userId)
+      )
+    : [];
+
   // Filter users based on search term
-  const filteredUsers = (users && Array.isArray(users)) ? users.filter((user) =>
+  const filteredUsers = uniqueUsers.filter((user) =>
     user.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.userEmail && user.userEmail.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (user.role && user.role.toLowerCase().includes(searchTerm.toLowerCase()))
-  ) : [];
+  );
 
   return (
     <div className="w-80 border-r bg-white">
@@ -92,9 +99,10 @@ export default function ChatList({ onSelectUser, selectedUser }) {
           ) : (
             filteredUsers.map((user) => {
               const unreadCount = getUnreadCount(user.userId);
+              const uniqueKey = `${user.userId}_${user.courseId || 'general'}`;
               return (
                 <div
-                  key={user.userId}
+                  key={uniqueKey}
                   onClick={() => onSelectUser(user)}
                   className={`p-3 mb-2 rounded-lg cursor-pointer transition-colors ${
                     selectedUser?.userId === user.userId

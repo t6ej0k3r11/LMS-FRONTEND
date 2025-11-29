@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import useFileValidator from "@/hooks/useFileValidator";
 import { submitOfflinePaymentService } from "@/services";
 import { PAYMENT_CONFIG } from "@/config/paymentConfig";
+import { AuthContext } from "@/context/auth-context";
 import PropTypes from 'prop-types';
 
 const PAYMENT_METHODS = PAYMENT_CONFIG.UI.PAYMENT_METHODS;
@@ -18,6 +19,7 @@ const PAYMENT_METHODS = PAYMENT_CONFIG.UI.PAYMENT_METHODS;
 function OfflinePaymentForm({ courseId, amount, onSuccess }) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { auth } = useContext(AuthContext);
 
   const [formData, setFormData] = useState({
     method: "",
@@ -125,7 +127,9 @@ function OfflinePaymentForm({ courseId, amount, onSuccess }) {
       const submitData = new FormData();
       submitData.append(PAYMENT_CONFIG.FIELDS.COURSE_ID, courseId);
       submitData.append(PAYMENT_CONFIG.FIELDS.METHOD, formData.method);
-      submitData.append("amount", formData.amount);
+      submitData.append(PAYMENT_CONFIG.FIELDS.AMOUNT, formData.amount);
+      submitData.append("name", formData.name.trim());
+      submitData.append("mobile", formData.mobile.trim());
       if (formData.transactionId) {
         submitData.append(PAYMENT_CONFIG.FIELDS.TRANSACTION_ID, formData.transactionId.trim());
       }
@@ -152,11 +156,38 @@ function OfflinePaymentForm({ courseId, amount, onSuccess }) {
       }
     } catch (error) {
       console.error("Payment submission error:", error);
-      toast({
-        title: "Submission Failed",
-        description: error.message || "Failed to submit payment. Please try again.",
-        variant: "destructive",
-      });
+      console.error("Error response:", error.response?.data);
+
+      // Check if it's a validation error
+      const errorData = error.response?.data;
+      if (errorData && errorData.validationErrors) {
+        const validationMessages = errorData.validationErrors.map(err => `${err.field}: ${err.message}`).join('\n');
+        toast({
+          title: "Validation Error",
+          description: validationMessages,
+          variant: "destructive",
+        });
+      } else {
+        // Handle specific error cases
+        if (errorData?.message?.includes("already enrolled")) {
+          toast({
+            title: "Already Enrolled",
+            description: "You are already enrolled in this course. No payment needed.",
+            variant: "default",
+          });
+          // Clear cache and redirect to course page
+          localStorage.removeItem(`studentCoursesCache_${auth?.user?._id}`);
+          setTimeout(() => {
+            navigate("/student-courses");
+          }, 2000);
+        } else {
+          toast({
+            title: "Submission Failed",
+            description: errorData?.message || error.message || "Failed to submit payment. Please try again.",
+            variant: "destructive",
+          });
+        }
+      }
     } finally {
       setLoading(false);
     }

@@ -3,12 +3,7 @@ import { initialSignInFormData, initialSignUpFormData } from "@/config";
 import { createContext, useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { toast } from "@/hooks/use-toast";
-
-// Dynamic import to avoid circular dependency
-const getServices = async () => {
-  const { checkAuthService, loginService, registerService } = await import("@/services");
-  return { checkAuthService, loginService, registerService };
-};
+import { checkAuthService, loginService, registerService, logoutService } from "@/services";
 
 export const AuthContext = createContext(null);
 
@@ -40,7 +35,6 @@ export default function AuthProvider({ children }) {
     }
 
     try {
-      const { registerService } = await getServices();
       const response = await registerService(signUpFormData);
 
       if (response.success) {
@@ -81,7 +75,6 @@ export default function AuthProvider({ children }) {
     setSignInFieldErrors({});
 
     try {
-      const { loginService } = await getServices();
       const data = await loginService(signInFormData);
 
       if (data.success) {
@@ -188,7 +181,6 @@ export default function AuthProvider({ children }) {
     }
 
     try {
-      const { checkAuthService } = await getServices();
       const data = await checkAuthService();
       if (data.success) {
         setAuth({
@@ -236,7 +228,6 @@ export default function AuthProvider({ children }) {
 
   async function logout() {
     try {
-      const { logoutService } = await getServices();
       await logoutService();
     } catch (error) {
       console.error("Logout error:", error);

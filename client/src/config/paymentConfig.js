@@ -1,7 +1,7 @@
 // Payment Configuration - Centralized for both backend and frontend
 export const PAYMENT_CONFIG = {
   // API Base URLs
-  API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5001',
+  API_BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
   CLIENT_BASE_URL: window.location.origin,
 
   // Payment Routes

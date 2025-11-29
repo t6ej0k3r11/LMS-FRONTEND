@@ -30,6 +30,7 @@ import QuizForm from "./components/instructor-view/quizzes/QuizForm";
 import QuizResults from "./components/instructor-view/quizzes/QuizResults";
 import QuizPlayerPage from "./pages/student/quiz-player";
 import StudentQuizResults from "./components/student-view/quizzes/QuizResults";
+import StudentDashboardOverview from "./features/student/overview";
 import AdminDashboard from "./pages/admin";
 import ChatPage from "./pages/chat";
 import NotificationsPage from "./pages/notifications";
@@ -208,6 +209,7 @@ function App() {
       >
         <Route path="" element={<StudentHomePage />} />
         <Route path="home" element={<StudentHomePage />} />
+        <Route path="dashboard" element={<StudentDashboardOverview />} />
         <Route path="courses" element={<StudentViewCoursesPage />} />
         <Route
           path="course/details/:id"
