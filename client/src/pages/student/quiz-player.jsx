@@ -1,34 +1,37 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { validateQuizAccessService } from "@/services";
-import QuizPlayer from "@/components/student-view/quizzes/QuizPlayer";
+import { getQuizForTakingService } from "@/services";
+import { QuizPlayer } from "../../features/quiz/components/QuizPlayer";
 import { useToast } from "@/hooks/use-toast";
+import { useContext } from "react";
+import { AuthContext } from "@/context/auth-context";
 
 function QuizPlayerPage() {
   const { quizId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [quizValidation, setQuizValidation] = useState(null);
+  const { auth } = useContext(AuthContext);
+  const [quizData, setQuizData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const validateQuiz = async () => {
+    const loadQuiz = async () => {
       try {
         setLoading(true);
-        const response = await validateQuizAccessService(quizId);
-        setQuizValidation(response);
-        if (!response?.success || !response?.canStart) {
+        const response = await getQuizForTakingService(quizId);
+        if (response?.success) {
+          setQuizData(response.data.quiz);
+        } else {
           toast({
-            title: "Cannot access quiz",
-            description: response?.message || "Quiz validation failed.",
+            title: "Cannot load quiz",
+            description: response?.message || "Failed to load quiz data.",
             variant: "destructive",
           });
           navigate(-1);
         }
       } catch (error) {
-        console.error("Error validating quiz access:", error);
+        console.error("Error loading quiz:", error);
         const errorMessage = error.response?.data?.message || "Cannot load quiz.";
-        setQuizValidation({ success: false, canStart: false, message: errorMessage });
         toast({
           title: "Cannot load quiz",
           description: errorMessage,
@@ -40,18 +43,34 @@ function QuizPlayerPage() {
       }
     };
 
-    validateQuiz();
-  }, [quizId, navigate, toast]);
+    if (quizId && auth?.user?._id) {
+      loadQuiz();
+    }
+  }, [quizId, auth?.user?._id, navigate, toast]);
 
   if (loading) {
-    return <div className="text-center py-8">Validating quiz access...</div>;
+    return <div className="text-center py-8">Loading quiz...</div>;
   }
 
-  if (!quizValidation?.canStart) {
-    return <div className="text-center py-8">Quiz access denied.</div>;
+  if (!quizData) {
+    return <div className="text-center py-8">Quiz not found.</div>;
   }
 
-  return <QuizPlayer validation={quizValidation} />;
+  return (
+    <QuizPlayer
+      quizId={quizId}
+      userId={auth?.user?._id}
+      quizData={quizData}
+      onComplete={(results) => {
+        toast({
+          title: "Quiz Completed",
+          description: `You scored ${results.score}%`,
+        });
+        navigate(`/quiz-results/${quizId}`);
+      }}
+      onExit={() => navigate(-1)}
+    />
+  );
 }
 
 export default QuizPlayerPage;

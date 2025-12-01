@@ -17,6 +17,7 @@ import StudentSettingsPage from "./pages/student/settings";
 import AdminSettingsPage from "./pages/admin/settings";
 import StudentViewCommonLayout from "./components/student-view/common-layout";
 import DashboardLayout from "./components/common/dashboard-layout";
+import StudentDashboard from "./features/student/overview";
 import StudentHomePage from "./pages/student/home";
 import NotFoundPage from "./pages/not-found";
 import AddNewCoursePage from "./pages/instructor/add-new-course";
@@ -206,8 +207,9 @@ function App() {
           />
         }
       >
-        <Route path="" element={<StudentHomePage />} />
+        <Route path="" element={<StudentDashboard />} />
         <Route path="home" element={<StudentHomePage />} />
+        <Route path="dashboard" element={<StudentDashboard />} />
         <Route path="courses" element={<StudentViewCoursesPage />} />
         <Route
           path="course/details/:id"
@@ -232,6 +234,12 @@ function App() {
         <Route path="settings" element={<StudentSettingsPage />} />
         <Route path="profile" element={<ViewProfilePage />} />
         <Route path="profile/edit" element={<EditProfilePage />} />
+        {/* New Student Dashboard Features */}
+        <Route path="assignments" element={<div>Assignments Page - Coming Soon</div>} />
+        <Route path="resources" element={<div>Resources Page - Coming Soon</div>} />
+        <Route path="messages" element={<div>Messages Page - Coming Soon</div>} />
+        <Route path="gamification" element={<div>Gamification Page - Coming Soon</div>} />
+        <Route path="calendar" element={<div>Calendar Page - Coming Soon</div>} />
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>

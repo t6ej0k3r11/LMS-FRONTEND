@@ -6,6 +6,10 @@ import {
   X,
   MessageCircle,
   User,
+  FileText,
+  Award,
+  Calendar,
+  BarChart3,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "../ui/button";
@@ -26,6 +30,11 @@ function StudentViewCommonHeader() {
 
   const navItems = [
     {
+      label: "Dashboard",
+      action: () => navigate("/"),
+      icon: <BarChart3 className="h-4 w-4" aria-hidden="true" />,
+    },
+    {
       label: "Explore Courses",
       action: () => navigate("/courses"),
       icon: <Compass className="h-4 w-4" aria-hidden="true" />,
@@ -36,9 +45,29 @@ function StudentViewCommonHeader() {
       icon: <BookOpen className="h-4 w-4" aria-hidden="true" />,
     },
     {
+      label: "Assignments",
+      action: () => navigate("/assignments"),
+      icon: <FileText className="h-4 w-4" aria-hidden="true" />,
+    },
+    {
+      label: "Resources",
+      action: () => navigate("/resources"),
+      icon: <TvMinimalPlay className="h-4 w-4" aria-hidden="true" />,
+    },
+    {
       label: "Messages",
       action: () => navigate("/chat"),
       icon: <MessageCircle className="h-4 w-4" aria-hidden="true" />,
+    },
+    {
+      label: "Achievements",
+      action: () => navigate("/gamification"),
+      icon: <Award className="h-4 w-4" aria-hidden="true" />,
+    },
+    {
+      label: "Calendar",
+      action: () => navigate("/calendar"),
+      icon: <Calendar className="h-4 w-4" aria-hidden="true" />,
     },
     {
       label: "Profile",

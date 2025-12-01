@@ -1,0 +1,30 @@
+# Backend Patch: Quiz Model Enhancement
+# File: server/models/Quiz.js
+# Description: Add new fields to support enhanced quiz features
+
+--- a/server/models/Quiz.js
++++ b/server/models/Quiz.js
+@@ -1,5 +1,6 @@
+ const mongoose = require("mongoose");
+
+ const quizSchema = new mongoose.Schema({
++  instantFeedbackEnabled: { type: Boolean, default: false }, // Enable practice mode
+   prerequisiteLectureIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "Lecture" }],
+   quizType: { type: String, enum: ["practice", "final", "assessment"], default: "practice" },
+   title: { type: String, required: true },
+@@ -15,6 +16,7 @@ const quizSchema = new mongoose.Schema({
+   questions: [{
+     mode: { type: String, enum: ["custom", "bank"], default: "custom" },
+     bankQuestionId: { type: mongoose.Schema.Types.ObjectId, ref: "QuestionBank" },
++    type: { type: String, enum: ["multiple-choice", "multiple-select", "true-false", "short-text", "broad-text", "code-snippet"], required: true },
+     question: { type: String }, // For custom questions
+     options: [{ type: String }], // For choice questions
+     correctAnswer: { type: mongoose.Schema.Types.Mixed }, // Can be string or array
+@@ -22,6 +24,7 @@ const quizSchema = new mongoose.Schema({
+     explanation: { type: String }, // For practice mode feedback
+     subject: { type: String }, // For bank questions
+     difficulty: { type: String, enum: ["easy", "medium", "hard"] }, // For bank questions
++    tags: [{ type: String }], // For categorization
+   }],
+   passingScore: { type: Number, default: 70, min: 0, max: 100 },
+   timeLimit: { type: Number }, // in minutes, null for untimed

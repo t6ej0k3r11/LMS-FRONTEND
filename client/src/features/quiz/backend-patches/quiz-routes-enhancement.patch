@@ -1,0 +1,35 @@
+# Backend Patch: Quiz Routes Enhancement
+# File: server/routes/student-routes/quiz-routes.js
+# Description: Add new routes for enhanced quiz functionality
+
+--- a/server/routes/student-routes/quiz-routes.js
++++ b/server/routes/student-routes/quiz-routes.js
+@@ -3,6 +3,9 @@ const {
+   getQuizzesByCourse,
+   getQuizById,
+   validateQuizAccess,
++  updateAttemptProgress,
++  getAttemptById,
++  deleteAttempt,
+   startQuizAttempt,
+   submitQuizAttempt,
+   submitQuestionAnswer,
+@@ -34,6 +37,18 @@ router.get("/:quizId/validate", validateQuizAccess);
+ // POST /:quizId/attempt - start quiz attempt
+ router.post("/:quizId/attempt", startQuizAttempt);
+
++// PUT /:quizId/attempt/:attemptId/progress - update attempt progress (auto-save)
++router.put(
++  "/:quizId/attempt/:attemptId/progress",
++  updateAttemptProgress
++);
++
++// GET /attempt/:attemptId - get attempt by ID (for resume)
++router.get("/attempt/:attemptId", getAttemptById);
++
++// DELETE /attempt/:attemptId - delete incomplete attempt
++router.delete("/attempt/:attemptId", deleteAttempt);
++
+ // PUT /:quizId/attempt/:attemptId - submit quiz (legacy for non-instant feedback)
+ router.put(
+   "/:quizId/attempt/:attemptId",

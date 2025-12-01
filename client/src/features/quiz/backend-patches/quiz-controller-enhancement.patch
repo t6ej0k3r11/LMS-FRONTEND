@@ -1,0 +1,185 @@
+# Backend Patch: Quiz Controller Enhancement
+# File: server/controllers/student-controller/quiz-controller.js
+# Description: Add new endpoints for enhanced quiz functionality
+
+--- a/server/controllers/student-controller/quiz-controller.js
++++ b/server/controllers/student-controller/quiz-controller.js
+@@ -1,5 +1,6 @@
+ const mongoose = require("mongoose");
+ const Quiz = require("../../models/Quiz");
+ const QuizAttempt = require("../../models/QuizAttempt");
+ const QuestionBank = require("../../models/QuestionBank");
+ const StudentCourses = require("../../models/StudentCourses");
+@@ -1395,6 +1396,144 @@ const finalizeQuizAttempt = async (req, res) => {
+   }
+ };
+
++// New endpoints for enhanced quiz system
++
++const updateAttemptProgress = async (req, res) => {
++  try {
++    const { quizId, attemptId } = req.params;
++    const { answers, questionAnalytics, timerState } = req.body;
++    const studentId = req.user._id;
++
++    // Validate parameters
++    if (!mongoose.Types.ObjectId.isValid(quizId) || !mongoose.Types.ObjectId.isValid(attemptId)) {
++      return res.status(400).json({
++        success: false,
++        message: "Invalid quiz or attempt ID format",
++      });
++    }
++
++    const attempt = await QuizAttempt.findById(attemptId);
++    if (!attempt || attempt.studentId.toString() !== studentId || attempt.quizId.toString() !== quizId) {
++      return res.status(404).json({
++        success: false,
++        message: "Attempt not found",
++      });
++    }
++
++    // Update answers if provided
++    if (answers && Array.isArray(answers)) {
++      answers.forEach(answerUpdate => {
++        const existingAnswer = attempt.answers.find(a => a.questionId.toString() === answerUpdate.questionId);
++        if (existingAnswer) {
++          Object.assign(existingAnswer, answerUpdate);
++        } else {
++          attempt.answers.push(answerUpdate);
++        }
++      });
++    }
++
++    // Update analytics if provided
++    if (questionAnalytics) {
++      // Store analytics in attempt metadata or separate collection
++      attempt.questionAnalytics = questionAnalytics;
++    }
++
++    // Update timer state if provided
++    if (timerState) {
++      attempt.timerState = timerState;
++    }
++
++    attempt.lastSavedAt = new Date();
++    await attempt.save();
++
++    res.status(200).json({
++      success: true,
++      message: "Progress updated successfully",
++    });
++  } catch (error) {
++    console.error("Error updating attempt progress:", error);
++    res.status(500).json({
++      success: false,
++      message: "Failed to update progress",
++    });
++  }
++};
++
++const getAttemptById = async (req, res) => {
++  try {
++    const { attemptId } = req.params;
++    const studentId = req.user._id;
++
++    if (!mongoose.Types.ObjectId.isValid(attemptId)) {
++      return res.status(400).json({
++        success: false,
++        message: "Invalid attempt ID format",
++      });
++    }
++
++    const attempt = await QuizAttempt.findById(attemptId)
++      .populate('quizId', 'title timeLimit instantFeedbackEnabled')
++      .populate('courseId', 'title');
++
++    if (!attempt || attempt.studentId.toString() !== studentId) {
++      return res.status(404).json({
++        success: false,
++        message: "Attempt not found",
++      });
++    }
++
++    res.status(200).json({
++      success: true,
++      data: {
++        attempt: {
++          _id: attempt._id,
++          quizId: attempt.quizId,
++          courseId: attempt.courseId,
++          mode: attempt.mode,
++          status: attempt.status,
++          currentQuestionIndex: attempt.currentQuestionIndex || 0,
++          answers: attempt.answers,
++          questionAnalytics: attempt.questionAnalytics || {},
++          timerState: attempt.timerState || {},
++          startedAt: attempt.startedAt,
++          lastSavedAt: attempt.lastSavedAt,
++          score: attempt.score,
++        }
++      }
++    });
++  } catch (error) {
++    console.error("Error getting attempt:", error);
++    res.status(500).json({
++      success: false,
++      message: "Failed to retrieve attempt",
++    });
++  }
++};
++
++const deleteAttempt = async (req, res) => {
++  try {
++    const { attemptId } = req.params;
++    const studentId = req.user._id;
++
++    if (!mongoose.Types.ObjectId.isValid(attemptId)) {
++      return res.status(400).json({
++        success: false,
++        message: "Invalid attempt ID format",
++      });
++    }
++
++    const attempt = await QuizAttempt.findById(attemptId);
++    if (!attempt || attempt.studentId.toString() !== studentId) {
++      return res.status(404).json({
++        success: false,
++        message: "Attempt not found",
++      });
++    }
++
++    // Only allow deletion of incomplete attempts
++    if (attempt.status === 'completed') {
++      return res.status(400).json({
++        success: false,
++        message: "Cannot delete completed attempts",
++      });
++    }
++
++    await QuizAttempt.findByIdAndDelete(attemptId);
++
++    res.status(200).json({
++      success: true,
++      message: "Attempt deleted successfully",
++    });
++  } catch (error) {
++    console.error("Error deleting attempt:", error);
++    res.status(500).json({
++      success: false,
++      message: "Failed to delete attempt",
++    });
++  }
++};
++
+ module.exports = {
+   getQuizzesByCourse,
+   getQuizById,
+@@ -1402,4 +1541,7 @@ module.exports = {
+   submitQuizAttempt,
+   submitQuestionAnswer,
+   finalizeQuizAttempt,
++  updateAttemptProgress,
++  getAttemptById,
++  deleteAttempt,
+   getQuizResults,
+ };

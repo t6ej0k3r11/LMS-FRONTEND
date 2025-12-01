@@ -1,0 +1,31 @@
+# Backend Patch: QuizAttempt Model Enhancement
+# File: server/models/QuizAttempt.js
+# Description: Add analytics fields and enhance attempt tracking
+
+--- a/server/models/QuizAttempt.js
++++ b/server/models/QuizAttempt.js
+@@ -1,5 +1,6 @@
+ const mongoose = require("mongoose");
+
+ const quizAttemptSchema = new mongoose.Schema({
++  mode: { type: String, enum: ["exam", "practice"], default: "exam" }, // Track attempt mode
+   quizId: { type: mongoose.Schema.Types.ObjectId, ref: "Quiz", required: true },
+   studentId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+   courseId: { type: mongoose.Schema.Types.ObjectId, ref: "Course", required: true },
+@@ -15,9 +16,15 @@ const quizAttemptSchema = new mongoose.Schema({
+   answers: [{
+     questionId: { type: mongoose.Schema.Types.ObjectId, required: true },
+     answer: { type: mongoose.Schema.Types.Mixed }, // Can be string, array, etc.
+-    isCorrect: { type: Boolean },
++    isCorrect: { type: Boolean, default: null }, // null for manual review
+     pointsEarned: { type: Number, default: 0 },
+-    needsReview: { type: Boolean, default: false },
++    needsReview: { type: Boolean, default: false }, // For text/code questions
++    timeSpent: { type: Number, default: 0 }, // Seconds spent on this question
++    attempts: { type: Number, default: 1 }, // Number of times answered
++    firstAnsweredAt: { type: Date },
++    lastAnsweredAt: { type: Date },
++    selectedOptions: [{ type: mongoose.Schema.Types.Mixed }], // Track all selected options
+   }],
+   score: { type: Number, default: 0 }, // Percentage score
+   pointsEarned: { type: Number, default: 0 }, // Total points earned

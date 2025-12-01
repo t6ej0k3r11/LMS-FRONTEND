@@ -376,7 +376,7 @@ function QuizPlayer({ validation }) {
     if (question.type === 'multiple-choice') {
       return (
         <RadioGroup
-          value={currentAnswer}
+          value={currentAnswer || ""}
           onValueChange={(value) => handleAnswerChange(question._id, value)}
           disabled={isDisabled}
         >
@@ -413,7 +413,7 @@ function QuizPlayer({ validation }) {
     } else if (question.type === 'true-false') {
       return (
         <RadioGroup
-          value={currentAnswer}
+          value={currentAnswer || ""}
           onValueChange={(value) => handleAnswerChange(question._id, value)}
         >
           <div className="flex items-center space-x-2">

@@ -1,16 +1,14 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { StudentContext } from "@/context/student-context";
 import { CheckCircle, XCircle, RotateCcw } from "lucide-react";
-import { useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getQuizResultsService } from "@/services";
 
 function QuizResults() {
   const { quizId } = useParams();
   const navigate = useNavigate();
-  const { studentQuizProgress } = useContext(StudentContext);
 
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,15 +17,10 @@ function QuizResults() {
     const fetchResults = async () => {
       try {
         setLoading(true);
-        // First check if we have results in context
-        if (studentQuizProgress[quizId]) {
-          setResults(studentQuizProgress[quizId]);
-        } else {
-          // Otherwise fetch from server
-          const response = await getQuizResultsService(quizId);
-          if (response?.success) {
-            setResults(response.data);
-          }
+        // Always fetch from server to get complete results
+        const response = await getQuizResultsService(quizId);
+        if (response?.success) {
+          setResults(response.data);
         }
       } catch (error) {
         console.error("Error fetching quiz results:", error);
@@ -37,7 +30,7 @@ function QuizResults() {
     };
 
     fetchResults();
-  }, [quizId, studentQuizProgress]);
+  }, [quizId]);
 
   // Get courseId from results or context
   const courseId = results?.courseId || results?.quiz?.courseId;
